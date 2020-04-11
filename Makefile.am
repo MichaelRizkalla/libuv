@@ -29,21 +29,21 @@ CLEANFILES =
 lib_LTLIBRARIES = libuv.la
 libuv_la_CFLAGS = @CFLAGS@
 libuv_la_LDFLAGS = -no-undefined -version-info 1:0:0
-libuv_la_SOURCES = src/fs-poll.c \
+libuv_la_SOURCES = src/fs-poll.cpp \
                    src/heap-inl.h \
-                   src/idna.c \
+                   src/idna.cpp \
                    src/idna.h \
-                   src/inet.c \
+                   src/inet.cpp \
                    src/queue.h \
-                   src/random.c \
-                   src/strscpy.c \
+                   src/random.cpp \
+                   src/strscpy.cpp \
                    src/strscpy.h \
-                   src/threadpool.c \
-                   src/timer.c \
-                   src/uv-data-getter-setters.c \
-                   src/uv-common.c \
+                   src/threadpool.cpp \
+                   src/timer.cpp \
+                   src/uv-data-getter-setters.cpp \
+                   src/uv-common.cpp \
                    src/uv-common.h \
-                   src/version.c
+                   src/version.cpp
 
 if SUNOS
 # Can't be turned into a CC_CHECK_CFLAGS in configure.ac, it makes compilers
@@ -57,63 +57,63 @@ uvinclude_HEADERS += include/uv/win.h include/uv/tree.h
 AM_CPPFLAGS += -I$(top_srcdir)/src/win \
                -DWIN32_LEAN_AND_MEAN \
                -D_WIN32_WINNT=0x0600
-libuv_la_SOURCES += src/win/async.c \
+libuv_la_SOURCES += src/win/async.cpp \
                     src/win/atomicops-inl.h \
-                    src/win/core.c \
-                    src/win/detect-wakeup.c \
-                    src/win/dl.c \
-                    src/win/error.c \
-                    src/win/fs-event.c \
-                    src/win/fs.c \
-                    src/win/getaddrinfo.c \
-                    src/win/getnameinfo.c \
-                    src/win/handle.c \
+                    src/win/core.cpp \
+                    src/win/detect-wakeup.cpp \
+                    src/win/dl.cpp \
+                    src/win/error.cpp \
+                    src/win/fs-event.cpp \
+                    src/win/fs.cpp \
+                    src/win/getaddrinfo.cpp \
+                    src/win/getnameinfo.cpp \
+                    src/win/handle.cpp \
                     src/win/handle-inl.h \
                     src/win/internal.h \
-                    src/win/loop-watcher.c \
-                    src/win/pipe.c \
-                    src/win/poll.c \
-                    src/win/process-stdio.c \
-                    src/win/process.c \
+                    src/win/loop-watcher.cpp \
+                    src/win/pipe.cpp \
+                    src/win/poll.cpp \
+                    src/win/process-stdio.cpp \
+                    src/win/process.cpp \
                     src/win/req-inl.h \
-                    src/win/signal.c \
-                    src/win/stream.c \
+                    src/win/signal.cpp \
+                    src/win/stream.cpp \
                     src/win/stream-inl.h \
-                    src/win/tcp.c \
-                    src/win/thread.c \
-                    src/win/tty.c \
-                    src/win/udp.c \
-                    src/win/util.c \
-                    src/win/winapi.c \
+                    src/win/tcp.cpp \
+                    src/win/thread.cpp \
+                    src/win/tty.cpp \
+                    src/win/udp.cpp \
+                    src/win/util.cpp \
+                    src/win/winapi.cpp \
                     src/win/winapi.h \
-                    src/win/winsock.c \
+                    src/win/winsock.cpp \
                     src/win/winsock.h
 
 else  # WINNT
 
 uvinclude_HEADERS += include/uv/unix.h
 AM_CPPFLAGS += -I$(top_srcdir)/src/unix
-libuv_la_SOURCES += src/unix/async.c \
+libuv_la_SOURCES += src/unix/async.cpp \
                    src/unix/atomic-ops.h \
-                   src/unix/core.c \
-                   src/unix/dl.c \
-                   src/unix/fs.c \
-                   src/unix/getaddrinfo.c \
-                   src/unix/getnameinfo.c \
+                   src/unix/core.cpp \
+                   src/unix/dl.cpp \
+                   src/unix/fs.cpp \
+                   src/unix/getaddrinfo.cpp \
+                   src/unix/getnameinfo.cpp \
                    src/unix/internal.h \
-                   src/unix/loop-watcher.c \
-                   src/unix/loop.c \
-                   src/unix/pipe.c \
-                   src/unix/poll.c \
-                   src/unix/process.c \
-                   src/unix/random-devurandom.c \
-                   src/unix/signal.c \
+                   src/unix/loop-watcher.cpp \
+                   src/unix/loop.cpp \
+                   src/unix/pipe.cpp \
+                   src/unix/poll.cpp \
+                   src/unix/process.cpp \
+                   src/unix/random-devurandom.cpp \
+                   src/unix/signal.cpp \
                    src/unix/spinlock.h \
-                   src/unix/stream.c \
-                   src/unix/tcp.c \
-                   src/unix/thread.c \
-                   src/unix/tty.c \
-                   src/unix/udp.c
+                   src/unix/stream.cpp \
+                   src/unix/tcp.cpp \
+                   src/unix/thread.cpp \
+                   src/unix/tty.cpp \
+                   src/unix/udp.cpp
 
 endif  # WINNT
 
@@ -140,174 +140,174 @@ test_run_tests_CFLAGS += -pthreads
 endif
 
 test_run_tests_LDFLAGS =
-test_run_tests_SOURCES = test/blackhole-server.c \
-                         test/dns-server.c \
-                         test/echo-server.c \
-                         test/run-tests.c \
-                         test/runner.c \
+test_run_tests_SOURCES = test/blackhole-server.cpp \
+                         test/dns-server.cpp \
+                         test/echo-server.cpp \
+                         test/run-tests.cpp \
+                         test/runner.cpp \
                          test/runner.h \
                          test/task.h \
-                         test/test-active.c \
-                         test/test-async.c \
-                         test/test-async-null-cb.c \
-                         test/test-barrier.c \
-                         test/test-callback-order.c \
-                         test/test-callback-stack.c \
-                         test/test-close-fd.c \
-                         test/test-close-order.c \
-                         test/test-condvar.c \
-                         test/test-connect-unspecified.c \
-                         test/test-connection-fail.c \
-                         test/test-cwd-and-chdir.c \
-                         test/test-default-loop-close.c \
-                         test/test-delayed-accept.c \
-                         test/test-dlerror.c \
-                         test/test-eintr-handling.c \
-                         test/test-embed.c \
-                         test/test-emfile.c \
-                         test/test-env-vars.c \
-                         test/test-error.c \
-                         test/test-fail-always.c \
-                         test/test-fs-copyfile.c \
-                         test/test-fs-event.c \
-                         test/test-fs-poll.c \
-                         test/test-fs.c \
-                         test/test-fs-readdir.c \
-                         test/test-fs-fd-hash.c \
-                         test/test-fs-open-flags.c \
-                         test/test-fork.c \
-                         test/test-getters-setters.c \
-                         test/test-get-currentexe.c \
-                         test/test-get-loadavg.c \
-                         test/test-get-memory.c \
-                         test/test-get-passwd.c \
-                         test/test-getaddrinfo.c \
-                         test/test-gethostname.c \
-                         test/test-getnameinfo.c \
-                         test/test-getsockname.c \
-                         test/test-gettimeofday.c \
-                         test/test-handle-fileno.c \
-                         test/test-homedir.c \
-                         test/test-hrtime.c \
-                         test/test-idle.c \
-                         test/test-idna.c \
-                         test/test-ip4-addr.c \
-                         test/test-ip6-addr.c \
-                         test/test-ipc-heavy-traffic-deadlock-bug.c \
-                         test/test-ipc-send-recv.c \
-                         test/test-ipc.c \
+                         test/test-active.cpp \
+                         test/test-async.cpp \
+                         test/test-async-null-cb.cpp \
+                         test/test-barrier.cpp \
+                         test/test-callback-order.cpp \
+                         test/test-callback-stack.cpp \
+                         test/test-close-fd.cpp \
+                         test/test-close-order.cpp \
+                         test/test-condvar.cpp \
+                         test/test-connect-unspecified.cpp \
+                         test/test-connection-fail.cpp \
+                         test/test-cwd-and-chdir.cpp \
+                         test/test-default-loop-close.cpp \
+                         test/test-delayed-accept.cpp \
+                         test/test-dlerror.cpp \
+                         test/test-eintr-handling.cpp \
+                         test/test-embed.cpp \
+                         test/test-emfile.cpp \
+                         test/test-env-vars.cpp \
+                         test/test-error.cpp \
+                         test/test-fail-always.cpp \
+                         test/test-fs-copyfile.cpp \
+                         test/test-fs-event.cpp \
+                         test/test-fs-poll.cpp \
+                         test/test-fs.cpp \
+                         test/test-fs-readdir.cpp \
+                         test/test-fs-fd-hash.cpp \
+                         test/test-fs-open-flags.cpp \
+                         test/test-fork.cpp \
+                         test/test-getters-setters.cpp \
+                         test/test-get-currentexe.cpp \
+                         test/test-get-loadavg.cpp \
+                         test/test-get-memory.cpp \
+                         test/test-get-passwd.cpp \
+                         test/test-getaddrinfo.cpp \
+                         test/test-gethostname.cpp \
+                         test/test-getnameinfo.cpp \
+                         test/test-getsockname.cpp \
+                         test/test-gettimeofday.cpp \
+                         test/test-handle-fileno.cpp \
+                         test/test-homedir.cpp \
+                         test/test-hrtime.cpp \
+                         test/test-idle.cpp \
+                         test/test-idna.cpp \
+                         test/test-ip4-addr.cpp \
+                         test/test-ip6-addr.cpp \
+                         test/test-ipc-heavy-traffic-deadlock-bug.cpp \
+                         test/test-ipc-send-recv.cpp \
+                         test/test-ipc.cpp \
                          test/test-list.h \
-                         test/test-loop-handles.c \
-                         test/test-loop-alive.c \
-                         test/test-loop-close.c \
-                         test/test-loop-stop.c \
-                         test/test-loop-time.c \
-                         test/test-loop-configure.c \
-                         test/test-multiple-listen.c \
-                         test/test-mutexes.c \
-                         test/test-osx-select.c \
-                         test/test-pass-always.c \
-                         test/test-ping-pong.c \
-                         test/test-pipe-bind-error.c \
-                         test/test-pipe-connect-error.c \
-                         test/test-pipe-connect-multiple.c \
-                         test/test-pipe-connect-prepare.c \
-                         test/test-pipe-getsockname.c \
-                         test/test-pipe-pending-instances.c \
-                         test/test-pipe-sendmsg.c \
-                         test/test-pipe-server-close.c \
-                         test/test-pipe-close-stdout-read-stdin.c \
-                         test/test-pipe-set-non-blocking.c \
-                         test/test-pipe-set-fchmod.c \
-                         test/test-platform-output.c \
-                         test/test-poll.c \
-                         test/test-poll-close.c \
-                         test/test-poll-close-doesnt-corrupt-stack.c \
-                         test/test-poll-closesocket.c \
-                         test/test-poll-oob.c \
-                         test/test-process-priority.c \
-                         test/test-process-title.c \
-                         test/test-process-title-threadsafe.c \
-                         test/test-queue-foreach-delete.c \
-                         test/test-random.c \
-                         test/test-ref.c \
-                         test/test-run-nowait.c \
-                         test/test-run-once.c \
-                         test/test-semaphore.c \
-                         test/test-shutdown-close.c \
-                         test/test-shutdown-eof.c \
-                         test/test-shutdown-twice.c \
-                         test/test-signal-multiple-loops.c \
-                         test/test-signal-pending-on-close.c \
-                         test/test-signal.c \
-                         test/test-socket-buffer-size.c \
-                         test/test-spawn.c \
-                         test/test-stdio-over-pipes.c \
-                         test/test-strscpy.c \
-                         test/test-tcp-alloc-cb-fail.c \
-                         test/test-tcp-bind-error.c \
-                         test/test-tcp-bind6-error.c \
-                         test/test-tcp-close-accept.c \
-                         test/test-tcp-close-while-connecting.c \
-                         test/test-tcp-close.c \
-                         test/test-tcp-close-reset.c \
-                         test/test-tcp-create-socket-early.c \
-                         test/test-tcp-connect-error-after-write.c \
-                         test/test-tcp-connect-error.c \
-                         test/test-tcp-connect-timeout.c \
-                         test/test-tcp-connect6-error.c \
-                         test/test-tcp-flags.c \
-                         test/test-tcp-open.c \
-                         test/test-tcp-read-stop.c \
-                         test/test-tcp-shutdown-after-write.c \
-                         test/test-tcp-unexpected-read.c \
-                         test/test-tcp-oob.c \
-                         test/test-tcp-write-to-half-open-connection.c \
-                         test/test-tcp-write-after-connect.c \
-                         test/test-tcp-writealot.c \
-                         test/test-tcp-write-fail.c \
-                         test/test-tcp-try-write.c \
-                         test/test-tcp-try-write-error.c \
-                         test/test-tcp-write-queue-order.c \
-                         test/test-thread-equal.c \
-                         test/test-thread.c \
-                         test/test-threadpool-cancel.c \
-                         test/test-threadpool.c \
-                         test/test-timer-again.c \
-                         test/test-timer-from-check.c \
-                         test/test-timer.c \
-                         test/test-tmpdir.c \
-                         test/test-tty-duplicate-key.c \
-                         test/test-tty-escape-sequence-processing.c \
-                         test/test-tty.c \
-                         test/test-udp-alloc-cb-fail.c \
-                         test/test-udp-bind.c \
-                         test/test-udp-connect.c \
-                         test/test-udp-create-socket-early.c \
-                         test/test-udp-dgram-too-big.c \
-                         test/test-udp-ipv6.c \
-                         test/test-udp-multicast-interface.c \
-                         test/test-udp-multicast-interface6.c \
-                         test/test-udp-multicast-join.c \
-                         test/test-udp-multicast-join6.c \
-                         test/test-udp-multicast-ttl.c \
-                         test/test-udp-open.c \
-                         test/test-udp-options.c \
-                         test/test-udp-send-and-recv.c \
-                         test/test-udp-send-hang-loop.c \
-                         test/test-udp-send-immediate.c \
-                         test/test-udp-send-unreachable.c \
-                         test/test-udp-try-send.c \
-                         test/test-uname.c \
-                         test/test-walk-handles.c \
-                         test/test-watcher-cross-stop.c
+                         test/test-loop-handles.cpp \
+                         test/test-loop-alive.cpp \
+                         test/test-loop-close.cpp \
+                         test/test-loop-stop.cpp \
+                         test/test-loop-time.cpp \
+                         test/test-loop-configure.cpp \
+                         test/test-multiple-listen.cpp \
+                         test/test-mutexes.cpp \
+                         test/test-osx-select.cpp \
+                         test/test-pass-always.cpp \
+                         test/test-ping-pong.cpp \
+                         test/test-pipe-bind-error.cpp \
+                         test/test-pipe-connect-error.cpp \
+                         test/test-pipe-connect-multiple.cpp \
+                         test/test-pipe-connect-prepare.cpp \
+                         test/test-pipe-getsockname.cpp \
+                         test/test-pipe-pending-instances.cpp \
+                         test/test-pipe-sendmsg.cpp \
+                         test/test-pipe-server-close.cpp \
+                         test/test-pipe-close-stdout-read-stdin.cpp \
+                         test/test-pipe-set-non-blocking.cpp \
+                         test/test-pipe-set-fchmod.cpp \
+                         test/test-platform-output.cpp \
+                         test/test-poll.cpp \
+                         test/test-poll-close.cpp \
+                         test/test-poll-close-doesnt-corrupt-stack.cpp \
+                         test/test-poll-closesocket.cpp \
+                         test/test-poll-oob.cpp \
+                         test/test-process-priority.cpp \
+                         test/test-process-title.cpp \
+                         test/test-process-title-threadsafe.cpp \
+                         test/test-queue-foreach-delete.cpp \
+                         test/test-random.cpp \
+                         test/test-ref.cpp \
+                         test/test-run-nowait.cpp \
+                         test/test-run-once.cpp \
+                         test/test-semaphore.cpp \
+                         test/test-shutdown-close.cpp \
+                         test/test-shutdown-eof.cpp \
+                         test/test-shutdown-twice.cpp \
+                         test/test-signal-multiple-loops.cpp \
+                         test/test-signal-pending-on-close.cpp \
+                         test/test-signal.cpp \
+                         test/test-socket-buffer-size.cpp \
+                         test/test-spawn.cpp \
+                         test/test-stdio-over-pipes.cpp \
+                         test/test-strscpy.cpp \
+                         test/test-tcp-alloc-cb-fail.cpp \
+                         test/test-tcp-bind-error.cpp \
+                         test/test-tcp-bind6-error.cpp \
+                         test/test-tcp-close-accept.cpp \
+                         test/test-tcp-close-while-connecting.cpp \
+                         test/test-tcp-close.cpp \
+                         test/test-tcp-close-reset.cpp \
+                         test/test-tcp-create-socket-early.cpp \
+                         test/test-tcp-connect-error-after-write.cpp \
+                         test/test-tcp-connect-error.cpp \
+                         test/test-tcp-connect-timeout.cpp \
+                         test/test-tcp-connect6-error.cpp \
+                         test/test-tcp-flags.cpp \
+                         test/test-tcp-open.cpp \
+                         test/test-tcp-read-stop.cpp \
+                         test/test-tcp-shutdown-after-write.cpp \
+                         test/test-tcp-unexpected-read.cpp \
+                         test/test-tcp-oob.cpp \
+                         test/test-tcp-write-to-half-open-connection.cpp \
+                         test/test-tcp-write-after-connect.cpp \
+                         test/test-tcp-writealot.cpp \
+                         test/test-tcp-write-fail.cpp \
+                         test/test-tcp-try-write.cpp \
+                         test/test-tcp-try-write-error.cpp \
+                         test/test-tcp-write-queue-order.cpp \
+                         test/test-thread-equal.cpp \
+                         test/test-thread.cpp \
+                         test/test-threadpool-cancel.cpp \
+                         test/test-threadpool.cpp \
+                         test/test-timer-again.cpp \
+                         test/test-timer-from-check.cpp \
+                         test/test-timer.cpp \
+                         test/test-tmpdir.cpp \
+                         test/test-tty-duplicate-key.cpp \
+                         test/test-tty-escape-sequence-processing.cpp \
+                         test/test-tty.cpp \
+                         test/test-udp-alloc-cb-fail.cpp \
+                         test/test-udp-bind.cpp \
+                         test/test-udp-connect.cpp \
+                         test/test-udp-create-socket-early.cpp \
+                         test/test-udp-dgram-too-big.cpp \
+                         test/test-udp-ipv6.cpp \
+                         test/test-udp-multicast-interface.cpp \
+                         test/test-udp-multicast-interface6.cpp \
+                         test/test-udp-multicast-join.cpp \
+                         test/test-udp-multicast-join6.cpp \
+                         test/test-udp-multicast-ttl.cpp \
+                         test/test-udp-open.cpp \
+                         test/test-udp-options.cpp \
+                         test/test-udp-send-and-recv.cpp \
+                         test/test-udp-send-hang-loop.cpp \
+                         test/test-udp-send-immediate.cpp \
+                         test/test-udp-send-unreachable.cpp \
+                         test/test-udp-try-send.cpp \
+                         test/test-uname.cpp \
+                         test/test-walk-handles.cpp \
+                         test/test-watcher-cross-stop.cpp
 test_run_tests_LDADD = libuv.la
 
 if WINNT
-test_run_tests_SOURCES += test/runner-win.c \
+test_run_tests_SOURCES += test/runner-win.cpp \
                           test/runner-win.h
 else
-test_run_tests_SOURCES += test/runner-unix.c \
+test_run_tests_SOURCES += test/runner-unix.cpp \
                           test/runner-unix.h
 endif
 
@@ -361,7 +361,7 @@ libuv_la_CFLAGS += -D_ALL_SOURCE \
                    -D_THREAD_SAFE \
                    -DHAVE_SYS_AHAFS_EVPRODS_H
 uvinclude_HEADERS += include/uv/aix.h
-libuv_la_SOURCES += src/unix/aix.c src/unix/aix-common.c
+libuv_la_SOURCES += src/unix/aix.cpp src/unix/aix-common.cpp
 endif
 
 if OS400
@@ -370,139 +370,139 @@ libuv_la_CFLAGS += -D_ALL_SOURCE \
                    -D_LINUX_SOURCE_COMPAT \
                    -D_THREAD_SAFE
 uvinclude_HEADERS += include/uv/posix.h
-libuv_la_SOURCES += src/unix/aix-common.c \
-                    src/unix/ibmi.c \
-                    src/unix/posix-poll.c \
-                    src/unix/no-fsevents.c \
-                    src/unix/no-proctitle.c
+libuv_la_SOURCES += src/unix/aix-common.cpp \
+                    src/unix/ibmi.cpp \
+                    src/unix/posix-poll.cpp \
+                    src/unix/no-fsevents.cpp \
+                    src/unix/no-proctitle.cpp
 endif
 
 if ANDROID
 uvinclude_HEADERS += include/uv/android-ifaddrs.h
-libuv_la_SOURCES += src/unix/android-ifaddrs.c \
-                    src/unix/linux-core.c \
-                    src/unix/linux-inotify.c \
-                    src/unix/linux-syscalls.c \
-                    src/unix/procfs-exepath.c \
-                    src/unix/pthread-fixes.c \
-                    src/unix/random-getrandom.c \
-                    src/unix/random-sysctl-linux.c \
-                    src/unix/sysinfo-loadavg.c
+libuv_la_SOURCES += src/unix/android-ifaddrs.cpp \
+                    src/unix/linux-core.cpp \
+                    src/unix/linux-inotify.cpp \
+                    src/unix/linux-syscalls.cpp \
+                    src/unix/procfs-exepath.cpp \
+                    src/unix/pthread-fixes.cpp \
+                    src/unix/random-getrandom.cpp \
+                    src/unix/random-sysctl-linux.cpp \
+                    src/unix/sysinfo-loadavg.cpp
 endif
 
 if CYGWIN
 uvinclude_HEADERS += include/uv/posix.h
 libuv_la_CFLAGS += -D_GNU_SOURCE
-libuv_la_SOURCES += src/unix/cygwin.c \
-                    src/unix/bsd-ifaddrs.c \
-                    src/unix/no-fsevents.c \
-                    src/unix/no-proctitle.c \
-                    src/unix/posix-hrtime.c \
-                    src/unix/posix-poll.c \
-                    src/unix/procfs-exepath.c \
-                    src/unix/sysinfo-loadavg.c \
-                    src/unix/sysinfo-memory.c
+libuv_la_SOURCES += src/unix/cygwin.cpp \
+                    src/unix/bsd-ifaddrs.cpp \
+                    src/unix/no-fsevents.cpp \
+                    src/unix/no-proctitle.cpp \
+                    src/unix/posix-hrtime.cpp \
+                    src/unix/posix-poll.cpp \
+                    src/unix/procfs-exepath.cpp \
+                    src/unix/sysinfo-loadavg.cpp \
+                    src/unix/sysinfo-memory.cpp
 endif
 
 if DARWIN
 uvinclude_HEADERS += include/uv/darwin.h
 libuv_la_CFLAGS += -D_DARWIN_USE_64_BIT_INODE=1
 libuv_la_CFLAGS += -D_DARWIN_UNLIMITED_SELECT=1
-libuv_la_SOURCES += src/unix/bsd-ifaddrs.c \
-                    src/unix/darwin.c \
-                    src/unix/darwin-proctitle.c \
-                    src/unix/fsevents.c \
-                    src/unix/kqueue.c \
-                    src/unix/proctitle.c \
-                    src/unix/random-getentropy.c
+libuv_la_SOURCES += src/unix/bsd-ifaddrs.cpp \
+                    src/unix/darwin.cpp \
+                    src/unix/darwin-proctitle.cpp \
+                    src/unix/fsevents.cpp \
+                    src/unix/kqueue.cpp \
+                    src/unix/proctitle.cpp \
+                    src/unix/random-getentropy.cpp
 test_run_tests_LDFLAGS += -lutil
 endif
 
 if DRAGONFLY
 uvinclude_HEADERS += include/uv/bsd.h
-libuv_la_SOURCES += src/unix/bsd-ifaddrs.c \
-                    src/unix/bsd-proctitle.c \
-                    src/unix/freebsd.c \
-                    src/unix/kqueue.c \
-                    src/unix/posix-hrtime.c
+libuv_la_SOURCES += src/unix/bsd-ifaddrs.cpp \
+                    src/unix/bsd-proctitle.cpp \
+                    src/unix/freebsd.cpp \
+                    src/unix/kqueue.cpp \
+                    src/unix/posix-hrtime.cpp
 test_run_tests_LDFLAGS += -lutil
 endif
 
 if FREEBSD
 uvinclude_HEADERS += include/uv/bsd.h
-libuv_la_SOURCES += src/unix/bsd-ifaddrs.c \
-                    src/unix/bsd-proctitle.c \
-                    src/unix/freebsd.c \
-                    src/unix/kqueue.c \
-                    src/unix/posix-hrtime.c \
-                    src/unix/random-getrandom.c
+libuv_la_SOURCES += src/unix/bsd-ifaddrs.cpp \
+                    src/unix/bsd-proctitle.cpp \
+                    src/unix/freebsd.cpp \
+                    src/unix/kqueue.cpp \
+                    src/unix/posix-hrtime.cpp \
+                    src/unix/random-getrandom.cpp
 test_run_tests_LDFLAGS += -lutil
 endif
 
 if HAIKU
 uvinclude_HEADERS += include/uv/posix.h
 libuv_la_CFLAGS += -D_BSD_SOURCE
-libuv_la_SOURCES += src/unix/bsd-ifaddrs.c \
-                    src/unix/haiku.c \
-                    src/unix/no-fsevents.c \
-                    src/unix/no-proctitle.c \
-                    src/unix/posix-hrtime.c \
-                    src/unix/posix-poll.c
+libuv_la_SOURCES += src/unix/bsd-ifaddrs.cpp \
+                    src/unix/haiku.cpp \
+                    src/unix/no-fsevents.cpp \
+                    src/unix/no-proctitle.cpp \
+                    src/unix/posix-hrtime.cpp \
+                    src/unix/posix-poll.cpp
 endif
 
 if HURD
 uvinclude_HEADERS += include/uv/posix.h
-libuv_la_SOURCES += src/unix/no-fsevents.c \
-                    src/unix/posix-hrtime.c \
-                    src/unix/posix-poll.c
+libuv_la_SOURCES += src/unix/no-fsevents.cpp \
+                    src/unix/posix-hrtime.cpp \
+                    src/unix/posix-poll.cpp
 endif
 
 if LINUX
 uvinclude_HEADERS += include/uv/linux.h
 libuv_la_CFLAGS += -D_GNU_SOURCE
-libuv_la_SOURCES += src/unix/linux-core.c \
-                    src/unix/linux-inotify.c \
-                    src/unix/linux-syscalls.c \
+libuv_la_SOURCES += src/unix/linux-core.cpp \
+                    src/unix/linux-inotify.cpp \
+                    src/unix/linux-syscalls.cpp \
                     src/unix/linux-syscalls.h \
-                    src/unix/procfs-exepath.c \
-                    src/unix/proctitle.c \
-                    src/unix/random-getrandom.c \
-                    src/unix/random-sysctl-linux.c \
-                    src/unix/sysinfo-loadavg.c
+                    src/unix/procfs-exepath.cpp \
+                    src/unix/proctitle.cpp \
+                    src/unix/random-getrandom.cpp \
+                    src/unix/random-sysctl-linux.cpp \
+                    src/unix/sysinfo-loadavg.cpp
 test_run_tests_LDFLAGS += -lutil
 endif
 
 if MSYS
 libuv_la_CFLAGS += -D_GNU_SOURCE
-libuv_la_SOURCES += src/unix/cygwin.c \
-                    src/unix/bsd-ifaddrs.c \
-                    src/unix/no-fsevents.c \
-                    src/unix/no-proctitle.c \
-                    src/unix/posix-hrtime.c \
-                    src/unix/posix-poll.c \
-                    src/unix/procfs-exepath.c \
-                    src/unix/sysinfo-loadavg.c \
-                    src/unix/sysinfo-memory.c
+libuv_la_SOURCES += src/unix/cygwin.cpp \
+                    src/unix/bsd-ifaddrs.cpp \
+                    src/unix/no-fsevents.cpp \
+                    src/unix/no-proctitle.cpp \
+                    src/unix/posix-hrtime.cpp \
+                    src/unix/posix-poll.cpp \
+                    src/unix/procfs-exepath.cpp \
+                    src/unix/sysinfo-loadavg.cpp \
+                    src/unix/sysinfo-memory.cpp
 endif
 
 if NETBSD
 uvinclude_HEADERS += include/uv/bsd.h
-libuv_la_SOURCES += src/unix/bsd-ifaddrs.c \
-                    src/unix/bsd-proctitle.c \
-                    src/unix/kqueue.c \
-                    src/unix/netbsd.c \
-                    src/unix/posix-hrtime.c
+libuv_la_SOURCES += src/unix/bsd-ifaddrs.cpp \
+                    src/unix/bsd-proctitle.cpp \
+                    src/unix/kqueue.cpp \
+                    src/unix/netbsd.cpp \
+                    src/unix/posix-hrtime.cpp
 test_run_tests_LDFLAGS += -lutil
 endif
 
 if OPENBSD
 uvinclude_HEADERS += include/uv/bsd.h
-libuv_la_SOURCES += src/unix/bsd-ifaddrs.c \
-                    src/unix/bsd-proctitle.c \
-                    src/unix/kqueue.c \
-                    src/unix/openbsd.c \
-                    src/unix/posix-hrtime.c \
-                    src/unix/random-getentropy.c
+libuv_la_SOURCES += src/unix/bsd-ifaddrs.cpp \
+                    src/unix/bsd-proctitle.cpp \
+                    src/unix/kqueue.cpp \
+                    src/unix/openbsd.cpp \
+                    src/unix/posix-hrtime.cpp \
+                    src/unix/random-getentropy.cpp
 test_run_tests_LDFLAGS += -lutil
 endif
 
@@ -511,8 +511,8 @@ uvinclude_HEADERS += include/uv/sunos.h
 libuv_la_CFLAGS += -D__EXTENSIONS__ \
                    -D_XOPEN_SOURCE=500 \
                    -D_REENTRANT
-libuv_la_SOURCES += src/unix/no-proctitle.c \
-                    src/unix/sunos.c
+libuv_la_SOURCES += src/unix/no-proctitle.cpp \
+                    src/unix/sunos.cpp
 endif
 
 if OS390
@@ -532,10 +532,10 @@ libuv_la_CFLAGS += -D_UNIX03_THREADS \
                    -qXPLINK \
                    -qFLOAT=IEEE
 libuv_la_LDFLAGS += -qXPLINK
-libuv_la_SOURCES += src/unix/pthread-fixes.c \
-                    src/unix/os390.c \
-                    src/unix/os390-syscalls.c \
-                    src/unix/proctitle.c
+libuv_la_SOURCES += src/unix/pthread-fixes.cpp \
+                    src/unix/os390.cpp \
+                    src/unix/os390-syscalls.cpp \
+                    src/unix/proctitle.cpp
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig

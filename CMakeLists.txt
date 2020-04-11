@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.4)
-project(libuv LANGUAGES C)
+
+project(libuv LANGUAGES CXX)
 
 cmake_policy(SET CMP0057 NEW) # Enable IN_LIST operator
 cmake_policy(SET CMP0064 NEW) # Support if (TEST) operator
@@ -8,14 +9,14 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 include(CMakePackageConfigHelpers)
 include(CMakeDependentOption)
-include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 include(CTest)
 
-set(CMAKE_C_VISIBILITY_PRESET hidden)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS ON)
-set(CMAKE_C_STANDARD 90)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_CXX_STANDARD 17)
 
 cmake_dependent_option(LIBUV_BUILD_TESTS
   "Build the unit tests when BUILD_TESTING is enabled and we are the root project" ON
@@ -26,17 +27,17 @@ cmake_dependent_option(LIBUV_BUILD_BENCH
 
 # Compiler check
 string(CONCAT is-msvc $<OR:
-  $<C_COMPILER_ID:MSVC>,
-  $<STREQUAL:${CMAKE_C_COMPILER_FRONTEND_VARIANT},MSVC>
+  $<CXX_COMPILER_ID:MSVC>,
+  $<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},MSVC>
 >)
 
-check_c_compiler_flag(/W4 UV_LINT_W4)
-check_c_compiler_flag(-Wall UV_LINT_WALL) # DO NOT use this under MSVC
+check_cxx_compiler_flag(/W4 UV_LINT_W4)
+check_cxx_compiler_flag(-Wall UV_LINT_WALL) # DO NOT use this under MSVC
 
 # TODO: Place these into its own function
-check_c_compiler_flag(-Wno-unused-parameter UV_LINT_NO_UNUSED_PARAMETER)
-check_c_compiler_flag(-Wstrict-prototypes UV_LINT_STRICT_PROTOTYPES)
-check_c_compiler_flag(-Wextra UV_LINT_EXTRA)
+check_cxx_compiler_flag(-Wno-unused-parameter UV_LINT_NO_UNUSED_PARAMETER)
+check_cxx_compiler_flag(-Wstrict-prototypes UV_LINT_STRICT_PROTOTYPES)
+check_cxx_compiler_flag(-Wextra UV_LINT_EXTRA)
 
 set(lint-no-unused-parameter $<$<BOOL:${UV_LINT_NO_UNUSED_PARAMETER}>:-Wno-unused-parameter>) 
 set(lint-strict-prototypes $<$<BOOL:${UV_LINT_STRICT_PROTOTYPES}>:-Wstrict-prototypes>)
@@ -52,16 +53,16 @@ list(APPEND uv_cflags ${lint-strict-prototypes} ${lint-extra} ${lint-default} ${
 list(APPEND uv_cflags ${lint-no-unused-parameter})
 
 set(uv_sources
-    src/fs-poll.c
-    src/idna.c
-    src/inet.c
-    src/random.c
-    src/strscpy.c
-    src/threadpool.c
-    src/timer.c
-    src/uv-common.c
-    src/uv-data-getter-setters.c
-    src/version.c)
+    src/fs-poll.cpp
+    src/idna.cpp
+    src/inet.cpp
+    src/random.cpp
+    src/strscpy.cpp
+    src/threadpool.cpp
+    src/timer.cpp
+    src/uv-common.cpp
+    src/uv-data-getter-setters.cpp
+    src/version.cpp)
 
 if(WIN32)
   if (CMAKE_SYSTEM_VERSION VERSION_GREATER 10) # Windows 10
@@ -84,33 +85,33 @@ if(WIN32)
        userenv
        ws2_32)
   list(APPEND uv_sources
-       src/win/async.c
-       src/win/core.c
-       src/win/detect-wakeup.c
-       src/win/dl.c
-       src/win/error.c
-       src/win/fs.c
-       src/win/fs-event.c
-       src/win/getaddrinfo.c
-       src/win/getnameinfo.c
-       src/win/handle.c
-       src/win/loop-watcher.c
-       src/win/pipe.c
-       src/win/thread.c
-       src/win/poll.c
-       src/win/process.c
-       src/win/process-stdio.c
-       src/win/signal.c
-       src/win/snprintf.c
-       src/win/stream.c
-       src/win/tcp.c
-       src/win/tty.c
-       src/win/udp.c
-       src/win/util.c
-       src/win/winapi.c
-       src/win/winsock.c)
+       src/win/async.cpp
+       src/win/core.cpp
+       src/win/detect-wakeup.cpp
+       src/win/dl.cpp
+       src/win/error.cpp
+       src/win/fs.cpp
+       src/win/fs-event.cpp
+       src/win/getaddrinfo.cpp
+       src/win/getnameinfo.cpp
+       src/win/handle.cpp
+       src/win/loop-watcher.cpp
+       src/win/pipe.cpp
+       src/win/thread.cpp
+       src/win/poll.cpp
+       src/win/process.cpp
+       src/win/process-stdio.cpp
+       src/win/signal.cpp
+       src/win/snprintf.cpp
+       src/win/stream.cpp
+       src/win/tcp.cpp
+       src/win/tty.cpp
+       src/win/udp.cpp
+       src/win/util.cpp
+       src/win/winapi.cpp
+       src/win/winsock.cpp)
   list(APPEND uv_test_libraries ws2_32)
-  list(APPEND uv_test_sources src/win/snprintf.c test/runner-win.c)
+  list(APPEND uv_test_sources src/win/snprintf.cpp test/runner-win.cpp)
 else()
   list(APPEND uv_defines _FILE_OFFSET_BITS=64 _LARGEFILE_SOURCE)
   if(NOT CMAKE_SYSTEM_NAME MATCHES "Android|OS390")
@@ -120,25 +121,25 @@ else()
     list(APPEND uv_libraries pthread)
   endif()
   list(APPEND uv_sources
-       src/unix/async.c
-       src/unix/core.c
-       src/unix/dl.c
-       src/unix/fs.c
-       src/unix/getaddrinfo.c
-       src/unix/getnameinfo.c
-       src/unix/loop-watcher.c
-       src/unix/loop.c
-       src/unix/pipe.c
-       src/unix/poll.c
-       src/unix/process.c
-       src/unix/random-devurandom.c
-       src/unix/signal.c
-       src/unix/stream.c
-       src/unix/tcp.c
-       src/unix/thread.c
-       src/unix/tty.c
-       src/unix/udp.c)
-  list(APPEND uv_test_sources test/runner-unix.c)
+       src/unix/async.cpp
+       src/unix/core.cpp
+       src/unix/dl.cpp
+       src/unix/fs.cpp
+       src/unix/getaddrinfo.cpp
+       src/unix/getnameinfo.cpp
+       src/unix/loop-watcher.cpp
+       src/unix/loop.cpp
+       src/unix/pipe.cpp
+       src/unix/poll.cpp
+       src/unix/process.cpp
+       src/unix/random-devurandom.cpp
+       src/unix/signal.cpp
+       src/unix/stream.cpp
+       src/unix/tcp.cpp
+       src/unix/thread.cpp
+       src/unix/tty.cpp
+       src/unix/udp.cpp)
+  list(APPEND uv_test_sources test/runner-unix.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
@@ -150,77 +151,77 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
        HAVE_SYS_AHAFS_EVPRODS_H)
   list(APPEND uv_libraries perfstat)
   list(APPEND uv_sources
-       src/unix/aix.c
-       src/unix/aix-common.c)
+       src/unix/aix.cpp
+       src/unix/aix-common.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
   list(APPEND uv_libs dl)
   list(APPEND uv_sources
-       src/unix/android-ifaddrs.c
-       src/unix/linux-core.c
-       src/unix/linux-inotify.c
-       src/unix/linux-syscalls.c
-       src/unix/procfs-exepath.c
-       src/unix/pthread-fixes.c
-       src/unix/random-getentropy.c
-       src/unix/random-getrandom.c
-       src/unix/random-sysctl-linux.c
-       src/unix/sysinfo-loadavg.c)
+       src/unix/android-ifaddrs.cpp
+       src/unix/linux-core.cpp
+       src/unix/linux-inotify.cpp
+       src/unix/linux-syscalls.cpp
+       src/unix/procfs-exepath.cpp
+       src/unix/pthread-fixes.cpp
+       src/unix/random-getentropy.cpp
+       src/unix/random-getrandom.cpp
+       src/unix/random-sysctl-linux.cpp
+       src/unix/sysinfo-loadavg.cpp)
 endif()
 
 if(APPLE OR CMAKE_SYSTEM_NAME MATCHES "Android|Linux|OS390")
-  list(APPEND uv_sources src/unix/proctitle.c)
+  list(APPEND uv_sources src/unix/proctitle.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD")
-  list(APPEND uv_sources src/unix/freebsd.c)
+  list(APPEND uv_sources src/unix/freebsd.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|NetBSD|OpenBSD")
-  list(APPEND uv_sources src/unix/posix-hrtime.c src/unix/bsd-proctitle.c)
+  list(APPEND uv_sources src/unix/posix-hrtime.cpp src/unix/bsd-proctitle.cpp)
   list(APPEND uv_libraries kvm)
 endif()
 
 if(APPLE OR CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|NetBSD|OpenBSD")
-  list(APPEND uv_sources src/unix/bsd-ifaddrs.c src/unix/kqueue.c)
+  list(APPEND uv_sources src/unix/bsd-ifaddrs.cpp src/unix/kqueue.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-  list(APPEND uv_sources src/unix/random-getrandom.c)
+  list(APPEND uv_sources src/unix/random-getrandom.cpp)
 endif()
 
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-  list(APPEND uv_sources src/unix/random-getentropy.c)
+  list(APPEND uv_sources src/unix/random-getentropy.cpp)
 endif()
 
 if(APPLE)
   list(APPEND uv_defines _DARWIN_UNLIMITED_SELECT=1 _DARWIN_USE_64_BIT_INODE=1)
   list(APPEND uv_sources
-       src/unix/darwin-proctitle.c
-       src/unix/darwin.c
-       src/unix/fsevents.c)
+       src/unix/darwin-proctitle.cpp
+       src/unix/darwin.cpp
+       src/unix/fsevents.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   list(APPEND uv_defines _GNU_SOURCE _POSIX_C_SOURCE=200112)
   list(APPEND uv_libraries dl rt)
   list(APPEND uv_sources
-       src/unix/linux-core.c
-       src/unix/linux-inotify.c
-       src/unix/linux-syscalls.c
-       src/unix/procfs-exepath.c
-       src/unix/random-getrandom.c
-       src/unix/random-sysctl-linux.c
-       src/unix/sysinfo-loadavg.c)
+       src/unix/linux-core.cpp
+       src/unix/linux-inotify.cpp
+       src/unix/linux-syscalls.cpp
+       src/unix/procfs-exepath.cpp
+       src/unix/random-getrandom.cpp
+       src/unix/random-sysctl-linux.cpp
+       src/unix/sysinfo-loadavg.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-  list(APPEND uv_sources src/unix/netbsd.c)
+  list(APPEND uv_sources src/unix/netbsd.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-  list(APPEND uv_sources src/unix/openbsd.c)
+  list(APPEND uv_sources src/unix/openbsd.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "OS390")
@@ -239,9 +240,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "OS390")
   list(APPEND uv_defines _UNIX03_WITHDRAWN)
   list(APPEND uv_defines _XOPEN_SOURCE_EXTENDED)
   list(APPEND uv_sources
-       src/unix/pthread-fixes.c
-       src/unix/os390.c
-       src/unix/os390-syscalls.c)
+       src/unix/pthread-fixes.cpp
+       src/unix/os390.cpp
+       src/unix/os390-syscalls.cpp)
   list(APPEND uv_cflags -Wc,DLL -Wc,exportall -Wc,xplink)
   list(APPEND uv_libraries -Wl,xplink)
   list(APPEND uv_test_libraries -Wl,xplink)
@@ -254,17 +255,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL "OS400")
        _THREAD_SAFE
        _XOPEN_SOURCE=500)
   list(APPEND uv_sources
-    src/unix/aix-common.c
-    src/unix/ibmi.c
-    src/unix/no-fsevents.c
-    src/unix/no-proctitle.c
-    src/unix/posix-poll.c)
+    src/unix/aix-common.cpp
+    src/unix/ibmi.cpp
+    src/unix/no-fsevents.cpp
+    src/unix/no-proctitle.cpp
+    src/unix/posix-poll.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   list(APPEND uv_defines __EXTENSIONS__ _XOPEN_SOURCE=500)
   list(APPEND uv_libraries kstat nsl sendfile socket)
-  list(APPEND uv_sources src/unix/no-proctitle.c src/unix/sunos.c)
+  list(APPEND uv_sources src/unix/no-proctitle.cpp src/unix/sunos.cpp)
 endif()
 
 if(APPLE OR CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|Linux|NetBSD|OpenBSD")
@@ -304,190 +305,190 @@ if(LIBUV_BUILD_TESTS)
   add_executable(
     uv_run_benchmarks_a
     ${uv_test_sources}
-    test/benchmark-async-pummel.c
-    test/benchmark-async.c
-    test/benchmark-fs-stat.c
-    test/benchmark-getaddrinfo.c
-    test/benchmark-loop-count.c
-    test/benchmark-million-async.c
-    test/benchmark-million-timers.c
-    test/benchmark-multi-accept.c
-    test/benchmark-ping-pongs.c
-    test/benchmark-ping-udp.c
-    test/benchmark-pound.c
-    test/benchmark-pump.c
-    test/benchmark-sizes.c
-    test/benchmark-spawn.c
-    test/benchmark-tcp-write-batch.c
-    test/benchmark-thread.c
-    test/benchmark-udp-pummel.c
-    test/blackhole-server.c
-    test/dns-server.c
-    test/echo-server.c
-    test/run-benchmarks.c
-    test/runner.c)
+    test/benchmark-async-pummel.cpp
+    test/benchmark-async.cpp
+    test/benchmark-fs-stat.cpp
+    test/benchmark-getaddrinfo.cpp
+    test/benchmark-loop-count.cpp
+    test/benchmark-million-async.cpp
+    test/benchmark-million-timers.cpp
+    test/benchmark-multi-accept.cpp
+    test/benchmark-ping-pongs.cpp
+    test/benchmark-ping-udp.cpp
+    test/benchmark-pound.cpp
+    test/benchmark-pump.cpp
+    test/benchmark-sizes.cpp
+    test/benchmark-spawn.cpp
+    test/benchmark-tcp-write-batch.cpp
+    test/benchmark-thread.cpp
+    test/benchmark-udp-pummel.cpp
+    test/blackhole-server.cpp
+    test/dns-server.cpp
+    test/echo-server.cpp
+    test/run-benchmarks.cpp
+    test/runner.cpp)
   target_compile_definitions(uv_run_benchmarks_a PRIVATE ${uv_defines})
   target_compile_options(uv_run_benchmarks_a PRIVATE ${uv_cflags})
   target_link_libraries(uv_run_benchmarks_a uv_a ${uv_test_libraries})
 
   list(APPEND uv_test_sources
-       test/blackhole-server.c
-       test/echo-server.c
-       test/run-tests.c
-       test/runner.c
-       test/test-active.c
-       test/test-async-null-cb.c
-       test/test-async.c
-       test/test-barrier.c
-       test/test-callback-order.c
-       test/test-callback-stack.c
-       test/test-close-fd.c
-       test/test-close-order.c
-       test/test-condvar.c
-       test/test-connect-unspecified.c
-       test/test-connection-fail.c
-       test/test-cwd-and-chdir.c
-       test/test-default-loop-close.c
-       test/test-delayed-accept.c
-       test/test-dlerror.c
-       test/test-eintr-handling.c
-       test/test-embed.c
-       test/test-emfile.c
-       test/test-env-vars.c
-       test/test-error.c
-       test/test-fail-always.c
-       test/test-fork.c
-       test/test-fs-copyfile.c
-       test/test-fs-event.c
-       test/test-fs-poll.c
-       test/test-fs.c
-       test/test-fs-readdir.c
-       test/test-fs-fd-hash.c
-       test/test-fs-open-flags.c
-       test/test-get-currentexe.c
-       test/test-get-loadavg.c
-       test/test-get-memory.c
-       test/test-get-passwd.c
-       test/test-getaddrinfo.c
-       test/test-gethostname.c
-       test/test-getnameinfo.c
-       test/test-getsockname.c
-       test/test-getters-setters.c
-       test/test-gettimeofday.c
-       test/test-handle-fileno.c
-       test/test-homedir.c
-       test/test-hrtime.c
-       test/test-idle.c
-       test/test-idna.c
-       test/test-ip4-addr.c
-       test/test-ip6-addr.c
-       test/test-ipc-heavy-traffic-deadlock-bug.c
-       test/test-ipc-send-recv.c
-       test/test-ipc.c
-       test/test-loop-alive.c
-       test/test-loop-close.c
-       test/test-loop-configure.c
-       test/test-loop-handles.c
-       test/test-loop-stop.c
-       test/test-loop-time.c
-       test/test-multiple-listen.c
-       test/test-mutexes.c
-       test/test-osx-select.c
-       test/test-pass-always.c
-       test/test-ping-pong.c
-       test/test-pipe-bind-error.c
-       test/test-pipe-close-stdout-read-stdin.c
-       test/test-pipe-connect-error.c
-       test/test-pipe-connect-multiple.c
-       test/test-pipe-connect-prepare.c
-       test/test-pipe-getsockname.c
-       test/test-pipe-pending-instances.c
-       test/test-pipe-sendmsg.c
-       test/test-pipe-server-close.c
-       test/test-pipe-set-fchmod.c
-       test/test-pipe-set-non-blocking.c
-       test/test-platform-output.c
-       test/test-poll-close-doesnt-corrupt-stack.c
-       test/test-poll-close.c
-       test/test-poll-closesocket.c
-       test/test-poll-oob.c
-       test/test-poll.c
-       test/test-process-priority.c
-       test/test-process-title-threadsafe.c
-       test/test-process-title.c
-       test/test-queue-foreach-delete.c
-       test/test-random.c
-       test/test-ref.c
-       test/test-run-nowait.c
-       test/test-run-once.c
-       test/test-semaphore.c
-       test/test-shutdown-close.c
-       test/test-shutdown-eof.c
-       test/test-shutdown-twice.c
-       test/test-signal-multiple-loops.c
-       test/test-signal-pending-on-close.c
-       test/test-signal.c
-       test/test-socket-buffer-size.c
-       test/test-spawn.c
-       test/test-stdio-over-pipes.c
-       test/test-strscpy.c
-       test/test-tcp-alloc-cb-fail.c
-       test/test-tcp-bind-error.c
-       test/test-tcp-bind6-error.c
-       test/test-tcp-close-accept.c
-       test/test-tcp-close-while-connecting.c
-       test/test-tcp-close.c
-       test/test-tcp-close-reset.c
-       test/test-tcp-connect-error-after-write.c
-       test/test-tcp-connect-error.c
-       test/test-tcp-connect-timeout.c
-       test/test-tcp-connect6-error.c
-       test/test-tcp-create-socket-early.c
-       test/test-tcp-flags.c
-       test/test-tcp-oob.c
-       test/test-tcp-open.c
-       test/test-tcp-read-stop.c
-       test/test-tcp-shutdown-after-write.c
-       test/test-tcp-try-write.c
-       test/test-tcp-try-write-error.c
-       test/test-tcp-unexpected-read.c
-       test/test-tcp-write-after-connect.c
-       test/test-tcp-write-fail.c
-       test/test-tcp-write-queue-order.c
-       test/test-tcp-write-to-half-open-connection.c
-       test/test-tcp-writealot.c
-       test/test-thread-equal.c
-       test/test-thread.c
-       test/test-threadpool-cancel.c
-       test/test-threadpool.c
-       test/test-timer-again.c
-       test/test-timer-from-check.c
-       test/test-timer.c
-       test/test-tmpdir.c
-       test/test-tty-duplicate-key.c
-       test/test-tty-escape-sequence-processing.c
-       test/test-tty.c
-       test/test-udp-alloc-cb-fail.c
-       test/test-udp-bind.c
-       test/test-udp-connect.c
-       test/test-udp-create-socket-early.c
-       test/test-udp-dgram-too-big.c
-       test/test-udp-ipv6.c
-       test/test-udp-multicast-interface.c
-       test/test-udp-multicast-interface6.c
-       test/test-udp-multicast-join.c
-       test/test-udp-multicast-join6.c
-       test/test-udp-multicast-ttl.c
-       test/test-udp-open.c
-       test/test-udp-options.c
-       test/test-udp-send-and-recv.c
-       test/test-udp-send-hang-loop.c
-       test/test-udp-send-immediate.c
-       test/test-udp-send-unreachable.c
-       test/test-udp-try-send.c
-       test/test-uname.c
-       test/test-walk-handles.c
-       test/test-watcher-cross-stop.c)
+       test/blackhole-server.cpp
+       test/echo-server.cpp
+       test/run-tests.cpp
+       test/runner.cpp
+       test/test-active.cpp
+       test/test-async-null-cb.cpp
+       test/test-async.cpp
+       test/test-barrier.cpp
+       test/test-callback-order.cpp
+       test/test-callback-stack.cpp
+       test/test-close-fd.cpp
+       test/test-close-order.cpp
+       test/test-condvar.cpp
+       test/test-connect-unspecified.cpp
+       test/test-connection-fail.cpp
+       test/test-cwd-and-chdir.cpp
+       test/test-default-loop-close.cpp
+       test/test-delayed-accept.cpp
+       test/test-dlerror.cpp
+       test/test-eintr-handling.cpp
+       test/test-embed.cpp
+       test/test-emfile.cpp
+       test/test-env-vars.cpp
+       test/test-error.cpp
+       test/test-fail-always.cpp
+       test/test-fork.cpp
+       test/test-fs-copyfile.cpp
+       test/test-fs-event.cpp
+       test/test-fs-poll.cpp
+       test/test-fs.cpp
+       test/test-fs-readdir.cpp
+       test/test-fs-fd-hash.cpp
+       test/test-fs-open-flags.cpp
+       test/test-get-currentexe.cpp
+       test/test-get-loadavg.cpp
+       test/test-get-memory.cpp
+       test/test-get-passwd.cpp
+       test/test-getaddrinfo.cpp
+       test/test-gethostname.cpp
+       test/test-getnameinfo.cpp
+       test/test-getsockname.cpp
+       test/test-getters-setters.cpp
+       test/test-gettimeofday.cpp
+       test/test-handle-fileno.cpp
+       test/test-homedir.cpp
+       test/test-hrtime.cpp
+       test/test-idle.cpp
+       test/test-idna.cpp
+       test/test-ip4-addr.cpp
+       test/test-ip6-addr.cpp
+       test/test-ipc-heavy-traffic-deadlock-bug.cpp
+       test/test-ipc-send-recv.cpp
+       test/test-ipc.cpp
+       test/test-loop-alive.cpp
+       test/test-loop-close.cpp
+       test/test-loop-configure.cpp
+       test/test-loop-handles.cpp
+       test/test-loop-stop.cpp
+       test/test-loop-time.cpp
+       test/test-multiple-listen.cpp
+       test/test-mutexes.cpp
+       test/test-osx-select.cpp
+       test/test-pass-always.cpp
+       test/test-ping-pong.cpp
+       test/test-pipe-bind-error.cpp
+       test/test-pipe-close-stdout-read-stdin.cpp
+       test/test-pipe-connect-error.cpp
+       test/test-pipe-connect-multiple.cpp
+       test/test-pipe-connect-prepare.cpp
+       test/test-pipe-getsockname.cpp
+       test/test-pipe-pending-instances.cpp
+       test/test-pipe-sendmsg.cpp
+       test/test-pipe-server-close.cpp
+       test/test-pipe-set-fchmod.cpp
+       test/test-pipe-set-non-blocking.cpp
+       test/test-platform-output.cpp
+       test/test-poll-close-doesnt-corrupt-stack.cpp
+       test/test-poll-close.cpp
+       test/test-poll-closesocket.cpp
+       test/test-poll-oob.cpp
+       test/test-poll.cpp
+       test/test-process-priority.cpp
+       test/test-process-title-threadsafe.cpp
+       test/test-process-title.cpp
+       test/test-queue-foreach-delete.cpp
+       test/test-random.cpp
+       test/test-ref.cpp
+       test/test-run-nowait.cpp
+       test/test-run-once.cpp
+       test/test-semaphore.cpp
+       test/test-shutdown-close.cpp
+       test/test-shutdown-eof.cpp
+       test/test-shutdown-twice.cpp
+       test/test-signal-multiple-loops.cpp
+       test/test-signal-pending-on-close.cpp
+       test/test-signal.cpp
+       test/test-socket-buffer-size.cpp
+       test/test-spawn.cpp
+       test/test-stdio-over-pipes.cpp
+       test/test-strscpy.cpp
+       test/test-tcp-alloc-cb-fail.cpp
+       test/test-tcp-bind-error.cpp
+       test/test-tcp-bind6-error.cpp
+       test/test-tcp-close-accept.cpp
+       test/test-tcp-close-while-connecting.cpp
+       test/test-tcp-close.cpp
+       test/test-tcp-close-reset.cpp
+       test/test-tcp-connect-error-after-write.cpp
+       test/test-tcp-connect-error.cpp
+       test/test-tcp-connect-timeout.cpp
+       test/test-tcp-connect6-error.cpp
+       test/test-tcp-create-socket-early.cpp
+       test/test-tcp-flags.cpp
+       test/test-tcp-oob.cpp
+       test/test-tcp-open.cpp
+       test/test-tcp-read-stop.cpp
+       test/test-tcp-shutdown-after-write.cpp
+       test/test-tcp-try-write.cpp
+       test/test-tcp-try-write-error.cpp
+       test/test-tcp-unexpected-read.cpp
+       test/test-tcp-write-after-connect.cpp
+       test/test-tcp-write-fail.cpp
+       test/test-tcp-write-queue-order.cpp
+       test/test-tcp-write-to-half-open-connection.cpp
+       test/test-tcp-writealot.cpp
+       test/test-thread-equal.cpp
+       test/test-thread.cpp
+       test/test-threadpool-cancel.cpp
+       test/test-threadpool.cpp
+       test/test-timer-again.cpp
+       test/test-timer-from-check.cpp
+       test/test-timer.cpp
+       test/test-tmpdir.cpp
+       test/test-tty-duplicate-key.cpp
+       test/test-tty-escape-sequence-processing.cpp
+       test/test-tty.cpp
+       test/test-udp-alloc-cb-fail.cpp
+       test/test-udp-bind.cpp
+       test/test-udp-connect.cpp
+       test/test-udp-create-socket-early.cpp
+       test/test-udp-dgram-too-big.cpp
+       test/test-udp-ipv6.cpp
+       test/test-udp-multicast-interface.cpp
+       test/test-udp-multicast-interface6.cpp
+       test/test-udp-multicast-join.cpp
+       test/test-udp-multicast-join6.cpp
+       test/test-udp-multicast-ttl.cpp
+       test/test-udp-open.cpp
+       test/test-udp-options.cpp
+       test/test-udp-send-and-recv.cpp
+       test/test-udp-send-hang-loop.cpp
+       test/test-udp-send-immediate.cpp
+       test/test-udp-send-unreachable.cpp
+       test/test-udp-try-send.cpp
+       test/test-uname.cpp
+       test/test-walk-handles.cpp
+       test/test-watcher-cross-stop.cpp)
 
   add_executable(uv_run_tests ${uv_test_sources})
   target_compile_definitions(uv_run_tests

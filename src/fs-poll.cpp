@@ -34,6 +34,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <utils/allocator.cpp>
+
 struct poll_ctx {
   uv_fs_poll_t* parent_handle;
   int busy_polling;
@@ -67,7 +69,6 @@ int uv_fs_poll_start(uv_fs_poll_t* handle,
                      uv_fs_poll_cb cb,
                      const char* path,
                      unsigned int interval) {
-  struct poll_ctx* ctx;
   uv_loop_t* loop;
   size_t len;
   int err;
@@ -77,7 +78,7 @@ int uv_fs_poll_start(uv_fs_poll_t* handle,
 
   loop = handle->loop;
   len = strlen(path);
-  ctx = uv__calloc(1, sizeof(*ctx) + len);
+  auto ctx = create_struct<poll_ctx *>(1, sizeof(poll_ctx) + len);
 
   if (ctx == NULL)
     return UV_ENOMEM;

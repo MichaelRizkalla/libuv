@@ -307,12 +307,12 @@ UV_UNUSED(static void uv__update_time(uv_loop_t* loop)) {
   loop->time = uv__hrtime(UV_CLOCK_FAST) / 1000000;
 }
 
-UV_UNUSED(static char* uv__basename_r(const char* path)) {
+UV_UNUSED(static char* uv__basename_r(char const* path)) {
   char* s;
 
-  s = strrchr(path, '/');
-  if (s == NULL)
-    return (char*) path;
+  s = const_cast<char*>(strrchr(path, '/'));
+  if (s == nullptr)
+    return const_cast<char*>(path);
 
   return s + 1;
 }
