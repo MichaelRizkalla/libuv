@@ -23,7 +23,7 @@
 #include "uv.h"
 #include "task.h"
 #include <string.h>
-
+#include "utils/allocator.cpp"
 #ifdef _WIN32
 # define INVALID_FD (INVALID_HANDLE_VALUE)
 #else
@@ -38,12 +38,11 @@ static void on_connect(uv_connect_t* req, int status) {
 
 
 static void on_connection(uv_stream_t* server, int status) {
-  uv_tcp_t* handle;
   int r;
 
   ASSERT(status == 0);
 
-  handle = malloc(sizeof(*handle));
+  auto *handle = test_create_ptrstruct<uv_tcp_t>(sizeof(uv_tcp_t));
   ASSERT(handle != NULL);
 
   r = uv_tcp_init_ex(server->loop, handle, AF_INET);

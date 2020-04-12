@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 #define NUM_PINGS               (1000 * 1000)
 #define ACCESS_ONCE(type, var)  (*(volatile type*) &(var))
 
@@ -62,12 +62,11 @@ static void pummel(void* arg) {
 
 
 static int test_async_pummel(int nthreads) {
-  uv_thread_t* tids;
   uv_async_t handle;
   uint64_t time;
   int i;
 
-  tids = calloc(nthreads, sizeof(tids[0]));
+  auto *tids = test_create_ptrstruct<uv_thread_t>(nthreads, sizeof(uv_thread_t));
   ASSERT(tids != NULL);
 
   ASSERT(0 == uv_async_init(uv_default_loop(), &handle, async_cb));

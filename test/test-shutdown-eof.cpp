@@ -23,7 +23,7 @@
 #include "task.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 static uv_timer_t timer;
 static uv_tcp_t tcp;
 static uv_connect_t connect_req;
@@ -40,7 +40,7 @@ static int called_timer_cb;
 
 
 static void alloc_cb(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
-  buf->base = malloc(size);
+  buf->base = test_create_ptrstruct<char>(size);
   buf->len = size;
 }
 
@@ -148,7 +148,7 @@ TEST_IMPL(shutdown_eof) {
   struct sockaddr_in server_addr;
   int r;
 
-  qbuf.base = "Q";
+  qbuf.base = const_cast<char*>("Q");
   qbuf.len = 1;
 
   r = uv_timer_init(uv_default_loop(), &timer);

@@ -31,12 +31,12 @@
 
 #include "uv.h"
 #include "internal.h"
-
+#include "../utils/allocator.cpp"
 static void uv__once_inner(uv_once_t* guard, void (*callback)(void)) {
   DWORD result;
   HANDLE existing_event, created_event;
 
-  created_event = CreateEvent(NULL, 1, 0, NULL);
+  created_event = CreateEvent(nullptr, 1, 0, nullptr);
   if (created_event == 0) {
     /* Could fail in a low-memory situation? */
     uv_fatal_error(GetLastError(), "CreateEvent");
@@ -44,9 +44,9 @@ static void uv__once_inner(uv_once_t* guard, void (*callback)(void)) {
 
   existing_event = InterlockedCompareExchangePointer(&guard->event,
                                                      created_event,
-                                                     NULL);
+                                                     nullptr);
 
-  if (existing_event == NULL) {
+  if (existing_event == nullptr) {
     /* We won the race */
     callback();
 
@@ -95,11 +95,9 @@ struct thread_ctx {
 
 
 static UINT __stdcall uv__thread_start(void* arg) {
-  struct thread_ctx *ctx_p;
-  struct thread_ctx ctx;
+  thread_ctx *ctx_p = static_cast<thread_ctx*>(arg);
+  thread_ctx ctx = *ctx_p;
 
-  ctx_p = arg;
-  ctx = *ctx_p;
   uv__free(ctx_p);
 
   uv_once(&uv__current_thread_init_guard, uv__init_current_thread_key);
@@ -141,8 +139,8 @@ int uv_thread_create_ex(uv_thread_t* tid,
       return UV_EINVAL;
   }
 
-  ctx = uv__malloc(sizeof(*ctx));
-  if (ctx == NULL)
+  ctx = create_ptrstruct<thread_ctx>(sizeof(thread_ctx));
+  if (ctx == nullptr)
     return UV_ENOMEM;
 
   ctx->entry = entry;
@@ -150,13 +148,13 @@ int uv_thread_create_ex(uv_thread_t* tid,
 
   /* Create the thread in suspended state so we have a chance to pass
    * its own creation handle to it */
-  thread = (HANDLE) _beginthreadex(NULL,
+  thread = (HANDLE) _beginthreadex(nullptr,
                                    (unsigned)stack_size,
                                    uv__thread_start,
                                    ctx,
                                    CREATE_SUSPENDED,
-                                   NULL);
-  if (thread == NULL) {
+                                   nullptr);
+  if (thread == nullptr) {
     err = errno;
     uv__free(ctx);
   } else {
@@ -240,8 +238,8 @@ void uv_mutex_unlock(uv_mutex_t* mutex) {
 
 int uv_rwlock_init(uv_rwlock_t* rwlock) {
   /* Initialize the semaphore that acts as the write lock. */
-  HANDLE handle = CreateSemaphoreW(NULL, 1, 1, NULL);
-  if (handle == NULL)
+  HANDLE handle = CreateSemaphoreW(nullptr, 1, 1, nullptr);
+  if (handle == nullptr)
     return uv_translate_sys_error(GetLastError());
   rwlock->state_.write_semaphore_ = handle;
 
@@ -315,7 +313,7 @@ void uv_rwlock_rdunlock(uv_rwlock_t* rwlock) {
   EnterCriticalSection(&rwlock->state_.num_readers_lock_);
 
   if (--rwlock->state_.num_readers_ == 0) {
-    if (!ReleaseSemaphore(rwlock->state_.write_semaphore_, 1, NULL))
+    if (!ReleaseSemaphore(rwlock->state_.write_semaphore_, 1, nullptr))
       uv_fatal_error(GetLastError(), "ReleaseSemaphore");
   }
 
@@ -342,14 +340,14 @@ int uv_rwlock_trywrlock(uv_rwlock_t* rwlock) {
 
 
 void uv_rwlock_wrunlock(uv_rwlock_t* rwlock) {
-  if (!ReleaseSemaphore(rwlock->state_.write_semaphore_, 1, NULL))
+  if (!ReleaseSemaphore(rwlock->state_.write_semaphore_, 1, nullptr))
     uv_fatal_error(GetLastError(), "ReleaseSemaphore");
 }
 
 
 int uv_sem_init(uv_sem_t* sem, unsigned int value) {
-  *sem = CreateSemaphore(NULL, value, INT_MAX, NULL);
-  if (*sem == NULL)
+  *sem = CreateSemaphore(nullptr, value, INT_MAX, nullptr);
+  if (*sem == nullptr)
     return uv_translate_sys_error(GetLastError());
   else
     return 0;
@@ -363,7 +361,7 @@ void uv_sem_destroy(uv_sem_t* sem) {
 
 
 void uv_sem_post(uv_sem_t* sem) {
-  if (!ReleaseSemaphore(*sem, 1, NULL))
+  if (!ReleaseSemaphore(*sem, 1, nullptr))
     abort();
 }
 
@@ -506,7 +504,7 @@ void* uv_key_get(uv_key_t* key) {
   void* value;
 
   value = TlsGetValue(key->tls_index);
-  if (value == NULL)
+  if (value == nullptr)
     if (GetLastError() != ERROR_SUCCESS)
       abort();
 

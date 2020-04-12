@@ -23,7 +23,7 @@
 #include "task.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 static int connection_cb_called = 0;
 static int close_cb_called = 0;
 static int connect_cb_called = 0;
@@ -32,7 +32,7 @@ static uv_tcp_t client;
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -65,7 +65,7 @@ static void start_server(void) {
 
 
 static void connect_cb(uv_connect_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
   free(req);
   uv_close((uv_handle_t*)&client, close_cb);
@@ -75,11 +75,11 @@ static void connect_cb(uv_connect_t* req, int status) {
 
 static void client_connect(void) {
   struct sockaddr_in addr;
-  uv_connect_t* connect_req = malloc(sizeof *connect_req);
+  uv_connect_t* connect_req = test_create_ptrstruct<uv_connect_t>(sizeof(uv_connect_t));
   int r;
 
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &addr));
-  ASSERT(connect_req != NULL);
+  ASSERT(connect_req != nullptr);
 
   r = uv_tcp_init(uv_default_loop(), &client);
   ASSERT(r == 0);

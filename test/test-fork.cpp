@@ -373,7 +373,7 @@ static void touch_file(const char* name) {
   file = r;
   uv_fs_req_cleanup(&req);
 
-  buf = uv_buf_init("foo", 4);
+  buf = uv_buf_init(const_cast<char*>("foo"), 4);
   r = uv_fs_write(NULL, &req, file, &buf, 1, -1, NULL);
   ASSERT(r >= 0);
   uv_fs_req_cleanup(&req);

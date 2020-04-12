@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "utils/allocator.cpp"
 static const int server_port = TEST_PORT;
 /* Will be updated right after making the uv_connect_call */
 static int connect_port = -1;
@@ -43,7 +43,7 @@ static uv_udp_send_t send_req;
 
 
 static void alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
-  buf->base = malloc(suggested_size);
+  buf->base = test_create_ptrstruct<char>(suggested_size);
   buf->len = suggested_size;
 }
 
@@ -70,7 +70,7 @@ static void after_read(uv_stream_t* handle,
     free(buf->base);
   }
 
-  req = (uv_shutdown_t*) malloc(sizeof *req);
+  req = test_create_ptrstruct<uv_shutdown_t>(sizeof(uv_shutdown_t));
   r = uv_shutdown(req, handle, after_shutdown);
   ASSERT(r == 0);
 }
@@ -115,7 +115,7 @@ static void on_connection(uv_stream_t* server, int status) {
   }
   ASSERT(status == 0);
 
-  handle = malloc(sizeof(*handle));
+  handle = test_create_ptrstruct<uv_tcp_t>(sizeof(uv_tcp_t));
   ASSERT(handle != NULL);
 
   r = uv_tcp_init(loop, handle);
@@ -310,7 +310,7 @@ static void udp_sender(void) {
   r = uv_udp_init(loop, &udp);
   ASSERT(!r);
 
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
   ASSERT(0 == uv_ip4_addr("127.0.0.1", server_port, &server_addr));
 
   r = uv_udp_send(&send_req,

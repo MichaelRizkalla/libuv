@@ -32,7 +32,7 @@
 #include "internal.h"
 #include "handle-inl.h"
 #include "req-inl.h"
-
+#include "../utils/allocator.cpp"
 
 #define SIGKILL         9
 
@@ -623,18 +623,18 @@ int env_strncmp(const wchar_t* a, int na, const wchar_t* b) {
   int r;
 
   if (na < 0) {
-    a_eq = wcschr(a, L'=');
+    a_eq = const_cast<wchar_t*>(wcschr(a, L'='));
     assert(a_eq);
     na = (int)(long)(a_eq - a);
   } else {
     na--;
   }
-  b_eq = wcschr(b, L'=');
+  b_eq = const_cast<wchar_t*>(wcschr(b, L'='));
   assert(b_eq);
   nb = b_eq - b;
 
-  A = alloca((na+1) * sizeof(wchar_t));
-  B = alloca((nb+1) * sizeof(wchar_t));
+  A = new (alloca((na+1) * sizeof(wchar_t))) wchar_t;
+  B = new (alloca((nb+1) * sizeof(wchar_t))) wchar_t;
 
   r = LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, a, na, A, na);
   assert(r==na);
@@ -692,7 +692,7 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
   WCHAR* dst_copy;
   WCHAR** ptr_copy;
   WCHAR** env_copy;
-  DWORD* required_vars_value_len = alloca(n_required_vars * sizeof(DWORD*));
+  DWORD* required_vars_value_len = new (alloca(n_required_vars * sizeof(DWORD*))) DWORD;
 
   /* first pass: determine size in UTF-16 */
   for (env = env_block; *env; env++) {
@@ -717,7 +717,7 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
   if (dst_copy == NULL && env_len > 0) {
     return ERROR_OUTOFMEMORY;
   }
-  env_copy = alloca(env_block_count * sizeof(WCHAR*));
+  env_copy = new (alloca(env_block_count * sizeof(WCHAR*))) WCHAR*;
 
   ptr = dst_copy;
   ptr_copy = env_copy;
@@ -771,7 +771,7 @@ int make_program_env(char* env_block[], WCHAR** dst_ptr) {
   }
 
   /* final pass: copy, in sort order, and inserting required variables */
-  dst = uv__malloc((1+env_len) * sizeof(WCHAR));
+  dst = create_ptrstruct<WCHAR>((1+env_len) * sizeof(WCHAR));
   if (!dst) {
     uv__free(dst_copy);
     return ERROR_OUTOFMEMORY;

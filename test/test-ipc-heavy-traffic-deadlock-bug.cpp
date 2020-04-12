@@ -23,7 +23,7 @@
 #include "uv.h"
 
 #include <string.h>
-
+#include "utils/allocator.cpp"
 /* See test-ipc.c */
 void spawn_helper(uv_pipe_t* channel,
                   uv_process_t* process,
@@ -47,11 +47,11 @@ static size_t bytes_written;
 static size_t bytes_read;
 
 static void write_cb(uv_write_t* req, int status) {
-  struct write_info* write_info =
-      container_of(req, struct write_info, write_req);
+  write_info* _write_info =
+      container_of(req, write_info, write_req);
   ASSERT(status == 0);
   bytes_written += BUFFERS_PER_WRITE * BUFFER_SIZE;
-  free(write_info);
+  free(_write_info);
 }
 
 static void shutdown_cb(uv_shutdown_t* req, int status) {
@@ -65,7 +65,7 @@ static void do_write(uv_stream_t* handle) {
   size_t i;
   int r;
 
-  write_info = malloc(sizeof *write_info);
+  write_info = test_create_ptrstruct<struct write_info>(sizeof(struct write_info));
   ASSERT(write_info != NULL);
 
   for (i = 0; i < BUFFERS_PER_WRITE; i++) {
@@ -81,7 +81,7 @@ static void do_write(uv_stream_t* handle) {
 static void alloc_cb(uv_handle_t* handle,
                      size_t suggested_size,
                      uv_buf_t* buf) {
-  buf->base = malloc(suggested_size);
+  buf->base = test_create_ptrstruct<char>(suggested_size);
   buf->len = (int) suggested_size;
 }
 

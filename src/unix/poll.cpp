@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <errno.h>
-
+#include "../utils/allocator.cpp"
 
 static void uv__poll_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
   uv_poll_t* handle;

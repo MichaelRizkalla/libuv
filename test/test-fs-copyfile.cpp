@@ -80,7 +80,7 @@ static void touch_file(const char* name, unsigned int size) {
   ASSERT(r >= 0);
   file = r;
 
-  buf = uv_buf_init("a", 1);
+  buf = uv_buf_init(const_cast<char*>("a"), 1);
 
   /* Inefficient but simple. */
   for (i = 0; i < size; i++) {

@@ -73,7 +73,7 @@ static void connect_cb(uv_connect_t* req, int status) {
   ASSERT(req <= connect_reqs + ARRAY_SIZE(connect_reqs));
   i = req - connect_reqs;
 
-  buf = uv_buf_init("x", 1);
+  buf = uv_buf_init(const_cast<char*>("x"), 1);
   outgoing = (uv_stream_t*) &tcp_outgoing[i];
   ASSERT(0 == uv_write(&write_reqs[i], outgoing, &buf, 1, write_cb));
 }

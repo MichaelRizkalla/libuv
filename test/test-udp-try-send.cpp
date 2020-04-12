@@ -104,7 +104,7 @@ TEST_IMPL(udp_try_send) {
   r = uv_udp_try_send(&client, &buf, 1, (const struct sockaddr*) &addr);
   ASSERT(r == UV_EMSGSIZE);
 
-  buf = uv_buf_init("EXIT", 4);
+  buf = uv_buf_init(const_cast<char*>("EXIT"), 4);
   r = uv_udp_try_send(&client, &buf, 1, (const struct sockaddr*) &addr);
   ASSERT(r == 4);
 

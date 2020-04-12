@@ -64,7 +64,7 @@ static void timer_cb(uv_timer_t* handle) {
 
   uv_close((uv_handle_t*)handle, close_cb);
 
-  buf = uv_buf_init("TEST", 4);
+  buf = uv_buf_init(const_cast<char*>("TEST"), 4);
   r = uv_write(&write_req, (uv_stream_t*)&conn, &buf, 1, write_cb);
   ASSERT(r == 0);
 

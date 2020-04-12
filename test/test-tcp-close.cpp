@@ -24,7 +24,7 @@
 
 #include <errno.h>
 #include <string.h> /* memset */
-
+#include "utils/allocator.cpp"
 #define NUM_WRITE_REQS 32
 
 static uv_tcp_t tcp_handle;
@@ -43,10 +43,10 @@ static void connect_cb(uv_connect_t* conn_req, int status) {
   uv_buf_t buf;
   int i, r;
 
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
   for (i = 0; i < NUM_WRITE_REQS; i++) {
-    req = malloc(sizeof *req);
-    ASSERT(req != NULL);
+    req = test_create_ptrstruct<uv_write_t>(sizeof(uv_write_t));
+    ASSERT(req != nullptr);
 
     r = uv_write(req, (uv_stream_t*)&tcp_handle, &buf, 1, write_cb);
     ASSERT(r == 0);

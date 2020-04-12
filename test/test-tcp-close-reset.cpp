@@ -53,7 +53,7 @@ static void do_write(uv_tcp_t* handle) {
   unsigned i;
   int r;
 
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
   for (i = 0; i < ARRAY_SIZE(write_reqs); i++) {
     r = uv_write(&write_reqs[i], (uv_stream_t*) handle, &buf, 1, write_cb);
     ASSERT(r == 0);

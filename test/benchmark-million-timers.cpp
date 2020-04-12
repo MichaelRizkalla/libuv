@@ -21,7 +21,7 @@
 
 #include "task.h"
 #include "uv.h"
-
+#include "utils/allocator.cpp"
 #define NUM_TIMERS (10 * 1000 * 1000)
 
 static int timer_cb_called;
@@ -39,7 +39,6 @@ static void close_cb(uv_handle_t* handle) {
 
 
 BENCHMARK_IMPL(million_timers) {
-  uv_timer_t* timers;
   uv_loop_t* loop;
   uint64_t before_all;
   uint64_t before_run;
@@ -48,7 +47,7 @@ BENCHMARK_IMPL(million_timers) {
   int timeout;
   int i;
 
-  timers = malloc(NUM_TIMERS * sizeof(timers[0]));
+  auto *timers = test_create_ptrstruct<uv_timer_t>(NUM_TIMERS * sizeof(uv_timer_t));
   ASSERT(timers != NULL);
 
   loop = uv_default_loop();

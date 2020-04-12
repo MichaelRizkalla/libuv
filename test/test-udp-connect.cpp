@@ -122,7 +122,7 @@ TEST_IMPL(udp_connect) {
   r = uv_udp_init(uv_default_loop(), &client);
   ASSERT(r == 0);
 
-  buf = uv_buf_init("EXIT", 4);
+  buf = uv_buf_init(const_cast<char*>("EXIT"), 4);
 
   ASSERT(0 == uv_ip4_addr("8.8.8.8", TEST_PORT, &ext_addr));
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &lo_addr));

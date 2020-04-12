@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include "utils/allocator.cpp"
 /* The value of NUM_SIGNAL_HANDLING_THREADS is not arbitrary; it needs to be a
  * multiple of three for reasons that will become clear when you scroll down.
  * We're basically creating three different thread groups.  The total needs
@@ -169,7 +169,7 @@ static void loop_creating_worker(void* context) {
     uv_signal_t signal;
     int r;
 
-    loop = malloc(sizeof(*loop));
+    loop = test_create_ptrstruct<uv_loop_t>(sizeof(uv_loop_t));
     ASSERT(loop != NULL);
     ASSERT(0 == uv_loop_init(loop));
 

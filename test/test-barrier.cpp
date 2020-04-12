@@ -35,7 +35,7 @@ typedef struct {
 
 
 static void worker(void* arg) {
-  worker_config* c = arg;
+  worker_config* c = static_cast<worker_config*>(arg);
 
   if (c->delay)
     uv_sleep(c->delay);
@@ -108,7 +108,7 @@ TEST_IMPL(barrier_3) {
 static void serial_worker(void* data) {
   uv_barrier_t* barrier;
 
-  barrier = data;
+  barrier = static_cast<uv_barrier_t*>(data);
   if (uv_barrier_wait(barrier) > 0)
     uv_barrier_destroy(barrier);
 

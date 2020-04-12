@@ -89,8 +89,14 @@ struct timer_ctx {
   int signum;
 };
 
+enum stop_or_close_enum{
+  CLOSE,
+  STOP,
+  NOOP,
+};
+
 struct signal_ctx {
-  enum { CLOSE, STOP, NOOP } stop_or_close;
+  stop_or_close_enum stop_or_close;
   unsigned int ncalls;
   uv_signal_t handle;
   int signum;

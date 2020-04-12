@@ -21,7 +21,7 @@
 
 #include "task.h"
 #include "uv.h"
-
+#include "utils/allocator.cpp"
 struct async_container {
   unsigned async_events;
   unsigned handles_seen;
@@ -85,7 +85,7 @@ BENCHMARK_IMPL(million_async) {
   loop = uv_default_loop();
   timeout = 5000;
 
-  container = malloc(sizeof(*container));
+  container = test_create_ptrstruct<async_container>(sizeof(async_container));
   ASSERT(container != NULL);
   container->async_events = 0;
   container->handles_seen = 0;

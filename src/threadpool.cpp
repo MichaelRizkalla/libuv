@@ -27,6 +27,8 @@
 
 #include <stdlib.h>
 
+#include "utils/allocator.cpp"
+
 #define MAX_THREADPOOL_SIZE 1024
 
 static uv_once_t once = UV_ONCE_INIT;
@@ -201,7 +203,7 @@ static void init_threads(void) {
 
   threads = default_threads;
   if (nthreads > ARRAY_SIZE(default_threads)) {
-    threads = uv__malloc(nthreads * sizeof(threads[0]));
+    threads = create_ptrstruct<uv_thread_t>(nthreads * sizeof(threads[0]));
     if (threads == NULL) {
       nthreads = ARRAY_SIZE(default_threads);
       threads = default_threads;
@@ -309,7 +311,7 @@ void uv__work_done(uv_async_t* handle) {
     QUEUE_REMOVE(q);
 
     w = container_of(q, struct uv__work, wq);
-    err = (w->work == uv__cancelled) ? UV_ECANCELED : 0;
+    err = (w->work == uv__cancelled) ? static_cast<std::underlying_type<uv_errno_t>::type>(UV_ECANCELED) : 0;
     w->done(w, err);
   }
 }

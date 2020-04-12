@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <stddef.h> /* NULL */
+#include <stddef.h> /* nullptr */
 #include <stdio.h>
 #include <stdlib.h> /* malloc */
 #include <string.h> /* memset */
@@ -37,7 +37,7 @@
 # include <sys/un.h> /* AF_UNIX, sockaddr_un */
 #endif
 
-
+#include "utils/allocator.cpp"
 typedef struct {
   uv_malloc_func local_malloc;
   uv_realloc_func local_realloc;
@@ -54,28 +54,27 @@ static uv__allocator_t uv__allocator = {
 
 char* uv__strdup(const char* s) {
   size_t len = strlen(s) + 1;
-  char* m = uv__malloc(len);
-  if (m == NULL)
-    return NULL;
-  return memcpy(m, s, len);
+  auto *m = create_ptrstruct<char>(len);
+  if (m == nullptr)
+    return nullptr;
+  return static_cast<char*>(memcpy(m, s, len));
 }
 
 char* uv__strndup(const char* s, size_t n) {
-  char* m;
   size_t len = strlen(s);
   if (n < len)
     len = n;
-  m = uv__malloc(len + 1);
-  if (m == NULL)
-    return NULL;
+  auto *m = create_ptrstruct<char>(len + 1);
+  if (m == nullptr)
+    return nullptr;
   m[len] = '\0';
-  return memcpy(m, s, len);
+  return static_cast<char*>(memcpy(m, s, len));
 }
 
 void* uv__malloc(size_t size) {
   if (size > 0)
     return uv__allocator.local_malloc(size);
-  return NULL;
+  return nullptr;
 }
 
 void uv__free(void* ptr) {
@@ -97,14 +96,14 @@ void* uv__realloc(void* ptr, size_t size) {
   if (size > 0)
     return uv__allocator.local_realloc(ptr, size);
   uv__free(ptr);
-  return NULL;
+  return nullptr;
 }
 
 void* uv__reallocf(void* ptr, size_t size) {
   void* newptr;
 
   newptr = uv__realloc(ptr, size);
-  if (newptr == NULL)
+  if (newptr == nullptr)
     if (size > 0)
       uv__free(ptr);
 
@@ -115,8 +114,8 @@ int uv_replace_allocator(uv_malloc_func malloc_func,
                          uv_realloc_func realloc_func,
                          uv_calloc_func calloc_func,
                          uv_free_func free_func) {
-  if (malloc_func == NULL || realloc_func == NULL ||
-      calloc_func == NULL || free_func == NULL) {
+  if (malloc_func == nullptr || realloc_func == nullptr ||
+      calloc_func == nullptr || free_func == nullptr) {
     return UV_EINVAL;
   }
 
@@ -169,7 +168,7 @@ static const char* uv__unknown_err_code(int err) {
   snprintf(buf, sizeof(buf), "Unknown system error %d", err);
   copy = uv__strdup(buf);
 
-  return copy != NULL ? copy : "Unknown system error";
+  return copy != nullptr ? copy : "Unknown system error";
 }
 
 #define UV_ERR_NAME_GEN_R(name, _) \
@@ -242,7 +241,7 @@ int uv_ip6_addr(const char* ip, int port, struct sockaddr_in6* addr) {
 #endif
 
   zone_index = strchr(ip, '%');
-  if (zone_index != NULL) {
+  if (zone_index != nullptr) {
     address_part_size = zone_index - ip;
     if (address_part_size >= sizeof(address_part))
       address_part_size = sizeof(address_part) - 1;
@@ -339,7 +338,7 @@ int uv_udp_connect(uv_udp_t* handle, const struct sockaddr* addr) {
     return UV_EINVAL;
 
   /* Disconnect the handle */
-  if (addr == NULL) {
+  if (addr == nullptr) {
     if (!(handle->flags & UV_HANDLE_UDP_CONNECTED))
       return UV_ENOTCONN;
 
@@ -380,13 +379,13 @@ int uv__udp_check_before_send(uv_udp_t* handle, const struct sockaddr* addr) {
   if (handle->type != UV_UDP)
     return UV_EINVAL;
 
-  if (addr != NULL && (handle->flags & UV_HANDLE_UDP_CONNECTED))
+  if (addr != nullptr && (handle->flags & UV_HANDLE_UDP_CONNECTED))
     return UV_EISCONN;
 
-  if (addr == NULL && !(handle->flags & UV_HANDLE_UDP_CONNECTED))
+  if (addr == nullptr && !(handle->flags & UV_HANDLE_UDP_CONNECTED))
     return UV_EDESTADDRREQ;
 
-  if (addr != NULL) {
+  if (addr != nullptr) {
     if (addr->sa_family == AF_INET)
       addrlen = sizeof(struct sockaddr_in);
     else if (addr->sa_family == AF_INET6)
@@ -438,7 +437,7 @@ int uv_udp_try_send(uv_udp_t* handle,
 int uv_udp_recv_start(uv_udp_t* handle,
                       uv_alloc_cb alloc_cb,
                       uv_udp_recv_cb recv_cb) {
-  if (handle->type != UV_UDP || alloc_cb == NULL || recv_cb == NULL)
+  if (handle->type != UV_UDP || alloc_cb == nullptr || recv_cb == nullptr)
     return UV_EINVAL;
   else
     return uv__udp_recv_start(handle, alloc_cb, recv_cb);
@@ -477,7 +476,7 @@ static void uv__print_handles(uv_loop_t* loop, int only_active, FILE* stream) {
   QUEUE* q;
   uv_handle_t* h;
 
-  if (loop == NULL)
+  if (loop == nullptr)
     loop = uv_default_loop();
 
   QUEUE_FOREACH(q, &loop->handle_queue) {
@@ -603,23 +602,21 @@ static unsigned int* uv__get_nbufs(uv_fs_t* req) {
 #endif
 
 void uv__fs_scandir_cleanup(uv_fs_t* req) {
-  uv__dirent_t** dents;
 
   unsigned int* nbufs = uv__get_nbufs(req);
 
-  dents = req->ptr;
+  auto **dents = reinterpret_cast<uv__dirent_t**>(req->ptr);
   if (*nbufs > 0 && *nbufs != (unsigned int) req->result)
     (*nbufs)--;
   for (; *nbufs < (unsigned int) req->result; (*nbufs)++)
     uv__fs_scandir_free(dents[*nbufs]);
 
   uv__fs_scandir_free(req->ptr);
-  req->ptr = NULL;
+  req->ptr = nullptr;
 }
 
 
 int uv_fs_scandir_next(uv_fs_t* req, uv_dirent_t* ent) {
-  uv__dirent_t** dents;
   uv__dirent_t* dent;
   unsigned int* nbufs;
 
@@ -634,7 +631,7 @@ int uv_fs_scandir_next(uv_fs_t* req, uv_dirent_t* ent) {
   nbufs = uv__get_nbufs(req);
   assert(nbufs);
 
-  dents = req->ptr;
+  auto **dents = reinterpret_cast<uv__dirent_t**>(req->ptr);
 
   /* Free previous entity */
   if (*nbufs > 0)
@@ -643,7 +640,7 @@ int uv_fs_scandir_next(uv_fs_t* req, uv_dirent_t* ent) {
   /* End was already reached */
   if (*nbufs == (unsigned int) req->result) {
     uv__fs_scandir_free(dents);
-    req->ptr = NULL;
+    req->ptr = nullptr;
     return UV_EOF;
   }
 
@@ -696,19 +693,19 @@ void uv__fs_readdir_cleanup(uv_fs_t* req) {
   uv_dirent_t* dirents;
   int i;
 
-  if (req->ptr == NULL)
+  if (req->ptr == nullptr)
     return;
 
-  dir = req->ptr;
+  dir = reinterpret_cast<uv_dir_t*>(req->ptr);
   dirents = dir->dirents;
-  req->ptr = NULL;
+  req->ptr = nullptr;
 
-  if (dirents == NULL)
+  if (dirents == nullptr)
     return;
 
   for (i = 0; i < req->result; ++i) {
     uv__free((char*) dirents[i].name);
-    dirents[i].name = NULL;
+    dirents[i].name = nullptr;
   }
 }
 
@@ -731,11 +728,11 @@ static uv_loop_t* default_loop_ptr;
 
 
 uv_loop_t* uv_default_loop(void) {
-  if (default_loop_ptr != NULL)
+  if (default_loop_ptr != nullptr)
     return default_loop_ptr;
 
   if (uv_loop_init(&default_loop_struct))
-    return NULL;
+    return nullptr;
 
   default_loop_ptr = &default_loop_struct;
   return default_loop_ptr;
@@ -743,15 +740,13 @@ uv_loop_t* uv_default_loop(void) {
 
 
 uv_loop_t* uv_loop_new(void) {
-  uv_loop_t* loop;
-
-  loop = uv__malloc(sizeof(*loop));
-  if (loop == NULL)
-    return NULL;
+  auto *loop = create_ptrstruct<uv_loop_t>(sizeof(uv_loop_t));
+  if (loop == nullptr)
+    return nullptr;
 
   if (uv_loop_init(loop)) {
     uv__free(loop);
-    return NULL;
+    return nullptr;
   }
 
   return loop;
@@ -782,7 +777,7 @@ int uv_loop_close(uv_loop_t* loop) {
   loop->data = saved_data;
 #endif
   if (loop == default_loop_ptr)
-    default_loop_ptr = NULL;
+    default_loop_ptr = nullptr;
 
   return 0;
 }

@@ -25,7 +25,7 @@
 
 #include <string.h>
 #include <unistd.h>
-
+#include "utils/allocator.cpp"
 static uv_loop_t loop;
 static uv_signal_t signal_hdl;
 static uv_pipe_t pipe_hdl;
@@ -49,7 +49,7 @@ static void close_cb(uv_handle_t *handle) {
 
 
 static void write_cb(uv_write_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == UV_EPIPE);
   free(buf);
   uv_close((uv_handle_t *) &pipe_hdl, close_cb);
@@ -75,8 +75,8 @@ TEST_IMPL(signal_pending_on_close) {
   ASSERT(0 == uv_pipe_open(&pipe_hdl, pipefds[1]));
 
   /* Write data large enough so it needs loop iteration */
-  buf = malloc(1<<24);
-  ASSERT(buf != NULL);
+  buf = test_create_ptrstruct<char>(1<<24);
+  ASSERT(buf != nullptr);
   memset(buf, '.', 1<<24);
   buffer = uv_buf_init(buf, 1<<24);
 

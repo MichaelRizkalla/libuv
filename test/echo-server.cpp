@@ -23,7 +23,7 @@
 #include "task.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 typedef struct {
   uv_write_t req;
   uv_buf_t buf;
@@ -82,7 +82,7 @@ static void after_read(uv_stream_t* handle,
     ASSERT(nread == UV_EOF);
 
     free(buf->base);
-    sreq = malloc(sizeof* sreq);
+    sreq = test_create_ptrstruct<uv_shutdown_t>(sizeof(uv_shutdown_t));
     ASSERT(0 == uv_shutdown(sreq, handle, after_shutdown));
     return;
   }
@@ -113,7 +113,7 @@ static void after_read(uv_stream_t* handle,
   }
 
   wr = (write_req_t*) malloc(sizeof *wr);
-  ASSERT(wr != NULL);
+  ASSERT(wr != nullptr);
   wr->buf = uv_buf_init(buf->base, nread);
 
   if (uv_write(&wr->req, handle, &wr->buf, 1, after_write)) {
@@ -130,7 +130,7 @@ static void on_close(uv_handle_t* peer) {
 static void echo_alloc(uv_handle_t* handle,
                        size_t suggested_size,
                        uv_buf_t* buf) {
-  buf->base = malloc(suggested_size);
+  buf->base = test_create_ptrstruct<char>(suggested_size);
   buf->len = suggested_size;
 }
 
@@ -154,15 +154,15 @@ static void on_connection(uv_stream_t* server, int status) {
 
   switch (serverType) {
   case TCP:
-    stream = malloc(sizeof(uv_tcp_t));
-    ASSERT(stream != NULL);
+    stream = test_create_ptrstruct<uv_stream_t>(sizeof(uv_tcp_t));
+    ASSERT(stream != nullptr);
     r = uv_tcp_init(loop, (uv_tcp_t*)stream);
     ASSERT(r == 0);
     break;
 
   case PIPE:
-    stream = malloc(sizeof(uv_pipe_t));
-    ASSERT(stream != NULL);
+    stream = test_create_ptrstruct<uv_stream_t>(sizeof(uv_pipe_t));
+    ASSERT(stream != nullptr);
     r = uv_pipe_init(loop, (uv_pipe_t*)stream, 0);
     ASSERT(r == 0);
     break;
@@ -189,15 +189,15 @@ static void on_server_close(uv_handle_t* handle) {
 
 static uv_udp_send_t* send_alloc(void) {
   uv_udp_send_t* req = send_freelist;
-  if (req != NULL)
-    send_freelist = req->data;
+  if (req != nullptr)
+    send_freelist = static_cast<uv_udp_send_t*>(req->data);
   else
-    req = malloc(sizeof(*req));
+    req = test_create_ptrstruct<uv_udp_send_t>(sizeof(uv_udp_send_t));
   return req;
 }
 
 static void on_send(uv_udp_send_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
   req->data = send_freelist;
   send_freelist = req;
@@ -219,7 +219,7 @@ static void on_recv(uv_udp_t* handle,
   ASSERT(addr->sa_family == AF_INET);
 
   uv_udp_send_t* req = send_alloc();
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   sndbuf = uv_buf_init(rcvbuf->base, nread);
   ASSERT(0 <= uv_udp_send(req, handle, &sndbuf, 1, addr, on_send));
 }
@@ -329,7 +329,7 @@ static int pipe_echo_start(char* pipeName) {
 #ifndef _WIN32
   {
     uv_fs_t req;
-    uv_fs_unlink(NULL, &req, pipeName, NULL);
+    uv_fs_unlink(nullptr, &req, pipeName, nullptr);
     uv_fs_req_cleanup(&req);
   }
 #endif
@@ -386,7 +386,7 @@ HELPER_IMPL(tcp6_echo_server) {
 HELPER_IMPL(pipe_echo_server) {
   loop = uv_default_loop();
 
-  if (pipe_echo_start(TEST_PIPENAME))
+  if (pipe_echo_start(const_cast<char*>(TEST_PIPENAME)))
     return 1;
 
   notify_parent_process();

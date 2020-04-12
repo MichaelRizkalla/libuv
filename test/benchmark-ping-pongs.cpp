@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
+#include "utils/allocator.cpp"
 /* Run the benchmark for this many ms */
 #define TIME 5000
 
@@ -38,7 +38,7 @@ typedef struct {
 } pinger_t;
 
 typedef struct buf_s {
-  uv_buf_t uv_buf_t;
+  uv_buf_t _uv_buf_t;
   struct buf_s* next;
 } buf_t;
 
@@ -60,12 +60,12 @@ static void buf_alloc(uv_handle_t* tcp, size_t size, uv_buf_t* buf) {
   if (ab != NULL)
     buf_freelist = ab->next;
   else {
-    ab = malloc(size + sizeof(*ab));
-    ab->uv_buf_t.len = size;
-    ab->uv_buf_t.base = (char*) (ab + 1);
+    ab = test_create_ptrstruct<buf_t>(size + sizeof(buf_t));
+    ab->_uv_buf_t.len = size;
+    ab->_uv_buf_t.base = (char*) (ab + 1);
   }
 
-  *buf = ab->uv_buf_t;
+  *buf = ab->_uv_buf_t;
 }
 
 
@@ -102,7 +102,7 @@ static void pinger_write_ping(pinger_t* pinger) {
 
   buf = uv_buf_init(PING, sizeof(PING) - 1);
 
-  req = malloc(sizeof *req);
+  req = test_create_ptrstruct<uv_write_t>(sizeof(uv_write_t));
   if (uv_write(req, (uv_stream_t*) &pinger->tcp, &buf, 1, pinger_write_cb)) {
     FATAL("uv_write failed");
   }
@@ -179,12 +179,11 @@ static void pinger_connect_cb(uv_connect_t* req, int status) {
 static void pinger_new(void) {
   struct sockaddr_in client_addr;
   struct sockaddr_in server_addr;
-  pinger_t *pinger;
   int r;
 
   ASSERT(0 == uv_ip4_addr("0.0.0.0", 0, &client_addr));
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &server_addr));
-  pinger = malloc(sizeof(*pinger));
+  auto *pinger = test_create_ptrstruct<pinger_t>(sizeof(pinger_t));
   pinger->state = 0;
   pinger->pongs = 0;
 

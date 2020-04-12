@@ -28,7 +28,7 @@ uv_loop_t loop;
 uv_tcp_t tcp_client;
 uv_connect_t connection_request;
 uv_write_t write_request;
-uv_buf_t buf = { "HELLO", 4 };
+uv_buf_t buf = { const_cast<char*>("HELLO"), 4 };
 
 
 static void write_cb(uv_write_t *req, int status) {

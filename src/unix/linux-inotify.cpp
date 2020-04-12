@@ -32,7 +32,7 @@
 #include <sys/inotify.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include "../utils/allocator.cpp"
 struct watcher_list {
   RB_ENTRY(watcher_list) entry;
   QUEUE watchers;
@@ -250,7 +250,7 @@ int uv_fs_event_start(uv_fs_event_t* handle,
                       uv_fs_event_cb cb,
                       const char* path,
                       unsigned int flags) {
-  struct watcher_list* w;
+  watcher_list* w;
   size_t len;
   int events;
   int err;
@@ -281,12 +281,12 @@ int uv_fs_event_start(uv_fs_event_t* handle,
     goto no_insert;
 
   len = strlen(path) + 1;
-  w = uv__malloc(sizeof(*w) + len);
+  w = create_ptrstruct<watcher_list>(sizeof(watcher_list) + len);
   if (w == NULL)
     return UV_ENOMEM;
 
   w->wd = wd;
-  w->path = memcpy(w + 1, path, len);
+  w->path = reinterpret_cast<char*>(memcpy(w + 1, path, len));
   QUEUE_INIT(&w->watchers);
   w->iterating = 0;
   RB_INSERT(watcher_root, CAST(&handle->loop->inotify_watchers), w);

@@ -61,7 +61,7 @@ static void empty_readdir_cb(uv_fs_t* req) {
   ASSERT(req == &readdir_req);
   ASSERT(req->fs_type == UV_FS_READDIR);
   ASSERT(req->result == 0);
-  dir = req->ptr;
+  dir = static_cast<uv_dir_t*>(req->ptr);
   uv_fs_req_cleanup(req);
   r = uv_fs_closedir(uv_default_loop(),
                      &closedir_req,
@@ -78,7 +78,7 @@ static void empty_opendir_cb(uv_fs_t* req) {
   ASSERT(req->fs_type == UV_FS_OPENDIR);
   ASSERT(req->result == 0);
   ASSERT(req->ptr != NULL);
-  dir = req->ptr;
+  dir = static_cast<uv_dir_t*>(req->ptr);
   dir->dirents = dirents;
   dir->nentries = ARRAY_SIZE(dirents);
   r = uv_fs_readdir(uv_default_loop(),
@@ -119,7 +119,7 @@ TEST_IMPL(fs_readdir_empty_dir) {
   ASSERT(opendir_req.fs_type == UV_FS_OPENDIR);
   ASSERT(opendir_req.result == 0);
   ASSERT(opendir_req.ptr != NULL);
-  dir = opendir_req.ptr;
+  dir = static_cast<uv_dir_t*>(opendir_req.ptr);
   uv_fs_req_cleanup(&opendir_req);
 
   /* Fill the req to ensure that required fields are cleaned up. */
@@ -284,7 +284,7 @@ static void non_empty_readdir_cb(uv_fs_t* req) {
 
   ASSERT(req == &readdir_req);
   ASSERT(req->fs_type == UV_FS_READDIR);
-  dir = req->ptr;
+  dir = static_cast<uv_dir_t*>(req->ptr);
 
   if (req->result == 0) {
     uv_fs_req_cleanup(req);
@@ -328,7 +328,7 @@ static void non_empty_opendir_cb(uv_fs_t* req) {
   ASSERT(req->result == 0);
   ASSERT(req->ptr != NULL);
 
-  dir = req->ptr;
+  dir = static_cast<uv_dir_t*>(req->ptr);
   dir->dirents = dirents;
   dir->nentries = ARRAY_SIZE(dirents);
 
@@ -403,7 +403,7 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
   ASSERT(opendir_req.ptr != NULL);
 
   entries_count = 0;
-  dir = opendir_req.ptr;
+  dir = static_cast<uv_dir_t*>(opendir_req.ptr);
   dir->dirents = dirents;
   dir->nentries = ARRAY_SIZE(dirents);
   uv_fs_req_cleanup(&opendir_req);

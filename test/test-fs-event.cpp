@@ -107,7 +107,7 @@ static void touch_file(const char* name) {
   file = r;
   uv_fs_req_cleanup(&req);
 
-  buf = uv_buf_init("foo", 4);
+  buf = uv_buf_init(const_cast<char*>("foo"), 4);
   r = uv_fs_write(NULL, &req, file, &buf, 1, -1, NULL);
   ASSERT(r >= 0);
   uv_fs_req_cleanup(&req);
@@ -338,7 +338,7 @@ static void timer_cb_close_handle(uv_timer_t* timer) {
   uv_handle_t* handle;
 
   ASSERT(timer != NULL);
-  handle = timer->data;
+  handle = static_cast<uv_handle_t*>(timer->data);
 
   uv_close((uv_handle_t*)timer, NULL);
   uv_close((uv_handle_t*)handle, close_cb);
@@ -400,7 +400,7 @@ static void timer_cb_exact(uv_timer_t* handle) {
 }
 
 static void timer_cb_watch_twice(uv_timer_t* handle) {
-  uv_fs_event_t* handles = handle->data;
+  uv_fs_event_t* handles = static_cast<uv_fs_event_t*>(handle->data);
   uv_close((uv_handle_t*) (handles + 0), NULL);
   uv_close((uv_handle_t*) (handles + 1), NULL);
   uv_close((uv_handle_t*) handle, NULL);

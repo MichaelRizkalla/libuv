@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "utils/allocator.cpp"
 #define CHECK_HANDLE(handle) \
   ASSERT((uv_udp_t*)(handle) == &server || (uv_udp_t*)(handle) == &client)
 
@@ -73,11 +73,11 @@ static void cl_recv_cb(uv_udp_t* handle,
 
   if (nread == 0) {
     /* Returning unused buffer. Don't count towards cl_recv_cb_called */
-    ASSERT(addr == NULL);
+    ASSERT(addr == nullptr);
     return;
   }
 
-  ASSERT(addr != NULL);
+  ASSERT(addr != nullptr);
   ASSERT(nread == 4);
   ASSERT(!memcmp("PONG", buf->base, nread));
 
@@ -90,7 +90,7 @@ static void cl_recv_cb(uv_udp_t* handle,
 static void cl_send_cb(uv_udp_send_t* req, int status) {
   int r;
 
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
   CHECK_HANDLE(req->handle);
 
@@ -102,7 +102,7 @@ static void cl_send_cb(uv_udp_send_t* req, int status) {
 
 
 static void sv_send_cb(uv_udp_send_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
   CHECK_HANDLE(req->handle);
 
@@ -128,14 +128,14 @@ static void sv_recv_cb(uv_udp_t* handle,
 
   if (nread == 0) {
     /* Returning unused buffer. Don't count towards sv_recv_cb_called */
-    ASSERT(addr == NULL);
+    ASSERT(addr == nullptr);
     return;
   }
 
   CHECK_HANDLE(handle);
   ASSERT(flags == 0);
 
-  ASSERT(addr != NULL);
+  ASSERT(addr != nullptr);
   ASSERT(nread == 4);
   ASSERT(!memcmp("PING", rcvbuf->base, nread));
 
@@ -146,10 +146,10 @@ static void sv_recv_cb(uv_udp_t* handle,
   r = uv_udp_recv_stop(handle);
   ASSERT(r == 0);
 
-  req = malloc(sizeof *req);
-  ASSERT(req != NULL);
+  req = test_create_ptrstruct<uv_udp_send_t>(sizeof(uv_udp_send_t));
+  ASSERT(req != nullptr);
 
-  sndbuf = uv_buf_init("PONG", 4);
+  sndbuf = uv_buf_init(const_cast<char*>("PONG"), 4);
   r = uv_udp_send(req, handle, &sndbuf, 1, addr, sv_send_cb);
   ASSERT(r == 0);
 
@@ -180,7 +180,7 @@ TEST_IMPL(udp_send_and_recv) {
   ASSERT(r == 0);
 
   /* client sends "PING", expects "PONG" */
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
 
   r = uv_udp_send(&req,
                   &client,

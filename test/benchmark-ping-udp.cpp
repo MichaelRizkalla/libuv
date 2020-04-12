@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
+#include "utils/allocator.cpp"
 /* Run the benchmark for this many ms */
 #define TIME 5000
 
@@ -36,7 +36,7 @@ typedef struct {
 } pinger_t;
 
 typedef struct buf_s {
-  uv_buf_t uv_buf_t;
+  struct uv_buf_t uv_buf_t;
   struct buf_s* next;
 } buf_t;
 
@@ -112,7 +112,7 @@ static void pinger_read_cb(uv_udp_t* udp,
 }
 
 static void udp_pinger_new(void) {
-  pinger_t* pinger = malloc(sizeof(*pinger));
+  pinger_t* pinger = test_create_ptrstruct<pinger_t>(sizeof(pinger_t));
   int r;
 
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &pinger->server_addr));

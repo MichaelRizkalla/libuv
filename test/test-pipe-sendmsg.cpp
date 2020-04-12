@@ -122,7 +122,7 @@ TEST_IMPL(pipe_sendmsg) {
   ASSERT(0 == uv_pipe_init(uv_default_loop(), &p, 1));
   ASSERT(0 == uv_pipe_open(&p, fds[1]));
 
-  buf = uv_buf_init("X", 1);
+  buf = uv_buf_init(const_cast<char*>("X"), 1);
   memset(&msg, 0, sizeof(msg));
   msg.msg_iov = (struct iovec*) &buf;
   msg.msg_iovlen = 1;
@@ -140,7 +140,7 @@ TEST_IMPL(pipe_sendmsg) {
   /* silence aliasing warning */
   {
     void* pv = CMSG_DATA(cmsg);
-    int* pi = pv;
+    int* pi = static_cast<int*>(pv);
     for (i = 0; i < ARRAY_SIZE(send_fds); i++)
       pi[i] = send_fds[i];
   }

@@ -137,7 +137,7 @@ static void send_cb(uv_udp_send_t* req, int status) {
 
 TEST_IMPL(udp_open) {
   struct sockaddr_in addr;
-  uv_buf_t buf = uv_buf_init("PING", 4);
+  uv_buf_t buf = uv_buf_init(const_cast<char*>("PING"), 4);
   uv_udp_t client;
   uv_os_sock_t sock;
   int r;
@@ -251,7 +251,7 @@ TEST_IMPL(udp_open_bound) {
 
 TEST_IMPL(udp_open_connect) {
   struct sockaddr_in addr;
-  uv_buf_t buf = uv_buf_init("PING", 4);
+  uv_buf_t buf = uv_buf_init(const_cast<char*>("PING"), 4);
   uv_udp_t client;
   uv_udp_t server;
   uv_os_sock_t sock;
@@ -307,7 +307,7 @@ TEST_IMPL(udp_send_unix) {
   uv_udp_t handle;
   uv_udp_send_t req;
   uv_loop_t* loop;
-  uv_buf_t buf = uv_buf_init("PING", 4);
+  uv_buf_t buf = uv_buf_init(const_cast<char*>("PING"), 4);
   int fd;
   int r;
 

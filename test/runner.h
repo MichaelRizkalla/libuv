@@ -57,29 +57,29 @@ typedef struct {
   task_entry_t TASKS[] = {
 
 #define TASK_LIST_END                               \
-    { 0, 0, 0, 0, 0, 0 }                               \
+    { const_cast<char*>("0"), const_cast<char*>("0"), 0, 0, 0, 0 }                               \
   };
 
 #define TEST_DECLARE(name)                          \
-  int run_test_##name(void);
+  int run_test_##name();
 
 #define TEST_ENTRY(name)                            \
-    { #name, #name, &run_test_##name, 0, 0, 5000 },
+    { const_cast<char*>(#name), const_cast<char*>(#name), &run_test_##name, 0, 0, 5000 },
 
 #define TEST_ENTRY_CUSTOM(name, is_helper, show_output, timeout) \
-    { #name, #name, &run_test_##name, is_helper, show_output, timeout },
+    { const_cast<char*>(#name), const_cast<char*>(#name), &run_test_##name, is_helper, show_output, timeout },
 
 #define BENCHMARK_DECLARE(name)                     \
-  int run_benchmark_##name(void);
+  int run_benchmark_##name();
 
 #define BENCHMARK_ENTRY(name)                       \
-    { #name, #name, &run_benchmark_##name, 0, 0, 60000 },
+    { const_cast<char*>(#name), const_cast<char*>(#name), &run_benchmark_##name, 0, 0, 60000 },
 
 #define HELPER_DECLARE(name)                        \
-  int run_helper_##name(void);
+  int run_helper_##name();
 
 #define HELPER_ENTRY(task_name, name)               \
-    { #task_name, #name, &run_helper_##name, 1, 0, 0 },
+    { const_cast<char*>(#task_name), const_cast<char*>(#name), &run_helper_##name, 1, 0, 0 },
 
 #define TEST_HELPER       HELPER_ENTRY
 #define BENCHMARK_HELPER  HELPER_ENTRY
@@ -167,6 +167,6 @@ int process_reap(process_info_t *p);
 void process_cleanup(process_info_t *p);
 
 /* Move the console cursor one line up and back to the first column. */
-void rewind_cursor(void);
+void rewind_cursor();
 
 #endif /* RUNNER_H_ */

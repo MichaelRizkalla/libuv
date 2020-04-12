@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include "utils/allocator.cpp"
 
 static char exepath[1024];
 static size_t exepath_size = 1024;
@@ -106,7 +106,7 @@ static void on_read(uv_stream_t* pipe, ssize_t nread, const uv_buf_t* rdbuf) {
     if (output_used % 12 == 0) {
       ASSERT(memcmp("hello world\n", output, 12) == 0);
       wrbuf = uv_buf_init(output, 12);
-      req = malloc(sizeof(*req));
+      req = test_create_ptrstruct<uv_write_t>(sizeof(uv_write_t));
       r = uv_write(req, (uv_stream_t*) &in, &wrbuf, 1, after_write);
       ASSERT(r == 0);
     }
@@ -123,17 +123,17 @@ static void test_stdio_over_pipes(int overlapped) {
 
   loop = uv_default_loop();
 
-  init_process_options("stdio_over_pipes_helper", exit_cb);
+  init_process_options(const_cast<char*>("stdio_over_pipes_helper"), exit_cb);
 
   uv_pipe_init(loop, &out, 0);
   uv_pipe_init(loop, &in, 0);
 
   options.stdio = stdio;
-  options.stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE |
-      (overlapped ?  UV_OVERLAPPED_PIPE : 0);
+  options.stdio[0].flags = static_cast<uv_stdio_flags>(UV_CREATE_PIPE | UV_READABLE_PIPE |
+      (overlapped ?  UV_OVERLAPPED_PIPE : 0));
   options.stdio[0].data.stream = (uv_stream_t*) &in;
-  options.stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE |
-      (overlapped ? UV_OVERLAPPED_PIPE : 0);
+  options.stdio[1].flags = static_cast<uv_stdio_flags>(UV_CREATE_PIPE | UV_WRITABLE_PIPE |
+      (overlapped ? UV_OVERLAPPED_PIPE : 0));
   options.stdio[1].data.stream = (uv_stream_t*) &out;
   options.stdio[2].flags = UV_INHERIT_FD;
   options.stdio[2].data.fd = 2;
@@ -198,7 +198,7 @@ static void after_pipe_write(uv_write_t* req, int status) {
 static void on_read_alloc(uv_handle_t* handle,
                           size_t suggested_size,
                           uv_buf_t* buf) {
-  buf->base = malloc(suggested_size);
+  buf->base = test_create_ptrstruct<char>(suggested_size);
   buf->len = suggested_size;
 }
 
@@ -206,13 +206,13 @@ static void on_read_alloc(uv_handle_t* handle,
 int stdio_over_pipes_helper(void) {
   /* Write several buffers to test that the write order is preserved. */
   char* buffers[] = {
-    "he",
-    "ll",
-    "o ",
-    "wo",
-    "rl",
-    "d",
-    "\n"
+    const_cast<char*>("he"),
+    const_cast<char*>("ll"),
+    const_cast<char*>("o "),
+    const_cast<char*>("wo"),
+    const_cast<char*>("rl"),
+    const_cast<char*>("d"),
+    const_cast<char*>("\n")
   };
 
   uv_write_t write_req[ARRAY_SIZE(buffers)];

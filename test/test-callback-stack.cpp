@@ -26,7 +26,7 @@
 
 #include "uv.h"
 #include "task.h"
-
+#include "utils/allocator.cpp"
 
 static const char MESSAGE[] = "Failure is for the weak. Everyone dies alone.";
 
@@ -47,7 +47,7 @@ static int shutdown_cb_called = 0;
 
 static void alloc_cb(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
   buf->len = size;
-  buf->base = malloc(size);
+  buf->base = test_create_ptrstruct<char>(size);
   ASSERT(buf->base != NULL);
 }
 

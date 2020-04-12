@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 static int completed_pingers = 0;
 
 #if defined(__CYGWIN__) || defined(__MSYS__) || defined(__MVS__)
@@ -54,7 +54,7 @@ typedef struct {
 
 
 static void alloc_cb(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
-  buf->base = malloc(size);
+  buf->base = test_create_ptrstruct<char>(size);
   buf->len = size;
 }
 
@@ -93,7 +93,7 @@ static void pinger_write_ping(pinger_t* pinger) {
     }
   }
 
-  req = malloc(sizeof(*req));
+  req = test_create_ptrstruct<uv_write_t>(sizeof(uv_write_t));
   if (uv_write(req,
                (uv_stream_t*) &pinger->stream.tcp,
                bufs,
@@ -173,7 +173,7 @@ static void tcp_pinger_v6_new(int vectored_writes) {
 
 
   ASSERT(0 ==uv_ip6_addr("::1", TEST_PORT, &server_addr));
-  pinger = malloc(sizeof(*pinger));
+  pinger = test_create_ptrstruct<pinger_t>(sizeof(pinger_t));
   ASSERT(pinger != NULL);
   pinger->vectored_writes = vectored_writes;
   pinger->state = 0;
@@ -203,7 +203,7 @@ static void tcp_pinger_new(int vectored_writes) {
   pinger_t *pinger;
 
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &server_addr));
-  pinger = malloc(sizeof(*pinger));
+  pinger = test_create_ptrstruct<pinger_t>(sizeof(pinger_t));
   ASSERT(pinger != NULL);
   pinger->vectored_writes = vectored_writes;
   pinger->state = 0;

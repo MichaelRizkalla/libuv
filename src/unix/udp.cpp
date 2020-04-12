@@ -31,7 +31,7 @@
 #include <xti.h>
 #endif
 #include <sys/un.h>
-
+#include "../utils/allocator.cpp"
 #define UV__UDP_DGRAM_MAXSIZE (64 * 1024)
 
 #if defined(IPV6_JOIN_GROUP) && !defined(IPV6_ADD_MEMBERSHIP)
@@ -220,11 +220,11 @@ static int uv__udp_recvmmsg(uv_udp_t* handle, uv_buf_t* buf) {
       if (msgs[k].msg_hdr.msg_flags & MSG_TRUNC)
         flags |= UV_UDP_PARTIAL;
 
-      chunk_buf = uv_buf_init(iov[k].iov_base, iov[k].iov_len);
+      chunk_buf = uv_buf_init(reinterpret_cast<char*>(iov[k].iov_base), iov[k].iov_len);
       handle->recv_cb(handle,
                       msgs[k].msg_len,
                       &chunk_buf,
-                      msgs[k].msg_hdr.msg_name,
+                      static_cast<const sockaddr*>(msgs[k].msg_hdr.msg_name),
                       flags);
     }
 
@@ -279,7 +279,7 @@ static void uv__udp_recvmsg(uv_udp_t* handle) {
     memset(&peer, 0, sizeof(peer));
     h.msg_name = &peer;
     h.msg_namelen = sizeof(peer);
-    h.msg_iov = (void*) &buf;
+    h.msg_iov = reinterpret_cast<iovec*>(&buf);
     h.msg_iovlen = 1;
 
     do {
@@ -684,7 +684,7 @@ int uv__udp_send(uv_udp_send_t* req,
 
   req->bufs = req->bufsml;
   if (nbufs > ARRAY_SIZE(req->bufsml))
-    req->bufs = uv__malloc(nbufs * sizeof(bufs[0]));
+    req->bufs = create_ptrstruct<uv_buf_t>(nbufs * sizeof(bufs[0]));
 
   if (req->bufs == NULL) {
     uv__req_unregister(handle->loop, req);

@@ -45,7 +45,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
-
+#include "../utils/allocator.cpp"
 #if defined(__DragonFly__)        ||                                      \
     defined(__FreeBSD__)          ||                                      \
     defined(__FreeBSD_kernel__)   ||                                      \
@@ -91,28 +91,28 @@ extern char *mkdtemp(char *template); /* See issue #740 on AIX < 7 */
 
 #define INIT(subtype)                                                         \
   do {                                                                        \
-    if (req == NULL)                                                          \
+    if (req == nullptr)                                                          \
       return UV_EINVAL;                                                       \
     UV_REQ_INIT(req, UV_FS);                                                  \
     req->fs_type = UV_FS_ ## subtype;                                         \
     req->result = 0;                                                          \
-    req->ptr = NULL;                                                          \
+    req->ptr = nullptr;                                                          \
     req->loop = loop;                                                         \
-    req->path = NULL;                                                         \
-    req->new_path = NULL;                                                     \
-    req->bufs = NULL;                                                         \
+    req->path = nullptr;                                                         \
+    req->new_path = nullptr;                                                     \
+    req->bufs = nullptr;                                                         \
     req->cb = cb;                                                             \
   }                                                                           \
   while (0)
 
 #define PATH                                                                  \
   do {                                                                        \
-    assert(path != NULL);                                                     \
-    if (cb == NULL) {                                                         \
+    assert(path != nullptr);                                                     \
+    if (cb == nullptr) {                                                         \
       req->path = path;                                                       \
     } else {                                                                  \
       req->path = uv__strdup(path);                                           \
-      if (req->path == NULL)                                                  \
+      if (req->path == nullptr)                                                  \
         return UV_ENOMEM;                                                     \
     }                                                                         \
   }                                                                           \
@@ -120,7 +120,7 @@ extern char *mkdtemp(char *template); /* See issue #740 on AIX < 7 */
 
 #define PATH2                                                                 \
   do {                                                                        \
-    if (cb == NULL) {                                                         \
+    if (cb == nullptr) {                                                      \
       req->path = path;                                                       \
       req->new_path = new_path;                                               \
     } else {                                                                  \
@@ -128,8 +128,8 @@ extern char *mkdtemp(char *template); /* See issue #740 on AIX < 7 */
       size_t new_path_len;                                                    \
       path_len = strlen(path) + 1;                                            \
       new_path_len = strlen(new_path) + 1;                                    \
-      req->path = uv__malloc(path_len + new_path_len);                        \
-      if (req->path == NULL)                                                  \
+      req->path = create_ptrstruct<char>(path_len + new_path_len);            \
+      if (req->path == nullptr)                                               \
         return UV_ENOMEM;                                                     \
       req->new_path = req->path + path_len;                                   \
       memcpy((void*) req->path, path, path_len);                              \
@@ -140,7 +140,7 @@ extern char *mkdtemp(char *template); /* See issue #740 on AIX < 7 */
 
 #define POST                                                                  \
   do {                                                                        \
-    if (cb != NULL) {                                                         \
+    if (cb != nullptr) {                                                         \
       uv__req_register(loop, req);                                            \
       uv__work_submit(loop,                                                   \
                       &req->work_req,                                         \
@@ -218,7 +218,7 @@ static ssize_t uv__fs_futime(uv_fs_t* req) {
   ts[1].tv_sec  = req->mtime;
   ts[1].tv_nsec = (uint64_t)(req->mtime * 1000000) % 1000000 * 1000;
 #if defined(__ANDROID_API__) && __ANDROID_API__ < 21
-  return utimensat(req->file, NULL, ts, 0);
+  return utimensat(req->file, nullptr, ts, 0);
 #else
   return futimens(req->file, ts);
 #endif
@@ -235,7 +235,7 @@ static ssize_t uv__fs_futime(uv_fs_t* req) {
   tv[1].tv_sec  = req->mtime;
   tv[1].tv_usec = (uint64_t)(req->mtime * 1000000) % 1000000;
 # if defined(__sun)
-  return futimesat(req->file, NULL, tv);
+  return futimesat(req->file, nullptr, tv);
 # else
   return futimes(req->file, tv);
 # endif
@@ -271,7 +271,7 @@ static void uv__mkostemp_initonce(void) {
 
   /* We don't care about errors, but we do want to clean them up.
    * If there has been no error, then dlerror() will just return
-   * NULL.
+   * nullptr.
    */
   dlerror();
 #endif  /* RTLD_DEFAULT */
@@ -306,7 +306,7 @@ static int uv__fs_mkstemp(uv_fs_t* req) {
   uv_once(&once, uv__mkostemp_initonce);
 
 #ifdef O_CLOEXEC
-  if (no_cloexec_support == 0 && uv__mkostemp != NULL) {
+  if (no_cloexec_support == 0 && uv__mkostemp != nullptr) {
     r = uv__mkostemp(path, O_CLOEXEC);
 
     if (r >= 0)
@@ -323,7 +323,7 @@ static int uv__fs_mkstemp(uv_fs_t* req) {
   }
 #endif  /* O_CLOEXEC */
 
-  if (req->cb != NULL)
+  if (req->cb != nullptr)
     uv_rwlock_rdlock(&req->loop->cloexec_lock);
 
   r = mkstemp(path);
@@ -338,7 +338,7 @@ static int uv__fs_mkstemp(uv_fs_t* req) {
     r = -1;
   }
 
-  if (req->cb != NULL)
+  if (req->cb != nullptr)
     uv_rwlock_rdunlock(&req->loop->cloexec_lock);
 
   return r;
@@ -351,7 +351,7 @@ static ssize_t uv__fs_open(uv_fs_t* req) {
 #else  /* O_CLOEXEC */
   int r;
 
-  if (req->cb != NULL)
+  if (req->cb != nullptr)
     uv_rwlock_rdlock(&req->loop->cloexec_lock);
 
   r = open(req->path, req->flags, req->mode);
@@ -366,7 +366,7 @@ static ssize_t uv__fs_open(uv_fs_t* req) {
     r = -1;
   }
 
-  if (req->cb != NULL)
+  if (req->cb != nullptr)
     uv_rwlock_rdunlock(&req->loop->cloexec_lock);
 
   return r;
@@ -475,7 +475,7 @@ done:
   if (req->bufs != req->bufsml)
     uv__free(req->bufs);
 
-  req->bufs = NULL;
+  req->bufs = nullptr;
   req->nbufs = 0;
 
 #ifdef __PASE__
@@ -515,7 +515,7 @@ static ssize_t uv__fs_scandir(uv_fs_t* req) {
   uv__dirent_t** dents;
   int n;
 
-  dents = NULL;
+  dents = nullptr;
   n = scandir(req->path, &dents, uv__fs_scandir_filter, uv__fs_scandir_sort);
 
   /* NOTE: We will use nbufs as an index field */
@@ -526,7 +526,7 @@ static ssize_t uv__fs_scandir(uv_fs_t* req) {
      * Memory was allocated using the system allocator, so use free() here.
      */
     free(dents);
-    dents = NULL;
+    dents = nullptr;
   } else if (n == -1) {
     return n;
   }
@@ -537,14 +537,13 @@ static ssize_t uv__fs_scandir(uv_fs_t* req) {
 }
 
 static int uv__fs_opendir(uv_fs_t* req) {
-  uv_dir_t* dir;
 
-  dir = uv__malloc(sizeof(*dir));
-  if (dir == NULL)
+  auto *dir = create_ptrstruct<uv_dir_t>(sizeof(uv_dir_t));
+  if (dir == nullptr)
     goto error;
 
   dir->dir = opendir(req->path);
-  if (dir->dir == NULL)
+  if (dir->dir == nullptr)
     goto error;
 
   req->ptr = dir;
@@ -552,7 +551,7 @@ static int uv__fs_opendir(uv_fs_t* req) {
 
 error:
   uv__free(dir);
-  req->ptr = NULL;
+  req->ptr = nullptr;
   return -1;
 }
 
@@ -563,16 +562,16 @@ static int uv__fs_readdir(uv_fs_t* req) {
   unsigned int dirent_idx;
   unsigned int i;
 
-  dir = req->ptr;
+  dir = reinterpret_cast<uv_dir_t*>(req->ptr);
   dirent_idx = 0;
 
   while (dirent_idx < dir->nentries) {
-    /* readdir() returns NULL on end of directory, as well as on error. errno
+    /* readdir() returns nullptr on end of directory, as well as on error. errno
        is used to differentiate between the two conditions. */
     errno = 0;
     res = readdir(dir->dir);
 
-    if (res == NULL) {
+    if (res == nullptr) {
       if (errno != 0)
         goto error;
       break;
@@ -584,7 +583,7 @@ static int uv__fs_readdir(uv_fs_t* req) {
     dirent = &dir->dirents[dirent_idx];
     dirent->name = uv__strdup(res->d_name);
 
-    if (dirent->name == NULL)
+    if (dirent->name == nullptr)
       goto error;
 
     dirent->type = uv__fs_get_dirent_type(res);
@@ -596,7 +595,7 @@ static int uv__fs_readdir(uv_fs_t* req) {
 error:
   for (i = 0; i < dirent_idx; ++i) {
     uv__free((char*) dir->dirents[i].name);
-    dir->dirents[i].name = NULL;
+    dir->dirents[i].name = nullptr;
   }
 
   return -1;
@@ -605,20 +604,19 @@ error:
 static int uv__fs_closedir(uv_fs_t* req) {
   uv_dir_t* dir;
 
-  dir = req->ptr;
+  dir = reinterpret_cast<uv_dir_t*>(req->ptr);
 
-  if (dir->dir != NULL) {
+  if (dir->dir != nullptr) {
     closedir(dir->dir);
-    dir->dir = NULL;
+    dir->dir = nullptr;
   }
 
   uv__free(req->ptr);
-  req->ptr = NULL;
+  req->ptr = nullptr;
   return 0;
 }
 
 static int uv__fs_statfs(uv_fs_t* req) {
-  uv_statfs_t* stat_fs;
 #if defined(__sun) || defined(__MVS__) || defined(__NetBSD__) || defined(__HAIKU__)
   struct statvfs buf;
 
@@ -630,8 +628,8 @@ static int uv__fs_statfs(uv_fs_t* req) {
 #endif /* defined(__sun) */
     return -1;
 
-  stat_fs = uv__malloc(sizeof(*stat_fs));
-  if (stat_fs == NULL) {
+  auto *stat_fs = create_ptrstruct<uv_statfs_t>(sizeof(uv_statfs_t));
+  if (stat_fs == nullptr) {
     errno = ENOMEM;
     return -1;
   }
@@ -689,9 +687,9 @@ static ssize_t uv__fs_readlink(uv_fs_t* req) {
     maxlen = uv__fs_pathmax_size(req->path);
 #endif
 
-  buf = uv__malloc(maxlen);
+  buf = create_ptrstruct<char>(maxlen);
 
-  if (buf == NULL) {
+  if (buf == nullptr) {
     errno = ENOMEM;
     return -1;
   }
@@ -709,9 +707,9 @@ static ssize_t uv__fs_readlink(uv_fs_t* req) {
 
   /* Uncommon case: resize to make room for the trailing nul byte. */
   if (len == maxlen) {
-    buf = uv__reallocf(buf, len + 1);
+    buf = create_ptrstruct_free<char>(buf, len + 1);
 
-    if (buf == NULL)
+    if (buf == nullptr)
       return -1;
   }
 
@@ -725,8 +723,8 @@ static ssize_t uv__fs_realpath(uv_fs_t* req) {
   char* buf;
 
 #if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200809L
-  buf = realpath(req->path, NULL);
-  if (buf == NULL)
+  buf = realpath(req->path, nullptr);
+  if (buf == nullptr)
     return -1;
 #else
   ssize_t len;
@@ -734,12 +732,12 @@ static ssize_t uv__fs_realpath(uv_fs_t* req) {
   len = uv__fs_pathmax_size(req->path);
   buf = uv__malloc(len + 1);
 
-  if (buf == NULL) {
+  if (buf == nullptr) {
     errno = ENOMEM;
     return -1;
   }
 
-  if (realpath(req->path, buf) == NULL) {
+  if (realpath(req->path, buf) == nullptr) {
     uv__free(buf);
     return -1;
   }
@@ -914,21 +912,21 @@ static ssize_t uv__fs_sendfile(uv_fs_t* req) {
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
     len = 0;
-    r = sendfile(in_fd, out_fd, req->off, req->bufsml[0].len, NULL, &len, 0);
+    r = sendfile(in_fd, out_fd, req->off, req->bufsml[0].len, nullptr, &len, 0);
 #elif defined(__FreeBSD_kernel__)
     len = 0;
     r = bsd_sendfile(in_fd,
                      out_fd,
                      req->off,
                      req->bufsml[0].len,
-                     NULL,
+                     nullptr,
                      &len,
                      0);
 #else
     /* The darwin sendfile takes len as an input for the length to send,
      * so make sure to initialize it with the caller's value. */
     len = req->bufsml[0].len;
-    r = sendfile(in_fd, out_fd, req->off, &len, NULL, 0);
+    r = sendfile(in_fd, out_fd, req->off, &len, nullptr, 0);
 #endif
 
      /*
@@ -1087,7 +1085,7 @@ static ssize_t uv__fs_copyfile(uv_fs_t* req) {
   err = 0;
 
   /* Open the source file. */
-  srcfd = uv_fs_open(NULL, &fs_req, req->path, O_RDONLY, 0, NULL);
+  srcfd = uv_fs_open(nullptr, &fs_req, req->path, O_RDONLY, 0, nullptr);
   uv_fs_req_cleanup(&fs_req);
 
   if (srcfd < 0)
@@ -1105,12 +1103,12 @@ static ssize_t uv__fs_copyfile(uv_fs_t* req) {
     dst_flags |= O_EXCL;
 
   /* Open the destination file. */
-  dstfd = uv_fs_open(NULL,
+  dstfd = uv_fs_open(nullptr,
                      &fs_req,
                      req->new_path,
                      dst_flags,
                      src_statsbuf.st_mode,
-                     NULL);
+                     nullptr);
   uv_fs_req_cleanup(&fs_req);
 
   if (dstfd < 0) {
@@ -1180,7 +1178,7 @@ static ssize_t uv__fs_copyfile(uv_fs_t* req) {
   bytes_to_send = src_statsbuf.st_size;
   in_offset = 0;
   while (bytes_to_send != 0) {
-    uv_fs_sendfile(NULL, &fs_req, dstfd, srcfd, in_offset, bytes_to_send, NULL);
+    uv_fs_sendfile(nullptr, &fs_req, dstfd, srcfd, in_offset, bytes_to_send, nullptr);
     bytes_written = fs_req.result;
     uv_fs_req_cleanup(&fs_req);
 
@@ -1216,7 +1214,7 @@ out:
 
     /* Remove the destination file if something went wrong. */
     if (result != 0) {
-      uv_fs_unlink(NULL, &fs_req, req->new_path, NULL);
+      uv_fs_unlink(nullptr, &fs_req, req->new_path, nullptr);
       /* Ignore the unlink return value, as an error already happened. */
       uv_fs_req_cleanup(&fs_req);
     }
@@ -1485,7 +1483,7 @@ static ssize_t uv__fs_write_all(uv_fs_t* req) {
   if (bufs != req->bufsml)
     uv__free(bufs);
 
-  req->bufs = NULL;
+  req->bufs = nullptr;
   req->nbufs = 0;
 
   return total;
@@ -1746,7 +1744,7 @@ int uv_fs_mkdtemp(uv_loop_t* loop,
                   uv_fs_cb cb) {
   INIT(MKDTEMP);
   req->path = uv__strdup(tpl);
-  if (req->path == NULL)
+  if (req->path == nullptr)
     return UV_ENOMEM;
   POST;
 }
@@ -1758,7 +1756,7 @@ int uv_fs_mkstemp(uv_loop_t* loop,
                   uv_fs_cb cb) {
   INIT(MKSTEMP);
   req->path = uv__strdup(tpl);
-  if (req->path == NULL)
+  if (req->path == nullptr)
     return UV_ENOMEM;
   POST;
 }
@@ -1786,7 +1784,7 @@ int uv_fs_read(uv_loop_t* loop, uv_fs_t* req,
                uv_fs_cb cb) {
   INIT(READ);
 
-  if (bufs == NULL || nbufs == 0)
+  if (bufs == nullptr || nbufs == 0)
     return UV_EINVAL;
 
   req->file = file;
@@ -1794,9 +1792,9 @@ int uv_fs_read(uv_loop_t* loop, uv_fs_t* req,
   req->nbufs = nbufs;
   req->bufs = req->bufsml;
   if (nbufs > ARRAY_SIZE(req->bufsml))
-    req->bufs = uv__malloc(nbufs * sizeof(*bufs));
+    req->bufs = create_ptrstruct<uv_buf_t>(nbufs * sizeof(*bufs));
 
-  if (req->bufs == NULL)
+  if (req->bufs == nullptr)
     return UV_ENOMEM;
 
   memcpy(req->bufs, bufs, nbufs * sizeof(*bufs));
@@ -1832,7 +1830,7 @@ int uv_fs_readdir(uv_loop_t* loop,
                   uv_fs_cb cb) {
   INIT(READDIR);
 
-  if (dir == NULL || dir->dir == NULL || dir->dirents == NULL)
+  if (dir == nullptr || dir->dir == nullptr || dir->dirents == nullptr)
     return UV_EINVAL;
 
   req->ptr = dir;
@@ -1845,7 +1843,7 @@ int uv_fs_closedir(uv_loop_t* loop,
                    uv_fs_cb cb) {
   INIT(CLOSEDIR);
 
-  if (dir == NULL)
+  if (dir == nullptr)
     return UV_EINVAL;
 
   req->ptr = dir;
@@ -1956,7 +1954,7 @@ int uv_fs_write(uv_loop_t* loop,
                 uv_fs_cb cb) {
   INIT(WRITE);
 
-  if (bufs == NULL || nbufs == 0)
+  if (bufs == nullptr || nbufs == 0)
     return UV_EINVAL;
 
   req->file = file;
@@ -1964,9 +1962,9 @@ int uv_fs_write(uv_loop_t* loop,
   req->nbufs = nbufs;
   req->bufs = req->bufsml;
   if (nbufs > ARRAY_SIZE(req->bufsml))
-    req->bufs = uv__malloc(nbufs * sizeof(*bufs));
+    req->bufs = create_ptrstruct<uv_buf_t>(nbufs * sizeof(*bufs));
 
-  if (req->bufs == NULL)
+  if (req->bufs == nullptr)
     return UV_ENOMEM;
 
   memcpy(req->bufs, bufs, nbufs * sizeof(*bufs));
@@ -1977,7 +1975,7 @@ int uv_fs_write(uv_loop_t* loop,
 
 
 void uv_fs_req_cleanup(uv_fs_t* req) {
-  if (req == NULL)
+  if (req == nullptr)
     return;
 
   /* Only necessary for asychronous requests, i.e., requests with a callback.
@@ -1985,27 +1983,27 @@ void uv_fs_req_cleanup(uv_fs_t* req) {
    * req->new_path pointing to user-owned memory.  UV_FS_MKDTEMP and 
    * UV_FS_MKSTEMP are the exception to the rule, they always allocate memory.
    */
-  if (req->path != NULL &&
-      (req->cb != NULL ||
+  if (req->path != nullptr &&
+      (req->cb != nullptr ||
         req->fs_type == UV_FS_MKDTEMP || req->fs_type == UV_FS_MKSTEMP))
     uv__free((void*) req->path);  /* Memory is shared with req->new_path. */
 
-  req->path = NULL;
-  req->new_path = NULL;
+  req->path = nullptr;
+  req->new_path = nullptr;
 
-  if (req->fs_type == UV_FS_READDIR && req->ptr != NULL)
+  if (req->fs_type == UV_FS_READDIR && req->ptr != nullptr)
     uv__fs_readdir_cleanup(req);
 
-  if (req->fs_type == UV_FS_SCANDIR && req->ptr != NULL)
+  if (req->fs_type == UV_FS_SCANDIR && req->ptr != nullptr)
     uv__fs_scandir_cleanup(req);
 
   if (req->bufs != req->bufsml)
     uv__free(req->bufs);
-  req->bufs = NULL;
+  req->bufs = nullptr;
 
   if (req->fs_type != UV_FS_OPENDIR && req->ptr != &req->statbuf)
     uv__free(req->ptr);
-  req->ptr = NULL;
+  req->ptr = nullptr;
 }
 
 

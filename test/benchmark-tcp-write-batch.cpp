@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 #define WRITE_REQ_DATA  "Hello, world."
 #define NUM_WRITE_REQS  (1000 * 1000)
 
@@ -102,12 +102,12 @@ BENCHMARK_IMPL(tcp_write_batch) {
   int i;
   int r;
 
-  write_reqs = malloc(sizeof(*write_reqs) * NUM_WRITE_REQS);
+  write_reqs = test_create_ptrstruct<write_req>(sizeof(write_req) * NUM_WRITE_REQS);
   ASSERT(write_reqs != NULL);
 
   /* Prepare the data to write out. */
   for (i = 0; i < NUM_WRITE_REQS; i++) {
-    write_reqs[i].buf = uv_buf_init(WRITE_REQ_DATA,
+    write_reqs[i].buf = uv_buf_init(const_cast<char*>(WRITE_REQ_DATA),
                                     sizeof(WRITE_REQ_DATA) - 1);
   }
 

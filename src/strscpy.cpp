@@ -1,12 +1,14 @@
 #include "strscpy.h"
 #include <limits.h>  /* SSIZE_MAX */
 
+#include <type_traits>
+
 ssize_t uv__strscpy(char* d, const char* s, size_t n) {
   size_t i;
 
   for (i = 0; i < n; i++)
     if ('\0' == (d[i] = s[i]))
-      return i > SSIZE_MAX ? UV_E2BIG : (ssize_t) i;
+      return i > SSIZE_MAX ? static_cast<std::underlying_type<uv_errno_t>::type>(UV_E2BIG) : (ssize_t) i;
 
   if (i == 0)
     return 0;

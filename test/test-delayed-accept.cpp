@@ -23,7 +23,7 @@
 #include "task.h"
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 static int connection_cb_called = 0;
 static int do_accept_called = 0;
 static int close_cb_called = 0;
@@ -31,13 +31,13 @@ static int connect_cb_called = 0;
 
 
 static void alloc_cb(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
-  buf->base = malloc(size);
+  buf->base = test_create_ptrstruct<char>(size);
   buf->len = size;
 }
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
 
   free(handle);
 
@@ -50,8 +50,8 @@ static void do_accept(uv_timer_t* timer_handle) {
   uv_tcp_t* accepted_handle = (uv_tcp_t*)malloc(sizeof *accepted_handle);
   int r;
 
-  ASSERT(timer_handle != NULL);
-  ASSERT(accepted_handle != NULL);
+  ASSERT(timer_handle != nullptr);
+  ASSERT(accepted_handle != nullptr);
 
   r = uv_tcp_init(uv_default_loop(), accepted_handle);
   ASSERT(r == 0);
@@ -82,7 +82,7 @@ static void connection_cb(uv_stream_t* tcp, int status) {
   ASSERT(status == 0);
 
   timer_handle = (uv_timer_t*)malloc(sizeof *timer_handle);
-  ASSERT(timer_handle != NULL);
+  ASSERT(timer_handle != nullptr);
 
   /* Accept the client after 1 second */
   r = uv_timer_init(uv_default_loop(), timer_handle);
@@ -103,7 +103,7 @@ static void start_server(void) {
   int r;
 
   ASSERT(0 == uv_ip4_addr("0.0.0.0", TEST_PORT, &addr));
-  ASSERT(server != NULL);
+  ASSERT(server != nullptr);
 
   r = uv_tcp_init(uv_default_loop(), server);
   ASSERT(r == 0);
@@ -125,7 +125,7 @@ static void read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf) {
   if (nread >= 0) {
     ASSERT(nread == 0);
   } else {
-    ASSERT(tcp != NULL);
+    ASSERT(tcp != nullptr);
     ASSERT(nread == UV_EOF);
     uv_close((uv_handle_t*)tcp, close_cb);
   }
@@ -135,7 +135,7 @@ static void read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf) {
 static void connect_cb(uv_connect_t* req, int status) {
   int r;
 
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
 
   /* Not that the server will send anything, but otherwise we'll never know
@@ -150,14 +150,14 @@ static void connect_cb(uv_connect_t* req, int status) {
 
 
 static void client_connect(void) {
-  struct sockaddr_in addr;
-  uv_tcp_t* client = (uv_tcp_t*)malloc(sizeof *client);
-  uv_connect_t* connect_req = malloc(sizeof *connect_req);
+  sockaddr_in addr;
+  uv_tcp_t* client = test_create_ptrstruct<uv_tcp_t>(sizeof(uv_tcp_t));
+  uv_connect_t* connect_req = test_create_ptrstruct<uv_connect_t>(sizeof(uv_connect_t));
   int r;
 
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &addr));
-  ASSERT(client != NULL);
-  ASSERT(connect_req != NULL);
+  ASSERT(client != nullptr);
+  ASSERT(connect_req != nullptr);
 
   r = uv_tcp_init(uv_default_loop(), client);
   ASSERT(r == 0);

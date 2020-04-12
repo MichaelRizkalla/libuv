@@ -90,7 +90,7 @@ extern char** environ;
 #if defined(__linux__)
 #include <sys/syscall.h>
 #endif
-
+#include "../utils/allocator.cpp"
 static int uv__run_pending(uv_loop_t* loop);
 
 /* Verify that uv_buf_t is ABI-compatible with struct iovec. */
@@ -815,7 +815,6 @@ static unsigned int next_power_of_two(unsigned int val) {
 }
 
 static void maybe_resize(uv_loop_t* loop, unsigned int len) {
-  uv__io_t** watchers;
   void* fake_watcher_list;
   void* fake_watcher_count;
   unsigned int nwatchers;
@@ -834,15 +833,15 @@ static void maybe_resize(uv_loop_t* loop, unsigned int len) {
   }
 
   nwatchers = next_power_of_two(len + 2) - 2;
-  watchers = uv__reallocf(loop->watchers,
+  auto **watchers = create_ptrstruct_free<uv__io_t*>(loop->watchers,
                           (nwatchers + 2) * sizeof(loop->watchers[0]));
 
   if (watchers == NULL)
     abort();
   for (i = loop->nwatchers; i < nwatchers; i++)
     watchers[i] = NULL;
-  watchers[nwatchers] = fake_watcher_list;
-  watchers[nwatchers + 1] = fake_watcher_count;
+  watchers[nwatchers] = reinterpret_cast<uv__io_s*>(fake_watcher_list);
+  watchers[nwatchers + 1] = reinterpret_cast<uv__io_s*>(fake_watcher_count);
 
   loop->watchers = watchers;
   loop->nwatchers = nwatchers;
@@ -1164,7 +1163,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
 
   for (;;) {
     uv__free(buf);
-    buf = uv__malloc(bufsize);
+    buf = create_ptrstruct<char>(bufsize);
 
     if (buf == NULL)
       return UV_ENOMEM;
@@ -1191,7 +1190,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
   name_size = strlen(pw.pw_name) + 1;
   homedir_size = strlen(pw.pw_dir) + 1;
   shell_size = strlen(pw.pw_shell) + 1;
-  pwd->username = uv__malloc(name_size + homedir_size + shell_size);
+  pwd->username = create_ptrstruct<char>(name_size + homedir_size + shell_size);
 
   if (pwd->username == NULL) {
     uv__free(buf);
@@ -1250,12 +1249,12 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
   int i, j, cnt;
   uv_env_item_t* envitem;
 
-  *envitems = NULL;
+  *envitems = nullptr;
   *count = 0;
 
   for (i = 0; environ[i] != NULL; i++);
 
-  *envitems = uv__calloc(i, sizeof(**envitems));
+  *envitems = create_ptrstruct<uv_env_item_t>(i, sizeof(uv_env_item_t));
 
   if (envitems == NULL)
     return UV_ENOMEM;

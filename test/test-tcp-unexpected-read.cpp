@@ -74,7 +74,7 @@ static void write_cb(uv_write_t* req, int status) {
 static void connection_cb(uv_stream_t* handle, int status) {
   uv_buf_t buf;
 
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
 
   ASSERT(0 == status);
   ASSERT(0 == uv_accept(handle, (uv_stream_t*) &peer_handle));

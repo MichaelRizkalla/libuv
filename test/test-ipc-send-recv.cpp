@@ -142,7 +142,7 @@ static void connect_cb(uv_connect_t* req, int status) {
   ASSERT(req == &ctx.connect_req);
   ASSERT(status == 0);
 
-  buf = uv_buf_init(".", 1);
+  buf = uv_buf_init(const_cast<char*>("."), 1);
   r = uv_write2(&ctx.write_req,
                 (uv_stream_t*)&ctx.channel,
                 &buf, 1,
@@ -153,7 +153,7 @@ static void connect_cb(uv_connect_t* req, int status) {
   /* Perform two writes to the same pipe to make sure that on Windows we are
    * not running into issue 505:
    *   https://github.com/libuv/libuv/issues/505 */
-  buf = uv_buf_init(".", 1);
+  buf = uv_buf_init(const_cast<char*>("."), 1);
   r = uv_write2(&ctx.write_req2,
                 (uv_stream_t*)&ctx.channel,
                 &buf, 1,
@@ -336,7 +336,7 @@ static void read_cb(uv_stream_t* handle,
     r = uv_accept(handle, &recv->stream);
     ASSERT(r == 0);
 
-    wrbuf = uv_buf_init(".", 1);
+    wrbuf = uv_buf_init(const_cast<char*>("."), 1);
     r = uv_write2(write_req,
                   (uv_stream_t*)&ctx2.channel,
                   &wrbuf,

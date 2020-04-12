@@ -24,7 +24,7 @@
 
 #include <math.h>
 #include <stdio.h>
-
+#include "utils/allocator.cpp"
 
 static int TARGET_CONNECTIONS;
 #define WRITE_BUFFER_SIZE           8192
@@ -342,7 +342,7 @@ static void req_free(uv_req_t* uv_req) {
  */
 
 typedef struct buf_list_s {
-  uv_buf_t uv_buf_t;
+  struct uv_buf_t uv_buf_t;
   struct buf_list_s* next;
 } buf_list_t;
 
@@ -357,7 +357,7 @@ static void buf_alloc(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
   if (ab != NULL)
     buf_freelist = ab->next;
   else {
-    ab = malloc(size + sizeof(*ab));
+    ab = test_create_ptrstruct<buf_list_t>(size + sizeof(*ab));
     ab->uv_buf_t.len = size;
     ab->uv_buf_t.base = (char*) (ab + 1);
   }

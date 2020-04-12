@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 typedef struct {
   uv_tcp_t handle;
   uv_shutdown_t shutdown_req;
@@ -40,13 +40,13 @@ static void close_cb(uv_handle_t* handle);
 
 
 static void connection_cb(uv_stream_t* stream, int status) {
-  conn_rec* conn;
   int r;
 
   ASSERT(status == 0);
   ASSERT(stream == (uv_stream_t*)&tcp_server);
 
-  conn = malloc(sizeof *conn);
+  auto *conn = test_create_ptrstruct<conn_rec>(sizeof(conn_rec));
+
   ASSERT(conn != NULL);
 
   r = uv_tcp_init(stream->loop, &conn->handle);

@@ -48,7 +48,7 @@ int uv__random_sysctl(void* buf, size_t buflen) {
   char* pe;
   size_t n;
 
-  p = buf;
+  p = reinterpret_cast<char*>(buf);
   pe = p + buflen;
 
   while (p < pe) {

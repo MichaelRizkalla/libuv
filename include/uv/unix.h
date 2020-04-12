@@ -118,10 +118,10 @@ struct uv__io_s {
 #endif
 
 /* Note: May be cast to struct iovec. See writev(2). */
-typedef struct uv_buf_t {
+struct uv_buf_t {
   char* base;
   size_t len;
-} uv_buf_t;
+};
 
 typedef int uv_file;
 typedef int uv_os_sock_t;

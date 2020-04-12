@@ -31,7 +31,7 @@
 #include <unistd.h>  /* getpagesize() */
 
 #include <limits.h>
-
+#include "../utils/allocator.cpp"
 #ifdef __MVS__
 #include <sys/ipc.h>
 #include <sys/sem.h>
@@ -524,9 +524,8 @@ STATIC_ASSERT(sizeof(uv_sem_t) >= sizeof(uv_semaphore_t*));
 
 static int uv__custom_sem_init(uv_sem_t* sem_, unsigned int value) {
   int err;
-  uv_semaphore_t* sem;
 
-  sem = uv__malloc(sizeof(*sem));
+  auto *sem = create_ptrstruct<uv_semaphore_t>(sizeof(uv_semaphore_t));
   if (sem == NULL)
     return UV_ENOMEM;
 

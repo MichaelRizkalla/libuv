@@ -3,7 +3,7 @@
 
 #include "uv.h"
 #include "internal.h"
-
+#include "../utils/allocator.cpp"
 /* Files are only inserted in uv__fd_hash when the UV_FS_O_FILEMAP flag is
  * specified. Thus, when uv__fd_hash_get returns true, the file mapping in the
  * info structure should be used for read/write operations.
@@ -123,8 +123,8 @@ INLINE static void uv__fd_hash_add(int fd, struct uv__fd_info_s* info) {
     i = bucket_ptr->size % UV__FD_HASH_GROUP_SIZE;
 
     if (bucket_ptr->size != 0 && i == 0) {
-      struct uv__fd_hash_entry_group_s* new_group_ptr =
-        uv__malloc(sizeof(*new_group_ptr));
+      uv__fd_hash_entry_group_s* new_group_ptr =
+        create_ptrstruct<uv__fd_hash_entry_group_s>(sizeof(uv__fd_hash_entry_group_s));
       if (new_group_ptr == NULL) {
         uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
       }

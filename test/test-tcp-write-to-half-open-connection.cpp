@@ -57,7 +57,7 @@ static void connection_cb(uv_stream_t* server, int status) {
   r = uv_read_start((uv_stream_t*)&tcp_peer, alloc_cb, read_cb);
   ASSERT(r == 0);
 
-  buf.base = "hello\n";
+  buf.base = const_cast<char*>("hello\n");
   buf.len = 6;
 
   r = uv_write(&write_req, (uv_stream_t*)&tcp_peer, &buf, 1, write_cb);

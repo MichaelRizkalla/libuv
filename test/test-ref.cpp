@@ -323,7 +323,7 @@ TEST_IMPL(udp_ref2) {
 
 TEST_IMPL(udp_ref3) {
   struct sockaddr_in addr;
-  uv_buf_t buf = uv_buf_init("PING", 4);
+  uv_buf_t buf = uv_buf_init(const_cast<char*>("PING"), 4);
   uv_udp_send_t req;
   uv_udp_t h;
 
@@ -399,7 +399,7 @@ TEST_IMPL(pipe_ref4) {
 
 TEST_IMPL(process_ref) {
   /* spawn_helper4 blocks indefinitely. */
-  char *argv[] = { NULL, "spawn_helper4", NULL };
+  char *argv[] = { nullptr, const_cast<char*>("spawn_helper4"), nullptr };
   uv_process_options_t options;
   size_t exepath_size;
   char exepath[256];

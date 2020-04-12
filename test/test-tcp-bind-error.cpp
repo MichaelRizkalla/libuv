@@ -235,7 +235,7 @@ TEST_IMPL(tcp_bind_writable_flags) {
   ASSERT(0 == uv_is_writable((uv_stream_t*) &server));
   ASSERT(0 == uv_is_readable((uv_stream_t*) &server));
 
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
   r = uv_write(&write_req, (uv_stream_t*) &server, &buf, 1, NULL);
   ASSERT(r == UV_EPIPE);
   r = uv_shutdown(&shutdown_req, (uv_stream_t*) &server, NULL);

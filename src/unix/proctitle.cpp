@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include "../utils/allocator.cpp"
 struct uv__process_title {
   char* str;
   size_t len;  /* Length of the current process title. */
@@ -45,7 +45,6 @@ static void init_process_title_mutex_once(void) {
 
 char** uv_setup_args(int argc, char** argv) {
   struct uv__process_title pt;
-  char** new_argv;
   size_t size;
   char* s;
   int i;
@@ -65,7 +64,7 @@ char** uv_setup_args(int argc, char** argv) {
   /* Add space for the argv pointers. */
   size += (argc + 1) * sizeof(char*);
 
-  new_argv = uv__malloc(size);
+  auto **new_argv = create_ptrstruct<char*>(size);
   if (new_argv == NULL)
     return argv;
 

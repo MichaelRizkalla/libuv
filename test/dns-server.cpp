@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "utils/allocator.cpp"
 
 typedef struct {
   uv_write_t req;
@@ -244,7 +244,7 @@ static void after_read(uv_stream_t* handle,
       free(buf->base);
     }
 
-    req = malloc(sizeof *req);
+    req = test_create_ptrstruct<uv_shutdown_t>(sizeof(uv_shutdown_t));
     uv_shutdown(req, handle, after_shutdown);
 
     return;
@@ -268,7 +268,7 @@ static void on_close(uv_handle_t* peer) {
 static void buf_alloc(uv_handle_t* handle,
                       size_t suggested_size,
                       uv_buf_t* buf) {
-  buf->base = malloc(suggested_size);
+  buf->base = test_create_ptrstruct<char>(suggested_size);
   buf->len = suggested_size;
 }
 

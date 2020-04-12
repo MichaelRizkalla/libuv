@@ -28,7 +28,7 @@
 #include "internal.h"
 #include "handle-inl.h"
 #include "req-inl.h"
-
+#include "../utils/allocator.cpp"
 
 const unsigned int uv_directory_watcher_buffer_size = 4096;
 
@@ -73,7 +73,7 @@ static void uv_relative_path(const WCHAR* filename,
   if (dirlen > 0 && dir[dirlen - 1] == '\\')
     dirlen--;
   relpathlen = filenamelen - dirlen - 1;
-  *relpath = uv__malloc((relpathlen + 1) * sizeof(WCHAR));
+  *relpath = create_ptrstruct<WCHAR>((relpathlen + 1) * sizeof(WCHAR));
   if (!*relpath)
     uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
   wcsncpy(*relpath, filename + dirlen + 1, relpathlen);

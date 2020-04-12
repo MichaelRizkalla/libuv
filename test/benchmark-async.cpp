@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "utils/allocator.cpp"
 #define NUM_PINGS (1000 * 1000)
 
 struct ctx {
@@ -41,31 +41,31 @@ struct ctx {
 
 
 static void worker_async_cb(uv_async_t* handle) {
-  struct ctx* ctx = container_of(handle, struct ctx, worker_async);
+  ctx* _ctx = container_of(handle, ctx, worker_async);
 
-  ASSERT(0 == uv_async_send(&ctx->main_async));
-  ctx->worker_sent++;
-  ctx->worker_seen++;
+  ASSERT(0 == uv_async_send(&_ctx->main_async));
+  _ctx->worker_sent++;
+  _ctx->worker_seen++;
 
-  if (ctx->worker_sent >= NUM_PINGS)
-    uv_close((uv_handle_t*) &ctx->worker_async, NULL);
+  if (_ctx->worker_sent >= NUM_PINGS)
+    uv_close((uv_handle_t*) &_ctx->worker_async, NULL);
 }
 
 
 static void main_async_cb(uv_async_t* handle) {
-  struct ctx* ctx = container_of(handle, struct ctx, main_async);
+  ctx* _ctx = container_of(handle, ctx, main_async);
 
-  ASSERT(0 == uv_async_send(&ctx->worker_async));
-  ctx->main_sent++;
-  ctx->main_seen++;
+  ASSERT(0 == uv_async_send(&_ctx->worker_async));
+  _ctx->main_sent++;
+  _ctx->main_seen++;
 
-  if (ctx->main_sent >= NUM_PINGS)
-    uv_close((uv_handle_t*) &ctx->main_async, NULL);
+  if (_ctx->main_sent >= NUM_PINGS)
+    uv_close((uv_handle_t*) &_ctx->main_async, NULL);
 }
 
 
 static void worker(void* arg) {
-  struct ctx* ctx = arg;
+  struct ctx* ctx = static_cast<struct ctx*>(arg);
   ASSERT(0 == uv_async_send(&ctx->main_async));
   ASSERT(0 == uv_run(&ctx->loop, UV_RUN_DEFAULT));
   uv_loop_close(&ctx->loop);
@@ -73,12 +73,11 @@ static void worker(void* arg) {
 
 
 static int test_async(int nthreads) {
-  struct ctx* threads;
   struct ctx* ctx;
   uint64_t time;
   int i;
 
-  threads = calloc(nthreads, sizeof(threads[0]));
+  auto *threads = test_create_ptrstruct<struct ctx>(nthreads, sizeof(struct ctx));
   ASSERT(threads != NULL);
 
   for (i = 0; i < nthreads; i++) {

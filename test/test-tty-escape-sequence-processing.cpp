@@ -29,7 +29,7 @@
 
 #include <errno.h>
 #include <string.h>
-
+#include "utils/allocator.cpp"
 #define ESC "\033"
 #define CSI ESC "["
 #define ST ESC "\\"
@@ -211,7 +211,7 @@ static void capture_screen(uv_tty_t* tty_out, struct captured_screen* cs) {
   get_screen_info(tty_out, &(cs->si));
   origin.X = 0;
   origin.Y = cs->si.csbi.srWindow.Top;
-  cs->text = malloc(cs->si.length * sizeof(*cs->text));
+  cs->text = test_create_ptrstruct<char>(cs->si.length * sizeof(*cs->text));
   ASSERT(cs->text != NULL);
   cs->attributes = (WORD*) malloc(cs->si.length * sizeof(*cs->attributes));
   ASSERT(cs->attributes != NULL);

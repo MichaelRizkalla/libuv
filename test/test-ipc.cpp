@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include "utils/allocator.cpp"
 static uv_pipe_t channel;
 static uv_tcp_t tcp_server;
 static uv_tcp_t tcp_server2;
@@ -82,7 +82,7 @@ static void on_connection(uv_stream_t* server, int status) {
     ASSERT_EQ(status, 0);
     ASSERT_PTR_EQ(&tcp_server, server);
 
-    conn = malloc(sizeof(*conn));
+    conn = test_create_ptrstruct<uv_tcp_t>(sizeof(uv_tcp_t));
     ASSERT_NOT_NULL(conn);
     r = uv_tcp_init(server->loop, conn);
     ASSERT_EQ(r, 0);
@@ -91,7 +91,7 @@ static void on_connection(uv_stream_t* server, int status) {
     ASSERT_EQ(r, 0);
 
     uv_close((uv_handle_t*)conn, close_server_conn_cb);
-    uv_close((uv_handle_t*)server, NULL);
+    uv_close((uv_handle_t*)server, nullptr);
     local_conn_accepted = 1;
   }
 }
@@ -111,19 +111,19 @@ static void exit_cb(uv_process_t* process,
 static void on_alloc(uv_handle_t* handle,
                      size_t suggested_size,
                      uv_buf_t* buf) {
-  buf->base = malloc(suggested_size);
+  buf->base = test_create_ptrstruct<char>(suggested_size);
   buf->len = suggested_size;
 }
 
 
 static void close_client_conn_cb(uv_handle_t* handle) {
-  tcp_conn* p = (tcp_conn*)handle->data;
+  tcp_conn* p = static_cast<tcp_conn*>(handle->data);
   free(p);
 }
 
 
 static void connect_cb(uv_connect_t* req, int status) {
-  uv_close((uv_handle_t*)req->handle, close_client_conn_cb);
+  uv_close(reinterpret_cast<uv_handle_t*>(req->handle), close_client_conn_cb);
 }
 
 
@@ -133,7 +133,7 @@ static void make_many_connections(void) {
   int r, i;
 
   for (i = 0; i < CONN_COUNT; i++) {
-    conn = malloc(sizeof(*conn));
+    conn = test_create_ptrstruct<tcp_conn>(sizeof(tcp_conn));
     ASSERT_NOT_NULL(conn);
 
     r = uv_tcp_init(uv_default_loop(), &conn->conn);
@@ -318,8 +318,8 @@ void spawn_helper(uv_pipe_t* channel,
   options.stdio = stdio;
   options.stdio_count = ARRAY_SIZE(stdio);
 
-  stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE;
-  stdio[0].data.stream = (uv_stream_t*) channel;
+  stdio[0].flags = static_cast<uv_stdio_flags>(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
+  stdio[0].data.stream = reinterpret_cast<uv_stream_t*>(channel);
   stdio[1].flags = UV_INHERIT_FD;
   stdio[1].data.fd = 1;
   stdio[2].flags = UV_INHERIT_FD;
@@ -340,7 +340,7 @@ static void on_tcp_write(uv_write_t* req, int status) {
 static void on_read_alloc(uv_handle_t* handle,
                           size_t suggested_size,
                           uv_buf_t* buf) {
-  buf->base = malloc(suggested_size);
+  buf->base = test_create_ptrstruct<char>(suggested_size);
   buf->len = suggested_size;
 }
 
@@ -701,7 +701,7 @@ static void ipc_on_connection_tcp_conn(uv_stream_t* server, int status) {
   ASSERT_EQ(status, 0);
   ASSERT_PTR_EQ(&tcp_server, server);
 
-  conn = malloc(sizeof(*conn));
+  conn = test_create_ptrstruct<uv_tcp_t>(sizeof(uv_tcp_t));
   ASSERT_NOT_NULL(conn);
 
   r = uv_tcp_init(server->loop, conn);

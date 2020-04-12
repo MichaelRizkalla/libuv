@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <poll.h>
-
+#include "../utils/allocator.cpp"
 #if defined(__APPLE__) && !TARGET_OS_IPHONE
 # include <crt_externs.h>
 # define environ (*_NSGetEnviron())
@@ -442,7 +442,7 @@ int uv_spawn(uv_loop_t* loop,
   err = UV_ENOMEM;
   pipes = pipes_storage;
   if (stdio_count > (int) ARRAY_SIZE(pipes_storage))
-    pipes = uv__malloc(stdio_count * sizeof(*pipes));
+    pipes = static_cast<int(*)[2]>(uv__malloc(stdio_count * sizeof(*pipes)));
 
   if (pipes == NULL)
     goto error;

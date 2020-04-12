@@ -44,7 +44,7 @@ static void incoming_close_cb(uv_handle_t* handle) {
 
   close_cb_called++;
 
-  buf = uv_buf_init("meow", 4);
+  buf = uv_buf_init(const_cast<char*>("meow"), 4);
   while (r > 0)
     r = uv_try_write((uv_stream_t*) &client, &buf, 1);
   fprintf(stderr, "uv_try_write error: %d %s\n", r, uv_strerror(r));

@@ -42,7 +42,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
-
+#include "../utils/allocator.cpp"
 #define HAVE_IFADDRS_H 1
 
 #ifdef __UCLIBC__
@@ -369,7 +369,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       x.events = events;
       assert(loop->watchers != NULL);
       loop->watchers[loop->nwatchers] = x.watchers;
-      loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
+      loop->watchers[loop->nwatchers + 1] = static_cast<uv__io_t*>((void*) (uintptr_t) nfds);
     }
 
     for (i = 0; i < nfds; i++) {
@@ -625,7 +625,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
     goto out;
 
   err = UV_ENOMEM;
-  ci = uv__calloc(numcpus, sizeof(*ci));
+  ci = create_ptrstruct<uv_cpu_info_t>(numcpus, sizeof(uv_cpu_info_t));
   if (ci == NULL)
     goto out;
 
@@ -904,7 +904,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   }
 
   /* Make sure the memory is initiallized to zero using calloc() */
-  *addresses = uv__calloc(*count, sizeof(**addresses));
+  *addresses = create_ptrstruct<uv_interface_address_t>(*count, sizeof(**addresses));
   if (!(*addresses)) {
     freeifaddrs(addrs);
     return UV_ENOMEM;

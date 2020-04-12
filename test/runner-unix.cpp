@@ -96,11 +96,11 @@ int process_start(char* name, char* part, process_info_t* p, int is_helper) {
    * They're killed after the test and as such never get a chance to clean up.
    */
   if (is_helper == 0 && arg != NULL && atoi(arg) != 0) {
-    args[n++] = "valgrind";
-    args[n++] = "--quiet";
-    args[n++] = "--leak-check=full";
-    args[n++] = "--show-reachable=yes";
-    args[n++] = "--error-exitcode=125";
+    args[n++] = const_cast<char*>("valgrind");
+    args[n++] = const_cast<char*>("--quiet");
+    args[n++] = const_cast<char*>("--leak-check=full");
+    args[n++] = const_cast<char*>("--show-reachable=yes");
+    args[n++] = const_cast<char*>("--error-exitcode=125");
   }
 
   args[n++] = executable_path;
@@ -191,7 +191,7 @@ typedef struct {
  * timeout.
  */
 static void* dowait(void* data) {
-  dowait_args* args = data;
+  dowait_args* args = static_cast<dowait_args*>(data);
 
   int i, r;
   process_info_t* p;

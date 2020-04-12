@@ -107,7 +107,7 @@ TEST_IMPL(process_title_big_argv) {
    * run-tests.c thinks it's the name of a test to run.
    */
   args[0] = exepath;
-  args[1] = "process_title_big_argv_helper";
+  args[1] = const_cast<char*>("process_title_big_argv_helper");
   args[2] = jumbo;
   args[3] = jumbo;
   args[4] = NULL;

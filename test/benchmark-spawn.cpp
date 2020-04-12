@@ -108,7 +108,7 @@ static void spawn(void) {
   ASSERT(pipe_open == 0);
 
   args[0] = exepath;
-  args[1] = "spawn_helper";
+  args[1] = const_cast<char*>("spawn_helper");
   args[2] = NULL;
   options.file = exepath;
   options.args = args;
@@ -119,7 +119,7 @@ static void spawn(void) {
   options.stdio = stdio;
   options.stdio_count = 2;
   options.stdio[0].flags = UV_IGNORE;
-  options.stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+  options.stdio[1].flags = static_cast<uv_stdio_flags>(UV_CREATE_PIPE | UV_WRITABLE_PIPE);
   options.stdio[1].data.stream = (uv_stream_t*)&out;
 
   r = uv_spawn(loop, &process, &options);

@@ -179,12 +179,12 @@ extern "C" {
   XX(GETNAMEINFO, getnameinfo)                                                \
   XX(RANDOM, random)                                                          \
 
-typedef enum {
+enum uv_errno_t : ssize_t{
 #define XX(code, _) UV_ ## code = UV__ ## code,
   UV_ERRNO_MAP(XX)
 #undef XX
   UV_ERRNO_MAX = UV__EOF - 1
-} uv_errno_t;
+};
 
 typedef enum {
   UV_UNKNOWN_HANDLE = 0,

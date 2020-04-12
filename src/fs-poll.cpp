@@ -78,7 +78,7 @@ int uv_fs_poll_start(uv_fs_poll_t* handle,
 
   loop = handle->loop;
   len = strlen(path);
-  auto ctx = create_struct<poll_ctx *>(1, sizeof(poll_ctx) + len);
+  auto *ctx = create_ptrstruct<poll_ctx>(1, sizeof(poll_ctx) + len);
 
   if (ctx == NULL)
     return UV_ENOMEM;
@@ -101,8 +101,8 @@ int uv_fs_poll_start(uv_fs_poll_t* handle,
   if (err < 0)
     goto error;
 
-  if (handle->poll_ctx != NULL)
-    ctx->previous = handle->poll_ctx;
+  if (handle->poll_ctx != nullptr)
+    ctx->previous = static_cast<poll_ctx*>(handle->poll_ctx);
   handle->poll_ctx = ctx;
   uv__handle_start(handle);
 
@@ -120,7 +120,7 @@ int uv_fs_poll_stop(uv_fs_poll_t* handle) {
   if (!uv_is_active((uv_handle_t*)handle))
     return 0;
 
-  ctx = handle->poll_ctx;
+  ctx = static_cast<poll_ctx*>(handle->poll_ctx);
   assert(ctx != NULL);
   assert(ctx->parent_handle == handle);
 
@@ -145,7 +145,7 @@ int uv_fs_poll_getpath(uv_fs_poll_t* handle, char* buffer, size_t* size) {
     return UV_EINVAL;
   }
 
-  ctx = handle->poll_ctx;
+  ctx = static_cast<poll_ctx*>(handle->poll_ctx);
   assert(ctx != NULL);
 
   required_len = strlen(ctx->path);
@@ -245,7 +245,7 @@ static void timer_close_cb(uv_handle_t* timer) {
     if (handle->poll_ctx == NULL && uv__is_closing(handle))
       uv__make_close_pending((uv_handle_t*)handle);
   } else {
-    for (last = handle->poll_ctx, it = last->previous;
+    for (last = static_cast<poll_ctx*>(handle->poll_ctx), it = last->previous;
          it != ctx;
          last = it, it = it->previous) {
       assert(last->previous != NULL);

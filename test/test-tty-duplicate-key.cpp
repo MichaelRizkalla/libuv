@@ -28,13 +28,13 @@
 #include <io.h>
 #include <string.h>
 #include <windows.h>
-
+#include "utils/allocator.cpp"
 #define ESC "\x1b"
 #define EUR_UTF8 "\xe2\x82\xac"
 #define EUR_UNICODE 0x20AC
 
 
-const char* expect_str = NULL;
+const char* expect_str = nullptr;
 ssize_t expect_nread = 0;
 
 static void dump_str(const char* str, ssize_t len) {
@@ -54,8 +54,8 @@ static void print_err_msg(const char* expect, ssize_t expect_len,
 }
 
 static void tty_alloc(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
-  buf->base = malloc(size);
-  ASSERT(buf->base != NULL);
+  buf->base = test_create_ptrstruct<char>(size);
+  ASSERT(buf->base != nullptr);
   buf->len = size;
 }
 
@@ -71,7 +71,7 @@ static void tty_read(uv_stream_t* tty_in, ssize_t nread, const uv_buf_t* buf) {
       print_err_msg(expect_str, expect_nread, buf->base, nread);
       ASSERT(FALSE);
     }
-    uv_close((uv_handle_t*) tty_in, NULL);
+    uv_close((uv_handle_t*) tty_in, nullptr);
   } else {
     ASSERT(nread == 0);
   }
@@ -146,10 +146,10 @@ TEST_IMPL(tty_duplicate_vt100_fn_key) {
   handle = CreateFileA("conin$",
                        GENERIC_READ | GENERIC_WRITE,
                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                       NULL,
+                       nullptr,
                        OPEN_EXISTING,
                        FILE_ATTRIBUTE_NORMAL,
-                       NULL);
+                       nullptr);
   ASSERT(handle != INVALID_HANDLE_VALUE);
   ttyin_fd = _open_osfhandle((intptr_t) handle, 0);
   ASSERT(ttyin_fd >= 0);
@@ -200,10 +200,10 @@ TEST_IMPL(tty_duplicate_alt_modifier_key) {
   handle = CreateFileA("conin$",
                        GENERIC_READ | GENERIC_WRITE,
                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                       NULL,
+                       nullptr,
                        OPEN_EXISTING,
                        FILE_ATTRIBUTE_NORMAL,
-                       NULL);
+                       nullptr);
   ASSERT(handle != INVALID_HANDLE_VALUE);
   ttyin_fd = _open_osfhandle((intptr_t) handle, 0);
   ASSERT(ttyin_fd >= 0);
@@ -217,7 +217,7 @@ TEST_IMPL(tty_duplicate_alt_modifier_key) {
   r = uv_read_start((uv_stream_t*)&tty_in, tty_alloc, tty_read);
   ASSERT(r == 0);
 
-  expect_str = ESC"a"ESC"a";
+  expect_str = ESC "a" ESC "a";
   expect_nread = strlen(expect_str);
 
   /* Turn on raw mode. */
@@ -266,10 +266,10 @@ TEST_IMPL(tty_composing_character) {
   handle = CreateFileA("conin$",
                        GENERIC_READ | GENERIC_WRITE,
                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                       NULL,
+                       nullptr,
                        OPEN_EXISTING,
                        FILE_ATTRIBUTE_NORMAL,
-                       NULL);
+                       nullptr);
   ASSERT(handle != INVALID_HANDLE_VALUE);
   ttyin_fd = _open_osfhandle((intptr_t) handle, 0);
   ASSERT(ttyin_fd >= 0);

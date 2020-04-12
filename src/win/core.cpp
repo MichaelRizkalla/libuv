@@ -35,7 +35,7 @@
 #include "handle-inl.h"
 #include "heap-inl.h"
 #include "req-inl.h"
-
+#include "../utils/allocator.cpp"
 /* uv_once initialization guards */
 static uv_once_t uv_init_guard_ = UV_ONCE_INIT;
 
@@ -96,12 +96,12 @@ static int uv__loops_add(uv_loop_t* loop) {
 
   if (uv__loops_size == uv__loops_capacity) {
     new_capacity = uv__loops_capacity + UV__LOOPS_CHUNK_SIZE;
-    new_loops = uv__realloc(uv__loops, sizeof(uv_loop_t*) * new_capacity);
+    new_loops = create_ptrstruct<uv_loop_t*>(uv__loops, sizeof(uv_loop_t*) * new_capacity);
     if (!new_loops)
       goto failed_loops_realloc;
     uv__loops = new_loops;
     for (i = uv__loops_capacity; i < new_capacity; ++i)
-      uv__loops[i] = NULL;
+      uv__loops[i] = nullptr;
     uv__loops_capacity = new_capacity;
   }
   uv__loops[uv__loops_size] = loop;
@@ -131,13 +131,13 @@ static void uv__loops_remove(uv_loop_t* loop) {
     goto loop_removed;
 
   uv__loops[loop_index] = uv__loops[uv__loops_size - 1];
-  uv__loops[uv__loops_size - 1] = NULL;
+  uv__loops[uv__loops_size - 1] = nullptr;
   --uv__loops_size;
 
   if (uv__loops_size == 0) {
     uv__loops_capacity = 0;
     uv__free(uv__loops);
-    uv__loops = NULL;
+    uv__loops = nullptr;
     goto loop_removed;
   }
 
@@ -149,7 +149,7 @@ static void uv__loops_remove(uv_loop_t* loop) {
   smaller_capacity = uv__loops_capacity / 2;
   if (uv__loops_size >= smaller_capacity)
     goto loop_removed;
-  new_loops = uv__realloc(uv__loops, sizeof(uv_loop_t*) * smaller_capacity);
+  new_loops = create_ptrstruct<uv_loop_t*>(uv__loops, sizeof(uv_loop_t*) * smaller_capacity);
   if (!new_loops)
     goto loop_removed;
   uv__loops = new_loops;
@@ -168,7 +168,7 @@ void uv__wake_all_loops(void) {
     loop = uv__loops[i];
     assert(loop);
     if (loop->iocp != INVALID_HANDLE_VALUE)
-      PostQueuedCompletionStatus(loop->iocp, 0, 0, NULL);
+      PostQueuedCompletionStatus(loop->iocp, 0, 0, nullptr);
   }
   uv_mutex_unlock(&uv__loops_lock);
 }
@@ -229,8 +229,8 @@ int uv_loop_init(uv_loop_t* loop) {
   uv__once_init();
 
   /* Create an I/O completion port */
-  loop->iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
-  if (loop->iocp == NULL)
+  loop->iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, 1);
+  if (loop->iocp == nullptr)
     return uv_translate_sys_error(GetLastError());
 
   /* To prevent uninitialized memory access, loop->time must be initialized
@@ -244,25 +244,25 @@ int uv_loop_init(uv_loop_t* loop) {
   loop->active_reqs.count = 0;
   loop->active_handles = 0;
 
-  loop->pending_reqs_tail = NULL;
+  loop->pending_reqs_tail = nullptr;
 
-  loop->endgame_handles = NULL;
+  loop->endgame_handles = nullptr;
 
-  loop->timer_heap = timer_heap = uv__malloc(sizeof(*timer_heap));
-  if (timer_heap == NULL) {
+  loop->timer_heap = timer_heap = create_ptrstruct<heap>(sizeof(heap));
+  if (timer_heap == nullptr) {
     err = UV_ENOMEM;
     goto fail_timers_alloc;
   }
 
   heap_init(timer_heap);
 
-  loop->check_handles = NULL;
-  loop->prepare_handles = NULL;
-  loop->idle_handles = NULL;
+  loop->check_handles = nullptr;
+  loop->prepare_handles = nullptr;
+  loop->idle_handles = nullptr;
 
-  loop->next_prepare_handle = NULL;
-  loop->next_check_handle = NULL;
-  loop->next_idle_handle = NULL;
+  loop->next_prepare_handle = nullptr;
+  loop->next_check_handle = nullptr;
+  loop->next_idle_handle = nullptr;
 
   memset(&loop->poll_peer_sockets, 0, sizeof loop->poll_peer_sockets);
 
@@ -294,7 +294,7 @@ fail_async_init:
 
 fail_mutex_init:
   uv__free(timer_heap);
-  loop->timer_heap = NULL;
+  loop->timer_heap = nullptr;
 
 fail_timers_alloc:
   CloseHandle(loop->iocp);
@@ -328,7 +328,7 @@ void uv__loop_close(uv_loop_t* loop) {
    * close_cb (which we also skip defining). We'll assert later that queue was
    * actually empty and all reqs handled. */
   loop->wq_async.async_sent = 0;
-  loop->wq_async.close_cb = NULL;
+  loop->wq_async.close_cb = nullptr;
   uv__handle_closing(&loop->wq_async);
   uv__handle_close(&loop->wq_async);
 
@@ -345,7 +345,7 @@ void uv__loop_close(uv_loop_t* loop) {
   uv_mutex_destroy(&loop->wq_mutex);
 
   uv__free(loop->timer_heap);
-  loop->timer_heap = NULL;
+  loop->timer_heap = nullptr;
 
   CloseHandle(loop->iocp);
 }
@@ -499,7 +499,7 @@ static void uv__poll(uv_loop_t* loop, DWORD timeout) {
 static int uv__loop_alive(const uv_loop_t* loop) {
   return uv__has_active_handles(loop) ||
          uv__has_active_reqs(loop) ||
-         loop->endgame_handles != NULL;
+         loop->endgame_handles != nullptr;
 }
 
 
@@ -606,7 +606,7 @@ int uv__socket_sockopt(uv_handle_t* handle, int optname, int* value) {
   int len;
   SOCKET socket;
 
-  if (handle == NULL || value == NULL)
+  if (handle == nullptr || value == nullptr)
     return UV_EINVAL;
 
   if (handle->type == UV_TCP)

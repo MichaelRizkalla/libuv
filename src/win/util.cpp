@@ -38,7 +38,7 @@
 #include <windows.h>
 #include <userenv.h>
 #include <math.h>
-
+#include "../utils/allocator.cpp"
 /*
  * Max title length; the only thing MSDN tells us about the maximum length
  * of the console title is that it is smaller than 64K. However in practice
@@ -64,7 +64,8 @@
 #define MAX_ENV_VAR_LENGTH 32767
 
 /* A RtlGenRandom() by any other name... */
-extern BOOLEAN NTAPI SystemFunction036(PVOID Buffer, ULONG BufferLength);
+// Add extern "C" to link properly with advapi32.dll library with no naming decoration.
+extern "C" BOOLEAN NTAPI SystemFunction036(PVOID Buffer, ULONG BufferLength);
 
 /* Cached copy of the process title, plus a mutex guarding it. */
 static char *process_title;
@@ -99,7 +100,7 @@ int uv_exepath(char* buffer, size_t* size_ptr) {
   WCHAR* utf16_buffer;
   int err;
 
-  if (buffer == NULL || size_ptr == NULL || *size_ptr == 0) {
+  if (buffer == nullptr || size_ptr == nullptr || *size_ptr == 0) {
     return UV_EINVAL;
   }
 
@@ -116,7 +117,7 @@ int uv_exepath(char* buffer, size_t* size_ptr) {
   }
 
   /* Get the path as UTF-16. */
-  utf16_len = GetModuleFileNameW(NULL, utf16_buffer, utf16_buffer_len);
+  utf16_len = GetModuleFileNameW(nullptr, utf16_buffer, utf16_buffer_len);
   if (utf16_len <= 0) {
     err = GetLastError();
     goto error;
@@ -132,8 +133,8 @@ int uv_exepath(char* buffer, size_t* size_ptr) {
                                  -1,
                                  buffer,
                                  (int) *size_ptr,
-                                 NULL,
-                                 NULL);
+                                 nullptr,
+                                 nullptr);
   if (utf8_len == 0) {
     err = GetLastError();
     goto error;
@@ -157,7 +158,7 @@ int uv_cwd(char* buffer, size_t* size) {
   WCHAR utf16_buffer[MAX_PATH];
   int r;
 
-  if (buffer == NULL || size == NULL) {
+  if (buffer == nullptr || size == nullptr) {
     return UV_EINVAL;
   }
 
@@ -186,10 +187,10 @@ int uv_cwd(char* buffer, size_t* size) {
                           0,
                           utf16_buffer,
                           -1,
-                          NULL,
+                          nullptr,
                           0,
-                          NULL,
-                          NULL);
+                          nullptr,
+                          nullptr);
   if (r == 0) {
     return uv_translate_sys_error(GetLastError());
   } else if (r > (int) *size) {
@@ -204,8 +205,8 @@ int uv_cwd(char* buffer, size_t* size) {
                           -1,
                           buffer,
                           *size > INT_MAX ? INT_MAX : (int) *size,
-                          NULL,
-                          NULL);
+                          nullptr,
+                          nullptr);
   if (r == 0) {
     return uv_translate_sys_error(GetLastError());
   }
@@ -220,7 +221,7 @@ int uv_chdir(const char* dir) {
   size_t utf16_len;
   WCHAR drive_letter, env_var[4];
 
-  if (dir == NULL) {
+  if (dir == nullptr) {
     return UV_EINVAL;
   }
 
@@ -364,12 +365,12 @@ char** uv_setup_args(int argc, char** argv) {
 int uv_set_process_title(const char* title) {
   int err;
   int length;
-  WCHAR* title_w = NULL;
+  WCHAR* title_w = nullptr;
 
   uv__once_init();
 
   /* Find out how big the buffer for the wide-char title must be */
-  length = MultiByteToWideChar(CP_UTF8, 0, title, -1, NULL, 0);
+  length = MultiByteToWideChar(CP_UTF8, 0, title, -1, nullptr, 0);
   if (!length) {
     err = GetLastError();
     goto done;
@@ -427,7 +428,7 @@ static int uv__get_process_title(void) {
 int uv_get_process_title(char* buffer, size_t size) {
   size_t len;
 
-  if (buffer == NULL || size == 0)
+  if (buffer == nullptr || size == 0)
     return UV_EINVAL;
 
   uv__once_init();
@@ -500,7 +501,7 @@ int uv_resident_set_memory(size_t* rss) {
 
 int uv_uptime(double* uptime) {
   BYTE stack_buffer[4096];
-  BYTE* malloced_buffer = NULL;
+  BYTE* malloced_buffer = nullptr;
   BYTE* buffer = (BYTE*) stack_buffer;
   size_t buffer_size = sizeof(stack_buffer);
   DWORD data_size;
@@ -517,8 +518,8 @@ int uv_uptime(double* uptime) {
     data_size = (DWORD) buffer_size;
     result = RegQueryValueExW(HKEY_PERFORMANCE_DATA,
                               L"2",
-                              NULL,
-                              NULL,
+                              nullptr,
+                              nullptr,
                               buffer,
                               &data_size);
     if (result == ERROR_SUCCESS) {
@@ -537,7 +538,7 @@ int uv_uptime(double* uptime) {
     uv__free(malloced_buffer);
 
     buffer = malloced_buffer = (BYTE*) uv__malloc(buffer_size);
-    if (malloced_buffer == NULL) {
+    if (malloced_buffer == nullptr) {
       *uptime = 0;
       return UV_ENOMEM;
     }
@@ -610,24 +611,24 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
   int err;
   uv_cpu_info_t* cpu_info;
 
-  cpu_infos = NULL;
+  cpu_infos = nullptr;
   cpu_count = 0;
-  sppi = NULL;
+  sppi = nullptr;
 
   uv__once_init();
 
   GetSystemInfo(&system_info);
   cpu_count = system_info.dwNumberOfProcessors;
 
-  cpu_infos = uv__calloc(cpu_count, sizeof *cpu_infos);
-  if (cpu_infos == NULL) {
+  cpu_infos = create_ptrstruct<uv_cpu_info_t>(cpu_count, sizeof(uv_cpu_info_t));
+  if (cpu_infos == nullptr) {
     err = ERROR_OUTOFMEMORY;
     goto error;
   }
 
   sppi_size = cpu_count * sizeof(*sppi);
-  sppi = uv__malloc(sppi_size);
-  if (sppi == NULL) {
+  sppi = create_ptrstruct<SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION>(sppi_size);
+  if (sppi == nullptr) {
     err = ERROR_OUTOFMEMORY;
     goto error;
   }
@@ -670,8 +671,8 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
 
     err = RegQueryValueExW(processor_key,
                            L"~MHz",
-                           NULL,
-                           NULL,
+                           nullptr,
+                           nullptr,
                            (BYTE*)&cpu_speed,
                            &cpu_speed_size);
     if (err != ERROR_SUCCESS) {
@@ -681,8 +682,8 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
 
     err = RegQueryValueExW(processor_key,
                            L"ProcessorNameString",
-                           NULL,
-                           NULL,
+                           nullptr,
+                           nullptr,
                            (BYTE*)&cpu_brand,
                            &cpu_brand_size);
     RegCloseKey(processor_key);
@@ -711,7 +712,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
   return 0;
 
  error:
-  if (cpu_infos != NULL) {
+  if (cpu_infos != nullptr) {
     /* This is safe because the cpu_infos array is zeroed on allocation. */
     for (i = 0; i < cpu_count; i++)
       uv__free(cpu_infos[i].model);
@@ -805,7 +806,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
   int is_vista_or_greater;
   ULONG flags;
 
-  *addresses_ptr = NULL;
+  *addresses_ptr = nullptr;
   *count_ptr = 0;
 
   is_vista_or_greater = is_windows_version_or_greater(6, 0, 0, 0);
@@ -825,7 +826,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
   /* Fetch the size of the adapters reported by windows, and then get the list
    * itself. */
   win_address_buf_size = 0;
-  win_address_buf = NULL;
+  win_address_buf = nullptr;
 
   for (;;) {
     ULONG r;
@@ -835,7 +836,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
      * win_address_buf_size. */
     r = GetAdaptersAddresses(AF_UNSPEC,
                              flags,
-                             NULL,
+                             nullptr,
                              win_address_buf,
                              &win_address_buf_size);
 
@@ -846,18 +847,18 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
 
     switch (r) {
       case ERROR_BUFFER_OVERFLOW:
-        /* This happens when win_address_buf is NULL or too small to hold all
+        /* This happens when win_address_buf is nullptr or too small to hold all
          * adapters. */
-        win_address_buf = uv__malloc(win_address_buf_size);
-        if (win_address_buf == NULL)
+        win_address_buf = create_ptrstruct<IP_ADAPTER_ADDRESSES>(win_address_buf_size);
+        if (win_address_buf == nullptr)
           return UV_ENOMEM;
 
         continue;
 
       case ERROR_NO_DATA: {
         /* No adapters were found. */
-        uv_address_buf = uv__malloc(1);
-        if (uv_address_buf == NULL)
+        uv_address_buf = create_ptrstruct<uv_interface_address_t>(1);
+        if (uv_address_buf == nullptr)
           return UV_ENOMEM;
 
         *count_ptr = 0;
@@ -872,7 +873,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
       case ERROR_INVALID_PARAMETER:
         /* MSDN says:
          *   "This error is returned for any of the following conditions: the
-         *   SizePointer parameter is NULL, the Address parameter is not
+         *   SizePointer parameter is nullptr, the Address parameter is not
          *   AF_INET, AF_INET6, or AF_UNSPEC, or the address information for
          *   the parameters requested is greater than ULONG_MAX."
          * Since the first two conditions are not met, it must be that the
@@ -894,7 +895,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
   uv_address_buf_size = 0;
 
   for (adapter = win_address_buf;
-       adapter != NULL;
+       adapter != nullptr;
        adapter = adapter->Next) {
     IP_ADAPTER_UNICAST_ADDRESS* unicast_address;
     int name_size;
@@ -903,7 +904,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
      * interfaces that have no associated unicast address, as to avoid
      * allocating space for the name for this interface. */
     if (adapter->OperStatus != IfOperStatusUp ||
-        adapter->FirstUnicastAddress == NULL)
+        adapter->FirstUnicastAddress == nullptr)
       continue;
 
     /* Compute the size of the interface name. */
@@ -911,9 +912,9 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
                                     0,
                                     adapter->FriendlyName,
                                     -1,
-                                    NULL,
+                                    nullptr,
                                     0,
-                                    NULL,
+                                    nullptr,
                                     FALSE);
     if (name_size <= 0) {
       uv__free(win_address_buf);
@@ -925,7 +926,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
      * compute the size. */
     for (unicast_address = (IP_ADAPTER_UNICAST_ADDRESS*)
                            adapter->FirstUnicastAddress;
-         unicast_address != NULL;
+         unicast_address != nullptr;
          unicast_address = unicast_address->Next) {
       count++;
       uv_address_buf_size += sizeof(uv_interface_address_t);
@@ -933,8 +934,8 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
   }
 
   /* Allocate space to store interface data plus adapter names. */
-  uv_address_buf = uv__malloc(uv_address_buf_size);
-  if (uv_address_buf == NULL) {
+  uv_address_buf = create_ptrstruct<uv_interface_address_t>(uv_address_buf_size);
+  if (uv_address_buf == nullptr) {
     uv__free(win_address_buf);
     return UV_ENOMEM;
   }
@@ -946,14 +947,14 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
 
   /* Fill out the output buffer. */
   for (adapter = win_address_buf;
-       adapter != NULL;
+       adapter != nullptr;
        adapter = adapter->Next) {
     IP_ADAPTER_UNICAST_ADDRESS* unicast_address;
     int name_size;
     size_t max_name_size;
 
     if (adapter->OperStatus != IfOperStatusUp ||
-        adapter->FirstUnicastAddress == NULL)
+        adapter->FirstUnicastAddress == nullptr)
       continue;
 
     /* Convert the interface name to UTF8. */
@@ -966,7 +967,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
                                     -1,
                                     name_buf,
                                     (int) max_name_size,
-                                    NULL,
+                                    nullptr,
                                     FALSE);
     if (name_size <= 0) {
       uv__free(win_address_buf);
@@ -977,7 +978,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
     /* Add an uv_interface_address_t element for every unicast address. */
     for (unicast_address = (IP_ADAPTER_UNICAST_ADDRESS*)
                            adapter->FirstUnicastAddress;
-         unicast_address != NULL;
+         unicast_address != nullptr;
          unicast_address = unicast_address->Next) {
       struct sockaddr* sa;
       ULONG prefix_len;
@@ -1167,7 +1168,7 @@ int uv_os_tmpdir(char* buffer, size_t* size) {
   DWORD bufsize;
   size_t len;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   len = GetTempPathW(ARRAY_SIZE(path), path);
@@ -1188,7 +1189,7 @@ int uv_os_tmpdir(char* buffer, size_t* size) {
   }
 
   /* Check how much space we need */
-  bufsize = WideCharToMultiByte(CP_UTF8, 0, path, -1, NULL, 0, NULL, NULL);
+  bufsize = WideCharToMultiByte(CP_UTF8, 0, path, -1, nullptr, 0, nullptr, nullptr);
 
   if (bufsize == 0) {
     return uv_translate_sys_error(GetLastError());
@@ -1204,8 +1205,8 @@ int uv_os_tmpdir(char* buffer, size_t* size) {
                                 -1,
                                 buffer,
                                 *size,
-                                NULL,
-                                NULL);
+                                nullptr,
+                                nullptr);
 
   if (bufsize == 0)
     return uv_translate_sys_error(GetLastError());
@@ -1216,13 +1217,13 @@ int uv_os_tmpdir(char* buffer, size_t* size) {
 
 
 void uv_os_free_passwd(uv_passwd_t* pwd) {
-  if (pwd == NULL)
+  if (pwd == nullptr)
     return;
 
   uv__free(pwd->username);
   uv__free(pwd->homedir);
-  pwd->username = NULL;
-  pwd->homedir = NULL;
+  pwd->username = nullptr;
+  pwd->homedir = nullptr;
 }
 
 
@@ -1236,7 +1237,7 @@ void uv_os_free_passwd(uv_passwd_t* pwd) {
 int uv__convert_utf16_to_utf8(const WCHAR* utf16, int utf16len, char** utf8) {
   DWORD bufsize;
 
-  if (utf16 == NULL)
+  if (utf16 == nullptr)
     return UV_EINVAL;
 
   /* Check how much space we need */
@@ -1244,20 +1245,20 @@ int uv__convert_utf16_to_utf8(const WCHAR* utf16, int utf16len, char** utf8) {
                                 0,
                                 utf16,
                                 utf16len,
-                                NULL,
+                                nullptr,
                                 0,
-                                NULL,
-                                NULL);
+                                nullptr,
+                                nullptr);
 
   if (bufsize == 0)
     return uv_translate_sys_error(GetLastError());
 
   /* Allocate the destination buffer adding an extra byte for the terminating
-   * NULL. If utf16len is not -1 WideCharToMultiByte will not add it, so
+   * nullptr. If utf16len is not -1 WideCharToMultiByte will not add it, so
    * we do it ourselves always, just in case. */
-  *utf8 = uv__malloc(bufsize + 1);
+  *utf8 = create_ptrstruct<char>(bufsize + 1);
 
-  if (*utf8 == NULL)
+  if (*utf8 == nullptr)
     return UV_ENOMEM;
 
   /* Convert to UTF-8 */
@@ -1267,12 +1268,12 @@ int uv__convert_utf16_to_utf8(const WCHAR* utf16, int utf16len, char** utf8) {
                                 utf16len,
                                 *utf8,
                                 bufsize,
-                                NULL,
-                                NULL);
+                                nullptr,
+                                nullptr);
 
   if (bufsize == 0) {
     uv__free(*utf8);
-    *utf8 = NULL;
+    *utf8 = nullptr;
     return uv_translate_sys_error(GetLastError());
   }
 
@@ -1291,21 +1292,21 @@ int uv__convert_utf16_to_utf8(const WCHAR* utf16, int utf16len, char** utf8) {
 int uv__convert_utf8_to_utf16(const char* utf8, int utf8len, WCHAR** utf16) {
   int bufsize;
 
-  if (utf8 == NULL)
+  if (utf8 == nullptr)
     return UV_EINVAL;
 
   /* Check how much space we need */
-  bufsize = MultiByteToWideChar(CP_UTF8, 0, utf8, utf8len, NULL, 0);
+  bufsize = MultiByteToWideChar(CP_UTF8, 0, utf8, utf8len, nullptr, 0);
 
   if (bufsize == 0)
     return uv_translate_sys_error(GetLastError());
 
   /* Allocate the destination buffer adding an extra byte for the terminating
-   * NULL. If utf8len is not -1 MultiByteToWideChar will not add it, so
+   * nullptr. If utf8len is not -1 MultiByteToWideChar will not add it, so
    * we do it ourselves always, just in case. */
-  *utf16 = uv__malloc(sizeof(WCHAR) * (bufsize + 1));
+  *utf16 = create_ptrstruct<WCHAR>(sizeof(WCHAR) * (bufsize + 1));
 
-  if (*utf16 == NULL)
+  if (*utf16 == nullptr)
     return UV_ENOMEM;
 
   /* Convert to UTF-16 */
@@ -1313,7 +1314,7 @@ int uv__convert_utf8_to_utf16(const char* utf8, int utf8len, WCHAR** utf16) {
 
   if (bufsize == 0) {
     uv__free(*utf16);
-    *utf16 = NULL;
+    *utf16 = nullptr;
     return uv_translate_sys_error(GetLastError());
   }
 
@@ -1329,7 +1330,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
   DWORD bufsize;
   int r;
 
-  if (pwd == NULL)
+  if (pwd == nullptr)
     return UV_EINVAL;
 
   /* Get the home directory using GetUserProfileDirectoryW() */
@@ -1362,13 +1363,13 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
     return uv_translate_sys_error(r);
   }
 
-  pwd->homedir = NULL;
+  pwd->homedir = nullptr;
   r = uv__convert_utf16_to_utf8(path, -1, &pwd->homedir);
 
   if (r != 0)
     return r;
 
-  pwd->username = NULL;
+  pwd->username = nullptr;
   r = uv__convert_utf16_to_utf8(username, -1, &pwd->username);
 
   if (r != 0) {
@@ -1376,7 +1377,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
     return r;
   }
 
-  pwd->shell = NULL;
+  pwd->shell = nullptr;
   pwd->uid = -1;
   pwd->gid = -1;
 
@@ -1395,17 +1396,17 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
   int i, cnt;
   uv_env_item_t* envitem;
 
-  *envitems = NULL;
+  *envitems = nullptr;
   *count = 0;
 
   env = GetEnvironmentStringsW();
-  if (env == NULL)
+  if (env == nullptr)
     return 0;
 
   for (penv = env, i = 0; *penv != L'\0'; penv += wcslen(penv) + 1, i++);
 
-  *envitems = uv__calloc(i, sizeof(**envitems));
-  if (envitems == NULL) {
+  *envitems = create_ptrstruct<uv_env_item_t>(i, sizeof(uv_env_item_t));
+  if (envitems == nullptr) {
     FreeEnvironmentStringsW(env);
     return UV_ENOMEM;
   }
@@ -1423,7 +1424,7 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
     /* Using buf + 1 here because we know that `buf` has length at least 1,
      * and some special environment variables on Windows start with a = sign. */
     ptr = strchr(buf + 1, '=');
-    if (ptr == NULL) {
+    if (ptr == nullptr) {
       uv__free(buf);
       goto do_continue;
     }
@@ -1454,7 +1455,7 @@ fail:
   }
   uv__free(*envitems);
 
-  *envitems = NULL;
+  *envitems = nullptr;
   *count = 0;
   return UV_ENOMEM;
 }
@@ -1467,7 +1468,7 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
   size_t len;
   int r;
 
-  if (name == NULL || buffer == NULL || size == NULL || *size == 0)
+  if (name == nullptr || buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   r = uv__convert_utf8_to_utf16(name, -1, &name_w);
@@ -1487,7 +1488,7 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
   }
 
   /* Check how much space we need */
-  bufsize = WideCharToMultiByte(CP_UTF8, 0, var, -1, NULL, 0, NULL, NULL);
+  bufsize = WideCharToMultiByte(CP_UTF8, 0, var, -1, nullptr, 0, nullptr, nullptr);
 
   if (bufsize == 0) {
     return uv_translate_sys_error(GetLastError());
@@ -1503,8 +1504,8 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
                                 -1,
                                 buffer,
                                 *size,
-                                NULL,
-                                NULL);
+                                nullptr,
+                                nullptr);
 
   if (bufsize == 0)
     return uv_translate_sys_error(GetLastError());
@@ -1519,7 +1520,7 @@ int uv_os_setenv(const char* name, const char* value) {
   wchar_t* value_w;
   int r;
 
-  if (name == NULL || value == NULL)
+  if (name == nullptr || value == nullptr)
     return UV_EINVAL;
 
   r = uv__convert_utf8_to_utf16(name, -1, &name_w);
@@ -1549,7 +1550,7 @@ int uv_os_unsetenv(const char* name) {
   wchar_t* name_w;
   int r;
 
-  if (name == NULL)
+  if (name == nullptr)
     return UV_EINVAL;
 
   r = uv__convert_utf8_to_utf16(name, -1, &name_w);
@@ -1557,7 +1558,7 @@ int uv_os_unsetenv(const char* name) {
   if (r != 0)
     return r;
 
-  r = SetEnvironmentVariableW(name_w, NULL);
+  r = SetEnvironmentVariableW(name_w, nullptr);
   uv__free(name_w);
 
   if (r == 0)
@@ -1571,7 +1572,7 @@ int uv_os_gethostname(char* buffer, size_t* size) {
   char buf[UV_MAXHOSTNAMESIZE];
   size_t len;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   uv__once_init(); /* Initialize winsock */
@@ -1601,7 +1602,7 @@ static int uv__get_handle(uv_pid_t pid, int access, HANDLE* handle) {
   else
     *handle = OpenProcess(access, FALSE, pid);
 
-  if (*handle == NULL) {
+  if (*handle == nullptr) {
     r = GetLastError();
 
     if (r == ERROR_INVALID_PARAMETER)
@@ -1618,7 +1619,7 @@ int uv_os_getpriority(uv_pid_t pid, int* priority) {
   HANDLE handle;
   int r;
 
-  if (priority == NULL)
+  if (priority == nullptr)
     return UV_EINVAL;
 
   r = uv__get_handle(pid, PROCESS_QUERY_LIMITED_INFORMATION, &handle);
@@ -1699,7 +1700,7 @@ int uv_os_uname(uv_utsname_t* buffer) {
   int processor_level;
   int r;
 
-  if (buffer == NULL)
+  if (buffer == nullptr)
     return UV_EINVAL;
 
   uv__once_init();
@@ -1730,10 +1731,10 @@ int uv_os_uname(uv_utsname_t* buffer) {
   if (r == ERROR_SUCCESS) {
     product_name_w_size = sizeof(product_name_w);
     r = RegGetValueW(registry_key,
-                     NULL,
+                     nullptr,
                      L"ProductName",
                      RRF_RT_REG_SZ,
-                     NULL,
+                     nullptr,
                      (PVOID) product_name_w,
                      &product_name_w_size);
     RegCloseKey(registry_key);
@@ -1745,8 +1746,8 @@ int uv_os_uname(uv_utsname_t* buffer) {
                                          -1,
                                          buffer->version,
                                          sizeof(buffer->version),
-                                         NULL,
-                                         NULL);
+                                         nullptr,
+                                         nullptr);
       if (version_size == 0) {
         r = uv_translate_sys_error(GetLastError());
         goto error;
@@ -1765,8 +1766,8 @@ int uv_os_uname(uv_utsname_t* buffer) {
                             -1,
                             buffer->version + version_size,
                             sizeof(buffer->version) - version_size,
-                            NULL,
-                            NULL) == 0) {
+                            nullptr,
+                            nullptr) == 0) {
       r = uv_translate_sys_error(GetLastError());
       goto error;
     }
@@ -1853,7 +1854,7 @@ int uv_gettimeofday(uv_timeval64_t* tv) {
   FILETIME file_time;
   ULARGE_INTEGER ularge;
 
-  if (tv == NULL)
+  if (tv == nullptr)
     return UV_EINVAL;
 
   GetSystemTimeAsFileTime(&file_time);

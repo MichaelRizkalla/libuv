@@ -39,7 +39,7 @@
 
 #include <string.h>
 #include <errno.h>
-
+#include "utils/allocator.cpp"
 
 TEST_IMPL(tty) {
   int r, width, height;
@@ -152,7 +152,7 @@ TEST_IMPL(tty) {
 
 #ifdef _WIN32
 static void tty_raw_alloc(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
-  buf->base = malloc(size);
+  buf->base = test_create_ptrstruct<char>(size);
   buf->len = size;
 }
 

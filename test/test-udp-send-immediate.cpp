@@ -117,7 +117,7 @@ TEST_IMPL(udp_send_immediate) {
   ASSERT(r == 0);
 
   /* client sends "PING", then "PANG" */
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
 
   r = uv_udp_send(&req1,
                   &client,
@@ -127,7 +127,7 @@ TEST_IMPL(udp_send_immediate) {
                   cl_send_cb);
   ASSERT(r == 0);
 
-  buf = uv_buf_init("PANG", 4);
+  buf = uv_buf_init(const_cast<char*>("PANG"), 4);
 
   r = uv_udp_send(&req2,
                   &client,

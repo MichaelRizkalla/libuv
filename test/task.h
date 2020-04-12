@@ -111,12 +111,14 @@ typedef enum {
   }                                                       \
  } while (0)
 
+#define GetString(x) #x
+
 #define ASSERT_BASE(expr, a, operator, b, type, conv)        \
  do {                                                        \
   if (!(expr)) {                                             \
     fprintf(stderr,                                          \
             "Assertion failed in %s on line %d: `%s %s %s` " \
-            "(%"conv" %s %"conv")\n",                      \
+            "(%"#conv" %s %"#conv")\n",                      \
             __FILE__,                                        \
             __LINE__,                                        \
             #a,                                              \

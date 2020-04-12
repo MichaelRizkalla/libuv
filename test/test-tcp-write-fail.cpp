@@ -82,7 +82,7 @@ static void connect_cb(uv_connect_t* req, int status) {
   /* close the socket, the hard way */
   close_socket((uv_tcp_t*)stream);
 
-  buf = uv_buf_init("hello\n", 6);
+  buf = uv_buf_init(const_cast<char*>("hello\n"), 6);
   r = uv_write(&write_req, stream, &buf, 1, write_cb);
   ASSERT(r == 0);
 }

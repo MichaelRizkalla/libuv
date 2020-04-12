@@ -87,7 +87,7 @@ static int do_send(uv_udp_send_t* send_req) {
   uv_buf_t buf;
   struct sockaddr_in6 addr;
   
-  buf = uv_buf_init("PING", 4);
+  buf = uv_buf_init(const_cast<char*>("PING"), 4);
 
   ASSERT(0 == uv_ip6_addr(MULTICAST_ADDR, TEST_PORT, &addr));
 

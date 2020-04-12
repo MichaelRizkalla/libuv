@@ -164,7 +164,7 @@ static void write1_cb(uv_write_t* req, int status) {
   if (shutdown_requested)
     return;
 
-  buf = uv_buf_init("P", 1);
+  buf = uv_buf_init(const_cast<char*>("P"), 1);
   r = uv_write(&write_req, req->handle, &buf, 1, write1_cb);
   ASSERT(r == 0);
 
@@ -183,7 +183,7 @@ static void timer_cb(uv_timer_t* handle) {
 
 
 static void connect_cb(uv_connect_t* req, int status) {
-  uv_buf_t buf = uv_buf_init("PING", 4);
+  uv_buf_t buf = uv_buf_init(const_cast<char*>("PING"), 4);
   uv_stream_t* stream;
   int r;
 
@@ -223,7 +223,7 @@ static void connect1_cb(uv_connect_t* req, int status) {
   r = uv_timer_start(&tm, timer_cb, 2000, 0);
   ASSERT(r == 0);
 
-  buf = uv_buf_init("P", 1);
+  buf = uv_buf_init(const_cast<char*>("P"), 1);
   r = uv_write(&write_req, stream, &buf, 1, write1_cb);
   ASSERT(r == 0);
 
@@ -335,7 +335,7 @@ TEST_IMPL(tcp_open_connected) {
   struct sockaddr_in addr;
   uv_tcp_t client;
   uv_os_sock_t sock;
-  uv_buf_t buf = uv_buf_init("PING", 4);
+  uv_buf_t buf = uv_buf_init(const_cast<char*>("PING"), 4);
 
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &addr));
 
