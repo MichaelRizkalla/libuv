@@ -53,7 +53,7 @@ static int uv__signal_compare(uv_signal_t* w1, uv_signal_t* w2) {
   if (w1->signum > w2->signum) return 1;
 
   /* Sort by loop pointer, so we can easily look up the first item after
-   * { .signum = x, .loop = NULL }. */
+   * { .signum = x, .loop = nullptr }. */
   if ((uintptr_t) w1->loop < (uintptr_t) w2->loop) return -1;
   if ((uintptr_t) w1->loop > (uintptr_t) w2->loop) return 1;
 
@@ -82,10 +82,10 @@ int uv__signal_dispatch(int signum) {
   EnterCriticalSection(&uv__signal_lock);
 
   lookup.signum = signum;
-  lookup.loop = NULL;
+  lookup.loop = nullptr;
 
   for (handle = RB_NFIND(uv_signal_tree_s, &uv__signal_tree, &lookup);
-       handle != NULL && handle->signum == signum;
+       handle != nullptr && handle->signum == signum;
        handle = RB_NEXT(uv_signal_tree_s, &uv__signal_tree, handle)) {
     unsigned long previous = InterlockedExchange(
             (volatile LONG*) &handle->pending_signum, signum);
@@ -143,7 +143,7 @@ int uv_signal_init(uv_loop_t* loop, uv_signal_t* handle) {
   uv__handle_init(loop, (uv_handle_t*) handle, UV_SIGNAL);
   handle->pending_signum = 0;
   handle->signum = 0;
-  handle->signal_cb = NULL;
+  handle->signal_cb = nullptr;
 
   UV_REQ_INIT(&handle->signal_req, UV_SIGNAL_REQ);
   handle->signal_req.data = handle;
@@ -265,6 +265,7 @@ void uv_signal_close(uv_loop_t* loop, uv_signal_t* handle) {
 
 
 void uv_signal_endgame(uv_loop_t* loop, uv_signal_t* handle) {
+  (void)loop;
   assert(handle->flags & UV_HANDLE_CLOSING);
   assert(!(handle->flags & UV_HANDLE_CLOSED));
 

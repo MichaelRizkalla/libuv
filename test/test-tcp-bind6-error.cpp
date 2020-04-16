@@ -29,7 +29,7 @@ static int close_cb_called = 0;
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -54,9 +54,9 @@ TEST_IMPL(tcp_bind6_error_addrinuse) {
   r = uv_tcp_bind(&server2, (const struct sockaddr*) &addr, 0);
   ASSERT(r == 0);
 
-  r = uv_listen((uv_stream_t*)&server1, 128, NULL);
+  r = uv_listen((uv_stream_t*)&server1, 128, nullptr);
   ASSERT(r == 0);
-  r = uv_listen((uv_stream_t*)&server2, 128, NULL);
+  r = uv_listen((uv_stream_t*)&server2, 128, nullptr);
   ASSERT(r == UV_EADDRINUSE);
 
   uv_close((uv_handle_t*)&server1, close_cb);
@@ -124,7 +124,7 @@ TEST_IMPL(tcp_bind6_error_fault) {
   return 0;
 }
 
-/* Notes: On Linux uv_bind6(server, NULL) will segfault the program.  */
+/* Notes: On Linux uv_bind6(server, nullptr) will segfault the program.  */
 
 TEST_IMPL(tcp_bind6_error_inval) {
   struct sockaddr_in6 addr1;

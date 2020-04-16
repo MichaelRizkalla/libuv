@@ -46,92 +46,92 @@ sPowerRegisterSuspendResumeNotification pPowerRegisterSuspendResumeNotification;
 sSetWinEventHook pSetWinEventHook;
 
 
-void uv_winapi_init(void) {
+void uv_winapi_init() {
   HMODULE ntdll_module;
   HMODULE powrprof_module;
   HMODULE user32_module;
   HMODULE kernel32_module;
 
   ntdll_module = GetModuleHandleA("ntdll.dll");
-  if (ntdll_module == NULL) {
+  if (ntdll_module == nullptr) {
     uv_fatal_error(GetLastError(), "GetModuleHandleA");
   }
 
-  pRtlGetVersion = (sRtlGetVersion) GetProcAddress(ntdll_module,
-                                                   "RtlGetVersion");
+  pRtlGetVersion = reinterpret_cast<sRtlGetVersion>(GetProcAddress(ntdll_module,
+                                                   "RtlGetVersion"));
 
-  pRtlNtStatusToDosError = (sRtlNtStatusToDosError) GetProcAddress(
-      ntdll_module,
-      "RtlNtStatusToDosError");
-  if (pRtlNtStatusToDosError == NULL) {
+  pRtlNtStatusToDosError = reinterpret_cast<sRtlNtStatusToDosError>(GetProcAddress(
+                                                                        ntdll_module,
+                                                                        "RtlNtStatusToDosError"));
+  if (pRtlNtStatusToDosError == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtDeviceIoControlFile = (sNtDeviceIoControlFile) GetProcAddress(
-      ntdll_module,
-      "NtDeviceIoControlFile");
-  if (pNtDeviceIoControlFile == NULL) {
+  pNtDeviceIoControlFile = reinterpret_cast<sNtDeviceIoControlFile>(GetProcAddress(
+                                                                        ntdll_module,
+                                                                        "NtDeviceIoControlFile"));
+  if (pNtDeviceIoControlFile == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtQueryInformationFile = (sNtQueryInformationFile) GetProcAddress(
-      ntdll_module,
-      "NtQueryInformationFile");
-  if (pNtQueryInformationFile == NULL) {
+  pNtQueryInformationFile = reinterpret_cast<sNtQueryInformationFile>(GetProcAddress(
+                                                                        ntdll_module,
+                                                                        "NtQueryInformationFile"));
+  if (pNtQueryInformationFile == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtSetInformationFile = (sNtSetInformationFile) GetProcAddress(
-      ntdll_module,
-      "NtSetInformationFile");
-  if (pNtSetInformationFile == NULL) {
+  pNtSetInformationFile = reinterpret_cast<sNtSetInformationFile>(GetProcAddress(
+                                                                        ntdll_module,
+                                                                        "NtSetInformationFile"));
+  if (pNtSetInformationFile == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtQueryVolumeInformationFile = (sNtQueryVolumeInformationFile)
-      GetProcAddress(ntdll_module, "NtQueryVolumeInformationFile");
-  if (pNtQueryVolumeInformationFile == NULL) {
+  pNtQueryVolumeInformationFile = reinterpret_cast<sNtQueryVolumeInformationFile>
+      (GetProcAddress(ntdll_module, "NtQueryVolumeInformationFile"));
+  if (pNtQueryVolumeInformationFile == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtQueryDirectoryFile = (sNtQueryDirectoryFile)
-      GetProcAddress(ntdll_module, "NtQueryDirectoryFile");
-  if (pNtQueryVolumeInformationFile == NULL) {
+  pNtQueryDirectoryFile = reinterpret_cast<sNtQueryDirectoryFile>
+      (GetProcAddress(ntdll_module, "NtQueryDirectoryFile"));
+  if (pNtQueryVolumeInformationFile == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtQuerySystemInformation = (sNtQuerySystemInformation) GetProcAddress(
-      ntdll_module,
-      "NtQuerySystemInformation");
-  if (pNtQuerySystemInformation == NULL) {
+  pNtQuerySystemInformation = reinterpret_cast<sNtQuerySystemInformation>(GetProcAddress(
+                                                                        ntdll_module,
+                                                                        "NtQuerySystemInformation"));
+  if (pNtQuerySystemInformation == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
-  pNtQueryInformationProcess = (sNtQueryInformationProcess) GetProcAddress(
-      ntdll_module,
-      "NtQueryInformationProcess");
-  if (pNtQueryInformationProcess == NULL) {
+  pNtQueryInformationProcess = reinterpret_cast<sNtQueryInformationProcess>(GetProcAddress(
+                                                                        ntdll_module,
+                                                                        "NtQueryInformationProcess"));
+  if (pNtQueryInformationProcess == nullptr) {
     uv_fatal_error(GetLastError(), "GetProcAddress");
   }
 
   kernel32_module = GetModuleHandleA("kernel32.dll");
-  if (kernel32_module == NULL) {
+  if (kernel32_module == nullptr) {
     uv_fatal_error(GetLastError(), "GetModuleHandleA");
   }
 
-  pGetQueuedCompletionStatusEx = (sGetQueuedCompletionStatusEx) GetProcAddress(
-      kernel32_module,
-      "GetQueuedCompletionStatusEx");
+  pGetQueuedCompletionStatusEx = reinterpret_cast<sGetQueuedCompletionStatusEx>(GetProcAddress(
+                                                                        kernel32_module,
+                                                                        "GetQueuedCompletionStatusEx"));
 
   powrprof_module = LoadLibraryA("powrprof.dll");
-  if (powrprof_module != NULL) {
-    pPowerRegisterSuspendResumeNotification = (sPowerRegisterSuspendResumeNotification)
-      GetProcAddress(powrprof_module, "PowerRegisterSuspendResumeNotification");
+  if (powrprof_module != nullptr) {
+    pPowerRegisterSuspendResumeNotification = reinterpret_cast<sPowerRegisterSuspendResumeNotification>
+      (GetProcAddress(powrprof_module, "PowerRegisterSuspendResumeNotification"));
   }
 
   user32_module = LoadLibraryA("user32.dll");
-  if (user32_module != NULL) {
-    pSetWinEventHook = (sSetWinEventHook)
-      GetProcAddress(user32_module, "SetWinEventHook");
+  if (user32_module != nullptr) {
+    pSetWinEventHook = reinterpret_cast<sSetWinEventHook>
+      (GetProcAddress(user32_module, "SetWinEventHook"));
   }
 }

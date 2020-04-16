@@ -43,7 +43,7 @@ int uv_resident_set_memory(size_t* rss) {
 
 int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   /* FIXME: read /proc/stat? */
-  *cpu_infos = NULL;
+  *cpu_infos = nullptr;
   *count = 0;
   return UV_ENOSYS;
 }

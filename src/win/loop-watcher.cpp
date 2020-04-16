@@ -27,6 +27,7 @@
 
 
 void uv_loop_watcher_endgame(uv_loop_t* loop, uv_handle_t* handle) {
+  (void)loop;
   if (handle->flags & UV_HANDLE_CLOSING) {
     assert(!(handle->flags & UV_HANDLE_CLOSED));
     handle->flags |= UV_HANDLE_CLOSED;
@@ -52,13 +53,13 @@ void uv_loop_watcher_endgame(uv_loop_t* loop, uv_handle_t* handle) {
     if (uv__is_active(handle))                                                \
       return 0;                                                               \
                                                                               \
-    if (cb == NULL)                                                           \
+    if (cb == nullptr)                                                           \
       return UV_EINVAL;                                                       \
                                                                               \
     old_head = loop->name##_handles;                                          \
                                                                               \
     handle->name##_next = old_head;                                           \
-    handle->name##_prev = NULL;                                               \
+    handle->name##_prev = nullptr;                                               \
                                                                               \
     if (old_head) {                                                           \
       old_head->name##_prev = handle;                                         \
@@ -109,7 +110,7 @@ void uv_loop_watcher_endgame(uv_loop_t* loop, uv_handle_t* handle) {
                                                                               \
     (loop)->next_##name##_handle = (loop)->name##_handles;                    \
                                                                               \
-    while ((loop)->next_##name##_handle != NULL) {                            \
+    while ((loop)->next_##name##_handle != nullptr) {                            \
       handle = (loop)->next_##name##_handle;                                  \
       (loop)->next_##name##_handle = handle->name##_next;                     \
                                                                               \

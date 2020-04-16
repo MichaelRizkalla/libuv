@@ -38,10 +38,10 @@ static void getnameinfo_req(uv_getnameinfo_t* handle,
                             int status,
                             const char* hostname,
                             const char* service) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   ASSERT(status == 0);
-  ASSERT(hostname != NULL);
-  ASSERT(service != NULL);
+  ASSERT(hostname != nullptr);
+  ASSERT(service != nullptr);
 }
 
 
@@ -70,7 +70,7 @@ TEST_IMPL(getnameinfo_basic_ip4_sync) {
 
   ASSERT(0 == uv_getnameinfo(uv_default_loop(),
                              &req,
-                             NULL,
+                             nullptr,
                              (const struct sockaddr*)&addr4,
                              0));
   ASSERT(req.host[0] != '\0');

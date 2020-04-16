@@ -130,7 +130,7 @@ TEST_IMPL(udp_no_autobind) {
   ASSERT(UV_EBADF == uv_udp_set_multicast_loop(&h, 1));
   ASSERT(UV_EBADF == uv_udp_set_multicast_interface(&h, "0.0.0.0"));
 
-  uv_close((uv_handle_t*) &h, NULL);
+  uv_close((uv_handle_t*) &h, nullptr);
 
   /* Test a non-lazily initialized socket. */
   ASSERT(0 == uv_udp_init_ex(loop, &h2, AF_INET));
@@ -147,7 +147,7 @@ TEST_IMPL(udp_no_autobind) {
   ASSERT(0 == uv_udp_set_multicast_loop(&h2, 1));
   ASSERT(0 == uv_udp_set_multicast_interface(&h2, "0.0.0.0"));
 
-  uv_close((uv_handle_t*) &h2, NULL);
+  uv_close((uv_handle_t*) &h2, nullptr);
 
   ASSERT(0 == uv_run(loop, UV_RUN_DEFAULT));
 

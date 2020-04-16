@@ -200,9 +200,9 @@ static void clear_screen(uv_tty_t* tty_out, struct screen_info* si) {
 
 static void free_screen(struct captured_screen* cs) {
   free(cs->text);
-  cs->text = NULL;
+  cs->text = nullptr;
   free(cs->attributes);
-  cs->attributes = NULL;
+  cs->attributes = nullptr;
 }
 
 static void capture_screen(uv_tty_t* tty_out, struct captured_screen* cs) {
@@ -212,9 +212,9 @@ static void capture_screen(uv_tty_t* tty_out, struct captured_screen* cs) {
   origin.X = 0;
   origin.Y = cs->si.csbi.srWindow.Top;
   cs->text = test_create_ptrstruct<char>(cs->si.length * sizeof(*cs->text));
-  ASSERT(cs->text != NULL);
+  ASSERT(cs->text != nullptr);
   cs->attributes = (WORD*) malloc(cs->si.length * sizeof(*cs->attributes));
-  ASSERT(cs->attributes != NULL);
+  ASSERT(cs->attributes != nullptr);
   ASSERT(ReadConsoleOutputCharacter(
       tty_out->handle, cs->text, cs->si.length, origin, &length));
   ASSERT((unsigned int) cs->si.length == length);
@@ -357,21 +357,21 @@ static void initialize_tty(uv_tty_t* tty_out) {
 
   handle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE,
                                      FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                     NULL,
+                                     nullptr,
                                      CONSOLE_TEXTMODE_BUFFER,
-                                     NULL);
+                                     nullptr);
   ASSERT(handle != INVALID_HANDLE_VALUE);
 
   ttyout_fd = _open_osfhandle((intptr_t) handle, 0);
   ASSERT(ttyout_fd >= 0);
   ASSERT(UV_TTY == uv_guess_handle(ttyout_fd));
-  r = uv_tty_init(uv_default_loop(), tty_out, ttyout_fd, 0); /* Writable. */
+  r = uv_tty_init(uv_default_loop(), tty_out, ttyout_fd); /* Writable. */
   ASSERT(r == 0);
 }
 
 static void terminate_tty(uv_tty_t* tty_out) {
   set_cursor_to_home(tty_out);
-  uv_close((uv_handle_t*) tty_out, NULL);
+  uv_close((uv_handle_t*) tty_out, nullptr);
 }
 
 TEST_IMPL(tty_cursor_up) {

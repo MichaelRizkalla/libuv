@@ -48,7 +48,7 @@ BENCHMARK_IMPL(million_timers) {
   int i;
 
   auto *timers = test_create_ptrstruct<uv_timer_t>(NUM_TIMERS * sizeof(uv_timer_t));
-  ASSERT(timers != NULL);
+  ASSERT(timers != nullptr);
 
   loop = uv_default_loop();
   timeout = 0;

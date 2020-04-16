@@ -32,9 +32,9 @@
 #include "../utils/allocator.cpp"
 int uv_pipe_init(uv_loop_t* loop, uv_pipe_t* handle, int ipc) {
   uv__stream_init(loop, (uv_stream_t*)handle, UV_NAMED_PIPE);
-  handle->shutdown_req = NULL;
-  handle->connect_req = NULL;
-  handle->pipe_fname = NULL;
+  handle->shutdown_req = nullptr;
+  handle->connect_req = nullptr;
+  handle->pipe_fname = nullptr;
   handle->ipc = ipc;
   return 0;
 }
@@ -46,7 +46,7 @@ int uv_pipe_bind(uv_pipe_t* handle, const char* name) {
   int sockfd;
   int err;
 
-  pipe_fname = NULL;
+  pipe_fname = nullptr;
 
   /* Already bound? */
   if (uv__stream_fd(handle) >= 0)
@@ -54,11 +54,11 @@ int uv_pipe_bind(uv_pipe_t* handle, const char* name) {
 
   /* Make a copy of the file name, it outlives this function's scope. */
   pipe_fname = uv__strdup(name);
-  if (pipe_fname == NULL)
+  if (pipe_fname == nullptr)
     return UV_ENOMEM;
 
   /* We've got a copy, don't touch the original any more. */
-  name = NULL;
+  name = nullptr;
 
   err = uv__socket(AF_UNIX, SOCK_STREAM, 0);
   if (err < 0)
@@ -127,7 +127,7 @@ void uv__pipe_close(uv_pipe_t* handle) {
      */
     unlink(handle->pipe_fname);
     uv__free((void*)handle->pipe_fname);
-    handle->pipe_fname = NULL;
+    handle->pipe_fname = nullptr;
   }
 
   uv__stream_close((uv_stream_t*)handle);
@@ -304,7 +304,7 @@ int uv_pipe_pending_count(uv_pipe_t* handle) {
   if (handle->accepted_fd == -1)
     return 0;
 
-  if (handle->queued_fds == NULL)
+  if (handle->queued_fds == nullptr)
     return 1;
 
   queued_fds = static_cast<uv__stream_queued_fds_t*>(handle->queued_fds);
@@ -330,7 +330,7 @@ int uv_pipe_chmod(uv_pipe_t* handle, int mode) {
   size_t name_len;
   int r;
 
-  if (handle == NULL || uv__stream_fd(handle) == -1)
+  if (handle == nullptr || uv__stream_fd(handle) == -1)
     return UV_EBADF;
 
   if (mode != UV_READABLE &&
@@ -340,12 +340,12 @@ int uv_pipe_chmod(uv_pipe_t* handle, int mode) {
 
   /* Unfortunately fchmod does not work on all platforms, we will use chmod. */
   name_len = 0;
-  r = uv_pipe_getsockname(handle, NULL, &name_len);
+  r = uv_pipe_getsockname(handle, nullptr, &name_len);
   if (r != UV_ENOBUFS)
     return r;
 
   name_buffer = create_ptrstruct<char>(name_len);
-  if (name_buffer == NULL)
+  if (name_buffer == nullptr)
     return UV_ENOMEM;
 
   r = uv_pipe_getsockname(handle, name_buffer, &name_len);

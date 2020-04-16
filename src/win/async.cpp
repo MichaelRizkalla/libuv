@@ -29,6 +29,7 @@
 
 
 void uv_async_endgame(uv_loop_t* loop, uv_async_t* handle) {
+  (void)loop;
   if (handle->flags & UV_HANDLE_CLOSING &&
       !handle->async_sent) {
     assert(!(handle->flags & UV_HANDLE_CLOSED));
@@ -92,7 +93,7 @@ void uv_process_async_wakeup_req(uv_loop_t* loop, uv_async_t* handle,
 
   if (handle->flags & UV_HANDLE_CLOSING) {
     uv_want_endgame(loop, (uv_handle_t*)handle);
-  } else if (handle->async_cb != NULL) {
+  } else if (handle->async_cb != nullptr) {
     handle->async_cb(handle);
   }
 }

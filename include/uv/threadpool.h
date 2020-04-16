@@ -27,10 +27,11 @@
 #ifndef UV_THREADPOOL_H_
 #define UV_THREADPOOL_H_
 
+struct uv_loop_s;
 struct uv__work {
-  void (*work)(struct uv__work *w);
-  void (*done)(struct uv__work *w, int status);
-  struct uv_loop_s* loop;
+  void (*work)(uv__work *w);
+  void (*done)(uv__work *w, int status);
+  uv_loop_s* loop;
   void* wq[2];
 };
 

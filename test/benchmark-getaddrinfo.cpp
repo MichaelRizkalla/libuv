@@ -58,7 +58,7 @@ static void getaddrinfo_initiate(uv_getaddrinfo_t* handle) {
 
   calls_initiated++;
 
-  r = uv_getaddrinfo(loop, handle, &getaddrinfo_cb, name, NULL, NULL);
+  r = uv_getaddrinfo(loop, handle, &getaddrinfo_cb, name, nullptr, nullptr);
   ASSERT(r == 0);
 }
 

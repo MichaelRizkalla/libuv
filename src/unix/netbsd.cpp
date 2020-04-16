@@ -55,7 +55,7 @@ void uv_loadavg(double avg[3]) {
   size_t size = sizeof(info);
   int which[] = {CTL_VM, VM_LOADAVG};
 
-  if (sysctl(which, ARRAY_SIZE(which), &info, &size, NULL, 0) == -1) return;
+  if (sysctl(which, ARRAY_SIZE(which), &info, &size, nullptr, 0) == -1) return;
 
   avg[0] = (double) info.ldavg[0] / info.fscale;
   avg[1] = (double) info.ldavg[1] / info.fscale;
@@ -72,7 +72,7 @@ int uv_exepath(char* buffer, size_t* size) {
   size_t int_size;
   int mib[4];
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   mib[0] = CTL_KERN;
@@ -81,7 +81,7 @@ int uv_exepath(char* buffer, size_t* size) {
   mib[3] = KERN_PROC_PATHNAME;
   int_size = ARRAY_SIZE(int_buf);
 
-  if (sysctl(mib, 4, int_buf, &int_size, NULL, 0))
+  if (sysctl(mib, 4, int_buf, &int_size, nullptr, 0))
     return UV__ERR(errno);
 
   /* Copy string from the intermediate buffer to outer one with appropriate
@@ -102,7 +102,7 @@ uint64_t uv_get_free_memory(void) {
   size_t size = sizeof(info);
   int which[] = {CTL_VM, VM_UVMEXP};
 
-  if (sysctl(which, ARRAY_SIZE(which), &info, &size, NULL, 0))
+  if (sysctl(which, ARRAY_SIZE(which), &info, &size, nullptr, 0))
     return UV__ERR(errno);
 
   return (uint64_t) info.free * sysconf(_SC_PAGESIZE);
@@ -119,7 +119,7 @@ uint64_t uv_get_total_memory(void) {
 #endif
   size_t size = sizeof(info);
 
-  if (sysctl(which, ARRAY_SIZE(which), &info, &size, NULL, 0))
+  if (sysctl(which, ARRAY_SIZE(which), &info, &size, nullptr, 0))
     return UV__ERR(errno);
 
   return (uint64_t) info;
@@ -132,8 +132,8 @@ uint64_t uv_get_constrained_memory(void) {
 
 
 int uv_resident_set_memory(size_t* rss) {
-  kvm_t *kd = NULL;
-  struct kinfo_proc2 *kinfo = NULL;
+  kvm_t *kd = nullptr;
+  struct kinfo_proc2 *kinfo = nullptr;
   pid_t pid;
   int nprocs;
   int max_size = sizeof(struct kinfo_proc2);
@@ -142,12 +142,12 @@ int uv_resident_set_memory(size_t* rss) {
   page_size = getpagesize();
   pid = getpid();
 
-  kd = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, "kvm_open");
+  kd = kvm_open(nullptr, nullptr, nullptr, KVM_NO_FILES, "kvm_open");
 
-  if (kd == NULL) goto error;
+  if (kd == nullptr) goto error;
 
   kinfo = kvm_getproc2(kd, KERN_PROC_PID, pid, max_size, &nprocs);
-  if (kinfo == NULL) goto error;
+  if (kinfo == nullptr) goto error;
 
   *rss = kinfo->p_vm_rssize * page_size;
 
@@ -167,10 +167,10 @@ int uv_uptime(double* uptime) {
   size_t size = sizeof(info);
   static int which[] = {CTL_KERN, KERN_BOOTTIME};
 
-  if (sysctl(which, ARRAY_SIZE(which), &info, &size, NULL, 0))
+  if (sysctl(which, ARRAY_SIZE(which), &info, &size, nullptr, 0))
     return UV__ERR(errno);
 
-  now = time(NULL);
+  now = time(nullptr);
 
   *uptime = (double)(now - info.tv_sec);
   return 0;
@@ -190,27 +190,27 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   int i;
 
   size = sizeof(model);
-  if (sysctlbyname("machdep.cpu_brand", &model, &size, NULL, 0) &&
-      sysctlbyname("hw.model", &model, &size, NULL, 0)) {
+  if (sysctlbyname("machdep.cpu_brand", &model, &size, nullptr, 0) &&
+      sysctlbyname("hw.model", &model, &size, nullptr, 0)) {
     return UV__ERR(errno);
   }
 
   size = sizeof(numcpus);
-  if (sysctlbyname("hw.ncpu", &numcpus, &size, NULL, 0))
+  if (sysctlbyname("hw.ncpu", &numcpus, &size, nullptr, 0))
     return UV__ERR(errno);
   *count = numcpus;
 
   /* Only i386 and amd64 have machdep.tsc_freq */
   size = sizeof(cpuspeed);
-  if (sysctlbyname("machdep.tsc_freq", &cpuspeed, &size, NULL, 0))
+  if (sysctlbyname("machdep.tsc_freq", &cpuspeed, &size, nullptr, 0))
     cpuspeed = 0;
 
   size = numcpus * CPUSTATES * sizeof(*cp_times);
   cp_times = uv__malloc(size);
-  if (cp_times == NULL)
+  if (cp_times == nullptr)
     return UV_ENOMEM;
 
-  if (sysctlbyname("kern.cp_time", cp_times, &size, NULL, 0))
+  if (sysctlbyname("kern.cp_time", cp_times, &size, nullptr, 0))
     return UV__ERR(errno);
 
   *cpu_infos = uv__malloc(numcpus * sizeof(**cpu_infos));
@@ -245,7 +245,7 @@ int uv__random_sysctl(void* buf, size_t len) {
     req = len < 32 ? len : 32;
     count = req;
 
-    if (sysctl(name, ARRAY_SIZE(name), p, &count, NULL, 0) == -1)
+    if (sysctl(name, ARRAY_SIZE(name), p, &count, nullptr, 0) == -1)
       return UV__ERR(errno);
 
     if (count != req)

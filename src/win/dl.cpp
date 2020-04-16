@@ -28,8 +28,8 @@ static int uv__dlerror(uv_lib_t* lib, const char* filename, DWORD errorno);
 int uv_dlopen(const char* filename, uv_lib_t* lib) {
   WCHAR filename_w[32768];
 
-  lib->handle = NULL;
-  lib->errmsg = NULL;
+  lib->handle = nullptr;
+  lib->errmsg = nullptr;
 
   if (!MultiByteToWideChar(CP_UTF8,
                            0,
@@ -40,8 +40,8 @@ int uv_dlopen(const char* filename, uv_lib_t* lib) {
     return uv__dlerror(lib, filename, GetLastError());
   }
 
-  lib->handle = LoadLibraryExW(filename_w, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
-  if (lib->handle == NULL) {
+  lib->handle = LoadLibraryExW(filename_w, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
+  if (lib->handle == nullptr) {
     return uv__dlerror(lib, filename, GetLastError());
   }
 
@@ -52,13 +52,13 @@ int uv_dlopen(const char* filename, uv_lib_t* lib) {
 void uv_dlclose(uv_lib_t* lib) {
   if (lib->errmsg) {
     LocalFree((void*)lib->errmsg);
-    lib->errmsg = NULL;
+    lib->errmsg = nullptr;
   }
 
   if (lib->handle) {
     /* Ignore errors. No good way to signal them without leaking memory. */
     FreeLibrary(lib->handle);
-    lib->handle = NULL;
+    lib->handle = nullptr;
   }
 }
 
@@ -97,7 +97,7 @@ static int uv__dlerror(uv_lib_t* lib, const char* filename, DWORD errorno) {
 
   if (lib->errmsg) {
     LocalFree(lib->errmsg);
-    lib->errmsg = NULL;
+    lib->errmsg = nullptr;
   }
 
   if (errorno == 0)
@@ -105,21 +105,21 @@ static int uv__dlerror(uv_lib_t* lib, const char* filename, DWORD errorno) {
 
   res = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                        FORMAT_MESSAGE_FROM_SYSTEM |
-                       FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorno,
+                       FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, errorno,
                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-                       (LPSTR) &lib->errmsg, 0, NULL);
+                       (LPSTR) &lib->errmsg, 0, nullptr);
 
   if (!res && (GetLastError() == ERROR_MUI_FILE_NOT_FOUND ||
                GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND)) {
     res = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                          FORMAT_MESSAGE_FROM_SYSTEM |
-                         FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorno,
-                         0, (LPSTR) &lib->errmsg, 0, NULL);
+                         FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, errorno,
+                         0, (LPSTR) &lib->errmsg, 0, nullptr);
   }
 
   if (res && errorno == ERROR_BAD_EXE_FORMAT && strstr(lib->errmsg, "%1")) {
     msg = lib->errmsg;
-    lib->errmsg = NULL;
+    lib->errmsg = nullptr;
     arg = (DWORD_PTR) filename;
     res = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                          FORMAT_MESSAGE_ARGUMENT_ARRAY |

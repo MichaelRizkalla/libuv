@@ -49,7 +49,7 @@ TEST_IMPL(pipe_pending_instances) {
   r = uv_listen((uv_stream_t*)&pipe_handle, 128, connection_cb);
   ASSERT(r == 0);
 
-  uv_close((uv_handle_t*)&pipe_handle, NULL);
+  uv_close((uv_handle_t*)&pipe_handle, nullptr);
 
   r = uv_run(loop, UV_RUN_DEFAULT);
   ASSERT(r == 0);

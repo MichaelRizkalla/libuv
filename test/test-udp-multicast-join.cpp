@@ -60,7 +60,7 @@ static void close_cb(uv_handle_t* handle) {
 
 
 static void sv_send_cb(uv_udp_send_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
   CHECK_HANDLE(req->handle);
 
@@ -103,11 +103,11 @@ static void cl_recv_cb(uv_udp_t* handle,
 
   if (nread == 0) {
     /* Returning unused buffer. Don't count towards cl_recv_cb_called */
-    ASSERT(addr == NULL);
+    ASSERT(addr == nullptr);
     return;
   }
 
-  ASSERT(addr != NULL);
+  ASSERT(addr != nullptr);
   ASSERT(nread == 4);
   ASSERT(!memcmp("PING", buf->base, nread));
 
@@ -123,11 +123,11 @@ static void cl_recv_cb(uv_udp_t* handle,
     r = uv_ip4_name((const struct sockaddr_in*)addr, source_addr, sizeof(source_addr));
     ASSERT(r == 0);
 
-    r = uv_udp_set_membership(&server, MULTICAST_ADDR, NULL, UV_LEAVE_GROUP);
+    r = uv_udp_set_membership(&server, MULTICAST_ADDR, nullptr, UV_LEAVE_GROUP);
     ASSERT(r == 0);
 
 #if !defined(__OpenBSD__) && !defined(__NetBSD__)
-    r = uv_udp_set_source_membership(&server, MULTICAST_ADDR, NULL, source_addr, UV_JOIN_GROUP);
+    r = uv_udp_set_source_membership(&server, MULTICAST_ADDR, nullptr, source_addr, UV_JOIN_GROUP);
     ASSERT(r == 0);
 #endif
 
@@ -154,7 +154,7 @@ TEST_IMPL(udp_multicast_join) {
   ASSERT(r == 0);
 
   /* join the multicast channel */
-  r = uv_udp_set_membership(&server, MULTICAST_ADDR, NULL, UV_JOIN_GROUP);
+  r = uv_udp_set_membership(&server, MULTICAST_ADDR, nullptr, UV_JOIN_GROUP);
   if (r == UV_ENODEV)
     RETURN_SKIP("No multicast support.");
   ASSERT(r == 0);

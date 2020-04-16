@@ -63,8 +63,8 @@ void platform_init(int argc, char **argv) {
 #endif
 
   /* Disable stdio output buffering. */
-  setvbuf(stdout, NULL, _IONBF, 0);
-  setvbuf(stderr, NULL, _IONBF, 0);
+  setvbuf(stdout, nullptr, _IONBF, 0);
+  setvbuf(stderr, nullptr, _IONBF, 0);
 
   strcpy(executable_path, argv[0]);
 }
@@ -93,10 +93,10 @@ int process_start(char *name, char *part, process_info_t *p, int is_helper) {
   file = CreateFileW((WCHAR*)filename,
                      GENERIC_READ | GENERIC_WRITE,
                      0,
-                     NULL,
+                     nullptr,
                      CREATE_ALWAYS,
                      FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE,
-                     NULL);
+                     nullptr);
   if (file == INVALID_HANDLE_VALUE)
     goto error;
 
@@ -106,17 +106,17 @@ int process_start(char *name, char *part, process_info_t *p, int is_helper) {
   nul = CreateFileA("nul",
                     GENERIC_READ,
                     FILE_SHARE_READ | FILE_SHARE_WRITE,
-                    NULL,
+                    nullptr,
                     OPEN_EXISTING,
                     FILE_ATTRIBUTE_NORMAL,
-                    NULL);
+                    nullptr);
   if (nul == INVALID_HANDLE_VALUE)
     goto error;
 
   if (!SetHandleInformation(nul, HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT))
     goto error;
 
-  result = GetModuleFileNameW(NULL,
+  result = GetModuleFileNameW(nullptr,
                               (WCHAR*) &image,
                               sizeof(image) / sizeof(WCHAR));
   if (result == 0 || result == sizeof(image))
@@ -148,8 +148,8 @@ int process_start(char *name, char *part, process_info_t *p, int is_helper) {
   si.hStdOutput = file;
   si.hStdError = file;
 
-  if (!CreateProcessW(image, args, NULL, NULL, TRUE,
-                      0, NULL, NULL, &si, &pi))
+  if (!CreateProcessW(image, args, nullptr, nullptr, TRUE,
+                      0, nullptr, nullptr, &si, &pi))
     goto error;
 
   CloseHandle(pi.hThread);
@@ -247,7 +247,7 @@ int process_read_last_line(process_info_t *p,
 
   ASSERT(buffer_len > 0);
 
-  size = GetFileSize(p->stdio_out, NULL);
+  size = GetFileSize(p->stdio_out, nullptr);
   if (size == INVALID_FILE_SIZE)
     return -1;
 

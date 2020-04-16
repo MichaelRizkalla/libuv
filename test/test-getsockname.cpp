@@ -50,7 +50,7 @@ static void alloc(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf) {
 
 static void on_close(uv_handle_t* peer) {
   free(peer);
-  uv_close((uv_handle_t*)&tcpServer, NULL);
+  uv_close((uv_handle_t*)&tcpServer, nullptr);
 }
 
 
@@ -116,7 +116,7 @@ static void on_connection(uv_stream_t* server, int status) {
   ASSERT(status == 0);
 
   handle = test_create_ptrstruct<uv_tcp_t>(sizeof(uv_tcp_t));
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
 
   r = uv_tcp_init(loop, handle);
   ASSERT(r == 0);
@@ -162,7 +162,7 @@ static void on_connect(uv_connect_t* req, int status) {
   check_sockname(&peername, "127.0.0.1", server_port, "connected socket peer");
   getpeernamecount++;
 
-  uv_close((uv_handle_t*)&tcp, NULL);
+  uv_close((uv_handle_t*)&tcp, nullptr);
 }
 
 
@@ -258,8 +258,8 @@ static void udp_recv(uv_udp_t* handle,
   check_sockname(&sockname, "0.0.0.0", 0, "udp receiving socket");
   getsocknamecount++;
 
-  uv_close((uv_handle_t*) &udp, NULL);
-  uv_close((uv_handle_t*) handle, NULL);
+  uv_close((uv_handle_t*) &udp, nullptr);
+  uv_close((uv_handle_t*) handle, nullptr);
 }
 
 

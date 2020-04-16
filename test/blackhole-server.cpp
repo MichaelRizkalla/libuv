@@ -47,7 +47,7 @@ static void connection_cb(uv_stream_t* stream, int status) {
 
   auto *conn = test_create_ptrstruct<conn_rec>(sizeof(conn_rec));
 
-  ASSERT(conn != NULL);
+  ASSERT(conn != nullptr);
 
   r = uv_tcp_init(stream->loop, &conn->handle);
   ASSERT(r == 0);

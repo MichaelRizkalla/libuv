@@ -70,7 +70,7 @@ static void do_close(uv_tcp_t* handle) {
     ASSERT(UV_ENOTCONN == uv_shutdown(&shutdown_req, (uv_stream_t*) handle, shutdown_cb));
   }
 
-  uv_close((uv_handle_t*) &tcp_server, NULL);
+  uv_close((uv_handle_t*) &tcp_server, nullptr);
 }
 
 static void alloc_cb(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
@@ -82,7 +82,7 @@ static void alloc_cb(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
 static void read_cb2(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
   ASSERT((uv_tcp_t*)stream == &tcp_client);
   if (nread == UV_EOF)
-    uv_close((uv_handle_t*) stream, NULL);
+    uv_close((uv_handle_t*) stream, nullptr);
 }
 
 
@@ -125,7 +125,7 @@ static void shutdown_cb(uv_shutdown_t* req, int status) {
 static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
   ASSERT((uv_tcp_t*)stream == &tcp_accepted);
   if (nread < 0) {
-    uv_close((uv_handle_t*) stream, NULL);
+    uv_close((uv_handle_t*) stream, nullptr);
   } else {
     read_size += nread;
     if (read_size == 16 && client_close == 0)

@@ -83,7 +83,7 @@ int uv_exepath(char* buffer, size_t* size) {
   size_t abspath_size;
   struct procsinfo pi;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   pi.pi_pid = getpid();
@@ -100,7 +100,7 @@ int uv_exepath(char* buffer, size_t* size) {
    */
 
   /* Case i) and ii) absolute or relative paths */
-  if (strchr(args, '/') != NULL) {
+  if (strchr(args, '/') != nullptr) {
     if (realpath(args, abspath) != abspath)
       return UV__ERR(errno);
 
@@ -117,19 +117,19 @@ int uv_exepath(char* buffer, size_t* size) {
   } else {
     /* Case iii). Search PATH environment variable */
     char trypath[PATH_MAX];
-    char *clonedpath = NULL;
-    char *token = NULL;
+    char *clonedpath = nullptr;
+    char *token = nullptr;
     char *path = getenv("PATH");
 
-    if (path == NULL)
+    if (path == nullptr)
       return UV_EINVAL;
 
     clonedpath = uv__strdup(path);
-    if (clonedpath == NULL)
+    if (clonedpath == nullptr)
       return UV_ENOMEM;
 
     token = strtok(clonedpath, ":");
-    while (token != NULL) {
+    while (token != nullptr) {
       snprintf(trypath, sizeof(trypath) - 1, "%s/%s", token, args);
       if (realpath(trypath, abspath) == abspath) {
         /* Check the match is executable */
@@ -147,7 +147,7 @@ int uv_exepath(char* buffer, size_t* size) {
           return 0;
         }
       }
-      token = strtok(NULL, ":");
+      token = strtok(nullptr, ":");
     }
     uv__free(clonedpath);
 

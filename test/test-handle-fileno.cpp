@@ -30,10 +30,10 @@ static int get_tty_fd(void) {
   handle = CreateFileA("conin$",
                        GENERIC_READ | GENERIC_WRITE,
                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                       NULL,
+                       nullptr,
                        OPEN_EXISTING,
                        FILE_ATTRIBUTE_NORMAL,
-                       NULL);
+                       nullptr);
   if (handle == INVALID_HANDLE_VALUE)
     return -1;
   return _open_osfhandle((intptr_t) handle, 0);
@@ -62,7 +62,7 @@ TEST_IMPL(handle_fileno) {
   ASSERT(r == 0);
   r = uv_fileno((uv_handle_t*) &idle, &fd);
   ASSERT(r == UV_EINVAL);
-  uv_close((uv_handle_t*) &idle, NULL);
+  uv_close((uv_handle_t*) &idle, nullptr);
 
   r = uv_tcp_init(loop, &tcp);
   ASSERT(r == 0);
@@ -72,7 +72,7 @@ TEST_IMPL(handle_fileno) {
   ASSERT(r == 0);
   r = uv_fileno((uv_handle_t*) &tcp, &fd);
   ASSERT(r == 0);
-  uv_close((uv_handle_t*) &tcp, NULL);
+  uv_close((uv_handle_t*) &tcp, nullptr);
   r = uv_fileno((uv_handle_t*) &tcp, &fd);
   ASSERT(r == UV_EBADF);
 
@@ -84,7 +84,7 @@ TEST_IMPL(handle_fileno) {
   ASSERT(r == 0);
   r = uv_fileno((uv_handle_t*) &udp, &fd);
   ASSERT(r == 0);
-  uv_close((uv_handle_t*) &udp, NULL);
+  uv_close((uv_handle_t*) &udp, nullptr);
   r = uv_fileno((uv_handle_t*) &udp, &fd);
   ASSERT(r == UV_EBADF);
 
@@ -96,7 +96,7 @@ TEST_IMPL(handle_fileno) {
   ASSERT(r == 0);
   r = uv_fileno((uv_handle_t*) &pipe, &fd);
   ASSERT(r == 0);
-  uv_close((uv_handle_t*) &pipe, NULL);
+  uv_close((uv_handle_t*) &pipe, nullptr);
   r = uv_fileno((uv_handle_t*) &pipe, &fd);
   ASSERT(r == UV_EBADF);
 
@@ -105,13 +105,13 @@ TEST_IMPL(handle_fileno) {
     fprintf(stderr, "Cannot open a TTY fd");
     fflush(stderr);
   } else {
-    r = uv_tty_init(loop, &tty, tty_fd, 0);
+    r = uv_tty_init(loop, &tty, tty_fd);
     ASSERT(r == 0);
     ASSERT(uv_is_readable((uv_stream_t*) &tty));
     ASSERT(!uv_is_writable((uv_stream_t*) &tty));
     r = uv_fileno((uv_handle_t*) &tty, &fd);
     ASSERT(r == 0);
-    uv_close((uv_handle_t*) &tty, NULL);
+    uv_close((uv_handle_t*) &tty, nullptr);
     r = uv_fileno((uv_handle_t*) &tty, &fd);
     ASSERT(r == UV_EBADF);
     ASSERT(!uv_is_readable((uv_stream_t*) &tty));

@@ -44,7 +44,7 @@ TEST_IMPL(get_currentexe) {
 #ifdef _WIN32
   snprintf(path, sizeof(path), "%s", executable_path);
 #else
-  ASSERT(NULL != realpath(executable_path, path));
+  ASSERT(nullptr != realpath(executable_path, path));
 #endif
 
   match = strstr(buffer, path);
@@ -56,10 +56,10 @@ TEST_IMPL(get_currentexe) {
 
   /* Negative tests */
   size = sizeof(buffer) / sizeof(buffer[0]);
-  r = uv_exepath(NULL, &size);
+  r = uv_exepath(nullptr, &size);
   ASSERT(r == UV_EINVAL);
 
-  r = uv_exepath(buffer, NULL);
+  r = uv_exepath(buffer, nullptr);
   ASSERT(r == UV_EINVAL);
 
   size = 0;

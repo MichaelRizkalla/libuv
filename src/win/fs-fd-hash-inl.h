@@ -70,7 +70,7 @@ INLINE static void uv__fd_hash_init(void) {
 #define FIND_COMMON_VARIABLES                                                \
   unsigned i;                                                                \
   unsigned bucket = fd % ARRAY_SIZE(uv__fd_hash);                            \
-  struct uv__fd_hash_entry_s* entry_ptr = NULL;                              \
+  struct uv__fd_hash_entry_s* entry_ptr = nullptr;                              \
   struct uv__fd_hash_entry_group_s* group_ptr;                               \
   struct uv__fd_hash_bucket_s* bucket_ptr = &uv__fd_hash[bucket];
 
@@ -92,7 +92,7 @@ INLINE static void uv__fd_hash_init(void) {
     group_ptr = bucket_ptr->data;                                            \
     FIND_IN_GROUP_PTR(first_group_size);                                     \
     for (group_ptr = group_ptr->next;                                        \
-         group_ptr != NULL && entry_ptr == NULL;                             \
+         group_ptr != nullptr && entry_ptr == nullptr;                             \
          group_ptr = group_ptr->next)                                        \
       FIND_IN_GROUP_PTR(UV__FD_HASH_GROUP_SIZE);                             \
   } while (0)
@@ -104,12 +104,12 @@ INLINE static int uv__fd_hash_get(int fd, struct uv__fd_info_s* info) {
 
   FIND_IN_BUCKET_PTR();
 
-  if (entry_ptr != NULL) {
+  if (entry_ptr != nullptr) {
     *info = entry_ptr->info;
   }
 
   uv_mutex_unlock(&uv__fd_hash_mutex);
-  return entry_ptr != NULL;
+  return entry_ptr != nullptr;
 }
 
 INLINE static void uv__fd_hash_add(int fd, struct uv__fd_info_s* info) {
@@ -119,13 +119,13 @@ INLINE static void uv__fd_hash_add(int fd, struct uv__fd_info_s* info) {
 
   FIND_IN_BUCKET_PTR();
 
-  if (entry_ptr == NULL) {
+  if (entry_ptr == nullptr) {
     i = bucket_ptr->size % UV__FD_HASH_GROUP_SIZE;
 
     if (bucket_ptr->size != 0 && i == 0) {
       uv__fd_hash_entry_group_s* new_group_ptr =
         create_ptrstruct<uv__fd_hash_entry_group_s>(sizeof(uv__fd_hash_entry_group_s));
-      if (new_group_ptr == NULL) {
+      if (new_group_ptr == nullptr) {
         uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
       }
       new_group_ptr->next = bucket_ptr->data;
@@ -149,7 +149,7 @@ INLINE static int uv__fd_hash_remove(int fd, struct uv__fd_info_s* info) {
 
   FIND_IN_BUCKET_PTR();
 
-  if (entry_ptr != NULL) {
+  if (entry_ptr != nullptr) {
     *info = entry_ptr->info;
 
     bucket_ptr->size -= 1;
@@ -168,7 +168,7 @@ INLINE static int uv__fd_hash_remove(int fd, struct uv__fd_info_s* info) {
   }
 
   uv_mutex_unlock(&uv__fd_hash_mutex);
-  return entry_ptr != NULL;
+  return entry_ptr != nullptr;
 }
 
 #undef FIND_COMMON_VARIABLES

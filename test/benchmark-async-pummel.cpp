@@ -45,7 +45,7 @@ static void async_cb(uv_async_t* handle) {
     while (ACCESS_ONCE(const char*, handle->data) != stopped)
       uv_sleep(0);
 
-    uv_close((uv_handle_t*) handle, NULL);
+    uv_close((uv_handle_t*) handle, nullptr);
   }
 }
 
@@ -67,7 +67,7 @@ static int test_async_pummel(int nthreads) {
   int i;
 
   auto *tids = test_create_ptrstruct<uv_thread_t>(nthreads, sizeof(uv_thread_t));
-  ASSERT(tids != NULL);
+  ASSERT(tids != nullptr);
 
   ASSERT(0 == uv_async_init(uv_default_loop(), &handle, async_cb));
   ACCESS_ONCE(const char*, handle.data) = running;

@@ -211,7 +211,7 @@ int uv__tcp_connect(uv_connect_t* req,
 
   assert(handle->type == UV_TCP);
 
-  if (handle->connect_req != NULL)
+  if (handle->connect_req != nullptr)
     return UV_EALREADY;  /* FIXME(bnoordhuis) UV_EINVAL or maybe UV_EBUSY. */
 
   err = maybe_new_socket(handle,
@@ -335,7 +335,7 @@ int uv_tcp_listen(uv_tcp_t* tcp, int backlog, uv_connection_cb cb) {
 
   if (single_accept == -1) {
     const char* val = getenv("UV_TCP_SINGLE_ACCEPT");
-    single_accept = (val != NULL && atoi(val) != 0);  /* Off by default. */
+    single_accept = (val != nullptr && atoi(val) != 0);  /* Off by default. */
   }
 
   if (single_accept)

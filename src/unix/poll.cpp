@@ -88,7 +88,7 @@ int uv_poll_init(uv_loop_t* loop, uv_poll_t* handle, int fd) {
 
   uv__handle_init(loop, (uv_handle_t*) handle, UV_POLL);
   uv__io_init(&handle->io_watcher, uv__poll_io, fd);
-  handle->poll_cb = NULL;
+  handle->poll_cb = nullptr;
   return 0;
 }
 

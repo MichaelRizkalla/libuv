@@ -110,8 +110,8 @@ static void connect_cb(uv_connect_t* req, int status) {
    */
   ASSERT(0 == status);
   connect_cb_called += 1;
-  uv_close((uv_handle_t*) &server_handle, NULL);
-  uv_close((uv_handle_t*) &client_handle, NULL);
+  uv_close((uv_handle_t*) &server_handle, nullptr);
+  uv_close((uv_handle_t*) &client_handle, nullptr);
 }
 
 #else

@@ -135,7 +135,7 @@ int uv_write(uv_write_t* req,
       break;
     case UV_NAMED_PIPE:
       err = uv__pipe_write(
-          loop, req, (uv_pipe_t*) handle, bufs, nbufs, NULL, cb);
+          loop, req, (uv_pipe_t*) handle, bufs, nbufs, nullptr, cb);
       break;
     case UV_TTY:
       err = uv_tty_write(loop, req, (uv_tty_t*) handle, bufs, nbufs, cb);
@@ -157,7 +157,7 @@ int uv_write2(uv_write_t* req,
   uv_loop_t* loop = handle->loop;
   int err;
 
-  if (send_handle == NULL) {
+  if (send_handle == nullptr) {
     return uv_write(req, handle, bufs, nbufs, cb);
   }
 

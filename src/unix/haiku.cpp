@@ -38,10 +38,10 @@ int uv_exepath(char* buffer, size_t* size) {
   status_t status;
   ssize_t abspath_len;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
-  status = find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, abspath,
+  status = find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, nullptr, abspath,
                      sizeof(abspath));
   if (status != B_OK)
     return UV__ERR(status);
@@ -90,7 +90,7 @@ int uv_resident_set_memory(size_t* rss) {
   status_t status;
   thread_info thread;
 
-  status = get_thread_info(find_thread(NULL), &thread);
+  status = get_thread_info(find_thread(nullptr), &thread);
   if (status != B_OK)
     return UV__ERR(status);
 
@@ -119,15 +119,15 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   uint64_t cpuspeed;
   uv_cpu_info_t* cpu_info;
 
-  if (cpu_infos == NULL || count == NULL)
+  if (cpu_infos == nullptr || count == nullptr)
     return UV_EINVAL;
 
-  status = get_cpu_topology_info(NULL, &topology_count);
+  status = get_cpu_topology_info(nullptr, &topology_count);
   if (status != B_OK)
     return UV__ERR(status);
 
   topology_infos = uv__malloc(topology_count * sizeof(*topology_infos));
-  if (topology_infos == NULL)
+  if (topology_infos == nullptr)
     return UV_ENOMEM;
 
   status = get_cpu_topology_info(topology_infos, &topology_count);
@@ -151,7 +151,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
     return UV__ERR(status);
 
   *cpu_infos = uv__calloc(system.cpu_count, sizeof(**cpu_infos));
-  if (*cpu_infos == NULL)
+  if (*cpu_infos == nullptr)
     return UV_ENOMEM;
 
   /* CPU time and model are not exposed by Haiku. */

@@ -65,7 +65,7 @@ char** uv_setup_args(int argc, char** argv) {
   size += (argc + 1) * sizeof(char*);
 
   auto **new_argv = create_ptrstruct<char*>(size);
-  if (new_argv == NULL)
+  if (new_argv == nullptr)
     return argv;
 
   /* Copy over the strings and set up the pointer table. */
@@ -81,7 +81,7 @@ char** uv_setup_args(int argc, char** argv) {
     new_argv[i] = s;
     s += size;
   }
-  new_argv[i] = NULL;
+  new_argv[i] = nullptr;
 
   /* argv is not adjacent on z/os, we use just argv[0] on that platform. */
 #ifndef __MVS__
@@ -122,7 +122,7 @@ int uv_set_process_title(const char* title) {
 
 
 int uv_get_process_title(char* buffer, size_t size) {
-  if (buffer == NULL || size == 0)
+  if (buffer == nullptr || size == 0)
     return UV_EINVAL;
 
   uv_once(&process_title_mutex_once, init_process_title_mutex_once);
@@ -146,5 +146,5 @@ int uv_get_process_title(char* buffer, size_t size) {
 
 UV_DESTRUCTOR(static void free_args_mem(void)) {
   uv__free(args_mem);  /* Keep valgrind happy. */
-  args_mem = NULL;
+  args_mem = nullptr;
 }

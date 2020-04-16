@@ -96,7 +96,7 @@ TEST_IMPL(pipe_getsockname) {
   int r;
 
   loop = uv_default_loop();
-  ASSERT(loop != NULL);
+  ASSERT(loop != nullptr);
 
   r = uv_pipe_init(loop, &pipe_server, 0);
   ASSERT(r == 0);
@@ -216,7 +216,7 @@ TEST_IMPL(pipe_getsockname_blocking) {
   size_t len1, len2;
   int r;
 
-  r = CreatePipe(&readh, &writeh, NULL, 65536);
+  r = CreatePipe(&readh, &writeh, nullptr, 65536);
   ASSERT(r != 0);
 
   r = uv_pipe_init(uv_default_loop(), &pipe_client, 0);
@@ -225,7 +225,7 @@ TEST_IMPL(pipe_getsockname_blocking) {
   ASSERT(r != -1);
   r = uv_pipe_open(&pipe_client, readfd);
   ASSERT(r == 0);
-  r = uv_read_start((uv_stream_t*)&pipe_client, NULL, NULL);
+  r = uv_read_start((uv_stream_t*)&pipe_client, nullptr, nullptr);
   ASSERT(r == 0);
   Sleep(100);
   r = uv_read_stop((uv_stream_t*)&pipe_client);
@@ -236,7 +236,7 @@ TEST_IMPL(pipe_getsockname_blocking) {
   ASSERT(r == 0);
   ASSERT(len1 == 0);  /* It's an annonymous pipe. */
 
-  r = uv_read_start((uv_stream_t*)&pipe_client, NULL, NULL);
+  r = uv_read_start((uv_stream_t*)&pipe_client, nullptr, nullptr);
   ASSERT(r == 0);
   Sleep(100);
 

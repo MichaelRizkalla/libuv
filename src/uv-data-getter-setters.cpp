@@ -7,9 +7,9 @@ const char* uv_handle_type_name(uv_handle_type type) {
 #undef XX
   case UV_FILE: return "file";
   case UV_HANDLE_TYPE_MAX:
-  case UV_UNKNOWN_HANDLE: return NULL;
+  case UV_UNKNOWN_HANDLE: return nullptr;
   }
-  return NULL;
+  return nullptr;
 }
 
 uv_handle_type uv_handle_get_type(const uv_handle_t* handle) {
@@ -38,7 +38,7 @@ const char* uv_req_type_name(uv_req_type type) {
   default: /* UV_REQ_TYPE_PRIVATE */
     break;
   }
-  return NULL;
+  return nullptr;
 }
 
 uv_req_type uv_req_get_type(const uv_req_t* req) {

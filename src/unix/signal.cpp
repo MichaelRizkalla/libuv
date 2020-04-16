@@ -70,7 +70,7 @@ static void uv__signal_global_init(void) {
      * it the handler functions will be called multiple times. Thus
      * we only want to do it once.
      */
-    if (pthread_atfork(NULL, NULL, &uv__signal_global_reinit))
+    if (pthread_atfork(nullptr, nullptr, &uv__signal_global_reinit))
       abort();
 
   uv__signal_global_reinit();
@@ -155,7 +155,7 @@ static void uv__signal_unlock_and_unblock(sigset_t* saved_sigmask) {
   if (uv__signal_unlock())
     abort();
 
-  if (pthread_sigmask(SIG_SETMASK, saved_sigmask, NULL))
+  if (pthread_sigmask(SIG_SETMASK, saved_sigmask, nullptr))
     abort();
 }
 
@@ -167,14 +167,14 @@ static uv_signal_t* uv__signal_first_handle(int signum) {
 
   lookup.signum = signum;
   lookup.flags = 0;
-  lookup.loop = NULL;
+  lookup.loop = nullptr;
 
   handle = RB_NFIND(uv__signal_tree_s, &uv__signal_tree, &lookup);
 
-  if (handle != NULL && handle->signum == signum)
+  if (handle != nullptr && handle->signum == signum)
     return handle;
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -192,7 +192,7 @@ static void uv__signal_handler(int signum) {
   }
 
   for (handle = uv__signal_first_handle(signum);
-       handle != NULL && handle->signum == signum;
+       handle != nullptr && handle->signum == signum;
        handle = RB_NEXT(uv__signal_tree_s, &uv__signal_tree, handle)) {
     int r;
 
@@ -233,7 +233,7 @@ static int uv__signal_register_handler(int signum, int oneshot) {
     sa.sa_flags |= SA_RESETHAND;
 
   /* XXX save old action so we can restore it later on? */
-  if (sigaction(signum, &sa, NULL))
+  if (sigaction(signum, &sa, nullptr))
     return UV__ERR(errno);
 
   return 0;
@@ -251,7 +251,7 @@ static void uv__signal_unregister_handler(int signum) {
    * signal implies that it was successfully registered earlier, so EINVAL
    * should never happen.
    */
-  if (sigaction(signum, &sa, NULL))
+  if (sigaction(signum, &sa, nullptr))
     abort();
 }
 
@@ -386,7 +386,7 @@ static int uv__signal_start(uv_signal_t* handle,
    * Also in case there's only one-shot handlers and a regular handler comes in.
    */
   first_handle = uv__signal_first_handle(signum);
-  if (first_handle == NULL ||
+  if (first_handle == nullptr ||
       (!oneshot && (first_handle->flags & UV_SIGNAL_ONE_SHOT))) {
     err = uv__signal_register_handler(signum, oneshot);
     if (err) {
@@ -496,7 +496,7 @@ static int uv__signal_compare(uv_signal_t* w1, uv_signal_t* w2) {
   if (f1 > f2) return 1;
 
   /* Sort by loop pointer, so we can easily look up the first item after
-   * { .signum = x, .loop = NULL }.
+   * { .signum = x, .loop = nullptr }.
    */
   if (w1->loop < w2->loop) return -1;
   if (w1->loop > w2->loop) return 1;
@@ -537,7 +537,7 @@ static void uv__signal_stop(uv_signal_t* handle) {
    * not, unregister the signal handler.
    */
   first_handle = uv__signal_first_handle(handle->signum);
-  if (first_handle == NULL) {
+  if (first_handle == nullptr) {
     uv__signal_unregister_handler(handle->signum);
   } else {
     rem_oneshot = handle->flags & UV_SIGNAL_ONE_SHOT;

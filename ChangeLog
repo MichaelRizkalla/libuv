@@ -96,7 +96,7 @@ Changes since version 1.34.2:
 
 * zos: return on realloc failure in scandir() (Milad Farazmand)
 
-* zos: fix scandir() error path NULL pointer deref (Ben Noordhuis)
+* zos: fix scandir() error path nullptr pointer deref (Ben Noordhuis)
 
 
 2020.01.24, Version 1.34.2 (Stable), f868c9ab0c307525a16fff99fd21e32a6ebc3837
@@ -755,7 +755,7 @@ Changes since version 1.23.2:
 
 * test: avoid memory leak for test_output (Carlo Marcelo Arenas Belón)
 
-* zos: avoid UB with NULL pointer arithmetic (Carlo Marcelo Arenas Belón)
+* zos: avoid UB with nullptr pointer arithmetic (Carlo Marcelo Arenas Belón)
 
 * doc: add vtjnash to maintainers (Jameson Nash)
 
@@ -1446,7 +1446,7 @@ Changes since version 1.14.0:
 
 * unix,windows: init all requests in fs calls (cjihrig)
 
-* unix,windows: return UV_EINVAL on NULL fs reqs (cjihrig)
+* unix,windows: return UV_EINVAL on nullptr fs reqs (cjihrig)
 
 * windows: add POST macro to fs functions (cjihrig)
 
@@ -1461,7 +1461,7 @@ Changes since version 1.14.0:
 
 Changes since version 1.13.1:
 
-* unix: check for NULL in uv_os_unsetenv for parameter name (André Klitzing)
+* unix: check for nullptr in uv_os_unsetenv for parameter name (André Klitzing)
 
 * doc: add thread safety warning for process title (Matthew Taylor)
 
@@ -1613,7 +1613,7 @@ Changes since version 1.11.0:
 
 * docs: improve UV_ENOBUFS scenario documentation (cjihrig)
 
-* unix: return UV_EINVAL for NULL env name (jBarz)
+* unix: return UV_EINVAL for nullptr env name (jBarz)
 
 * unix: filter getifaddrs results consistently (Brad King)
 
@@ -2499,7 +2499,7 @@ Changes since version 1.7.0:
 
 * test: plug small memory leak in unix test runner (Ben Noordhuis)
 
-* unix,windows: allow NULL loop for sync fs requests (Ben Noordhuis)
+* unix,windows: allow nullptr loop for sync fs requests (Ben Noordhuis)
 
 * unix,windows: don't assert on unknown error code (Ben Noordhuis)
 
@@ -3213,7 +3213,7 @@ Changes since version 0.11.29:
 
 * darwin: allocate enough space for select() hack (Fedor Indutny)
 
-* unix, windows: don't allow a NULL callback on timers (Saúl Ibarra Corretgé)
+* unix, windows: don't allow a nullptr callback on timers (Saúl Ibarra Corretgé)
 
 * windows: simplify code in uv_timer_again (Saúl Ibarra Corretgé)
 
@@ -3893,7 +3893,7 @@ Changes since version 0.11.13:
 
 * unix: remove uv__pipe_accept() (Ben Noordhuis)
 
-* unix: fix uv_spawn() NULL pointer deref on ENOMEM (Ben Noordhuis)
+* unix: fix uv_spawn() nullptr pointer deref on ENOMEM (Ben Noordhuis)
 
 * unix: don't close inherited fds on uv_spawn() fail (Ben Noordhuis)
 
@@ -3946,7 +3946,7 @@ Changes since version 0.11.13:
 
 Changes since version 0.10.17:
 
-* unix: fix uv_spawn() NULL pointer deref on ENOMEM (Ben Noordhuis)
+* unix: fix uv_spawn() nullptr pointer deref on ENOMEM (Ben Noordhuis)
 
 * unix: don't close inherited fds on uv_spawn() fail (Ben Noordhuis)
 
@@ -4132,7 +4132,7 @@ Changes since version 0.11.7:
 
 * unix: fix uv__signal_unlock() prototype (Ben Noordhuis)
 
-* unix, windows: allow NULL async callback (Ben Noordhuis)
+* unix, windows: allow nullptr async callback (Ben Noordhuis)
 
 * build: apply dtrace -G to all object files (Timothy J. Fontaine)
 

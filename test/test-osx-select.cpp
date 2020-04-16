@@ -42,7 +42,7 @@ static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
   fflush(stdout);
 
   if (read_count == 3)
-    uv_close((uv_handle_t*) stream, NULL);
+    uv_close((uv_handle_t*) stream, nullptr);
 }
 
 
@@ -61,7 +61,7 @@ TEST_IMPL(osx_select) {
     return TEST_SKIP;
   }
 
-  r = uv_tty_init(uv_default_loop(), &tty, fd, 1);
+  r = uv_tty_init(uv_default_loop(), &tty, fd);
   ASSERT(r == 0);
 
   uv_read_start((uv_stream_t*) &tty, alloc_cb, read_cb);
@@ -114,7 +114,7 @@ TEST_IMPL(osx_select_many_fds) {
     return TEST_SKIP;
   }
 
-  r = uv_tty_init(uv_default_loop(), &tty, fd, 1);
+  r = uv_tty_init(uv_default_loop(), &tty, fd);
   ASSERT(r == 0);
 
   r = uv_read_start((uv_stream_t*) &tty, alloc_cb, read_cb);

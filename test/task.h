@@ -214,10 +214,10 @@ typedef enum {
   ASSERT_BASE_HEX(memcmp(a, b, size) != 0, a, !=, b, size)
 
 #define ASSERT_NULL(a) \
-  ASSERT_BASE(a == NULL, a, ==, NULL, void*, "p")
+  ASSERT_BASE(a == nullptr, a, ==, nullptr, void*, "p")
 
 #define ASSERT_NOT_NULL(a) \
-  ASSERT_BASE(a != NULL, a, !=, NULL, void*, "p")
+  ASSERT_BASE(a != nullptr, a, !=, nullptr, void*, "p")
 
 #define ASSERT_PTR_EQ(a, b) \
   ASSERT_BASE((void*)a == (void*)b, a, ==, b, void*, "p")
@@ -306,11 +306,11 @@ extern void notify_parent_process(void);
 /* Fully close a loop */
 static void close_walk_cb(uv_handle_t* handle, void* arg) {
   if (!uv_is_closing(handle))
-    uv_close(handle, NULL);
+    uv_close(handle, nullptr);
 }
 
 UNUSED static void close_loop(uv_loop_t* loop) {
-  uv_walk(loop, close_walk_cb, NULL);
+  uv_walk(loop, close_walk_cb, nullptr);
   uv_run(loop, UV_RUN_DEFAULT);
 }
 

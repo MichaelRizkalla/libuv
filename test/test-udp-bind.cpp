@@ -49,8 +49,8 @@ TEST_IMPL(udp_bind) {
   r = uv_udp_bind(&h2, (const struct sockaddr*) &addr, 0);
   ASSERT(r == UV_EADDRINUSE);
 
-  uv_close((uv_handle_t*) &h1, NULL);
-  uv_close((uv_handle_t*) &h2, NULL);
+  uv_close((uv_handle_t*) &h1, nullptr);
+  uv_close((uv_handle_t*) &h2, nullptr);
 
   r = uv_run(loop, UV_RUN_DEFAULT);
   ASSERT(r == 0);
@@ -82,8 +82,8 @@ TEST_IMPL(udp_bind_reuseaddr) {
   r = uv_udp_bind(&h2, (const struct sockaddr*) &addr, UV_UDP_REUSEADDR);
   ASSERT(r == 0);
 
-  uv_close((uv_handle_t*) &h1, NULL);
-  uv_close((uv_handle_t*) &h2, NULL);
+  uv_close((uv_handle_t*) &h1, nullptr);
+  uv_close((uv_handle_t*) &h2, nullptr);
 
   r = uv_run(loop, UV_RUN_DEFAULT);
   ASSERT(r == 0);

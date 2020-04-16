@@ -36,7 +36,7 @@ static int close_cb_called = 0;
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -55,9 +55,9 @@ TEST_IMPL(pipe_bind_error_addrinuse) {
   r = uv_pipe_bind(&server2, TEST_PIPENAME);
   ASSERT(r == UV_EADDRINUSE);
 
-  r = uv_listen((uv_stream_t*)&server1, SOMAXCONN, NULL);
+  r = uv_listen((uv_stream_t*)&server1, SOMAXCONN, nullptr);
   ASSERT(r == 0);
-  r = uv_listen((uv_stream_t*)&server2, SOMAXCONN, NULL);
+  r = uv_listen((uv_stream_t*)&server2, SOMAXCONN, nullptr);
   ASSERT(r == UV_EINVAL);
 
   uv_close((uv_handle_t*)&server1, close_cb);
@@ -125,7 +125,7 @@ TEST_IMPL(pipe_listen_without_bind) {
   r = uv_pipe_init(uv_default_loop(), &server, 0);
   ASSERT(r == 0);
 
-  r = uv_listen((uv_stream_t*)&server, SOMAXCONN, NULL);
+  r = uv_listen((uv_stream_t*)&server, SOMAXCONN, nullptr);
   ASSERT(r == UV_EINVAL);
 
   uv_close((uv_handle_t*)&server, close_cb);

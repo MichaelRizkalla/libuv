@@ -38,12 +38,12 @@
 #endif
 
 #include "utils/allocator.cpp"
-typedef struct {
+struct uv__allocator_t {
   uv_malloc_func local_malloc;
   uv_realloc_func local_realloc;
   uv_calloc_func local_calloc;
   uv_free_func local_free;
-} uv__allocator_t;
+};
 
 static uv__allocator_t uv__allocator = {
   malloc,
@@ -133,7 +133,7 @@ size_t uv_handle_size(uv_handle_type type) {
   switch (type) {
     UV_HANDLE_TYPE_MAP(XX)
     default:
-      return -1;
+      return static_cast<size_t>(-1);
   }
 }
 
@@ -141,14 +141,14 @@ size_t uv_req_size(uv_req_type type) {
   switch(type) {
     UV_REQ_TYPE_MAP(XX)
     default:
-      return -1;
+      return static_cast<size_t>(-1);
   }
 }
 
 #undef XX
 
 
-size_t uv_loop_size(void) {
+size_t uv_loop_size() {
   return sizeof(uv_loop_t);
 }
 
@@ -217,25 +217,25 @@ const char* uv_strerror(int err) {
 #undef UV_STRERROR_GEN
 
 
-int uv_ip4_addr(const char* ip, int port, struct sockaddr_in* addr) {
-  memset(addr, 0, sizeof(*addr));
+int uv_ip4_addr(const char* ip, int port, sockaddr_in* addr) {
+  memset(addr, 0, sizeof(sockaddr_in));
   addr->sin_family = AF_INET;
-  addr->sin_port = htons(port);
+  addr->sin_port = htons(static_cast<u_short>(port));
 #ifdef SIN6_LEN
-  addr->sin_len = sizeof(*addr);
+  addr->sin_len = sizeof(sockaddr_in);
 #endif
   return uv_inet_pton(AF_INET, ip, &(addr->sin_addr.s_addr));
 }
 
 
-int uv_ip6_addr(const char* ip, int port, struct sockaddr_in6* addr) {
+int uv_ip6_addr(const char* ip, int port, sockaddr_in6* addr) {
   char address_part[40];
   size_t address_part_size;
   const char* zone_index;
 
   memset(addr, 0, sizeof(*addr));
   addr->sin6_family = AF_INET6;
-  addr->sin6_port = htons(port);
+  addr->sin6_port = htons(static_cast<u_short>(port));
 #ifdef SIN6_LEN
   addr->sin6_len = sizeof(*addr);
 #endif
@@ -263,18 +263,18 @@ int uv_ip6_addr(const char* ip, int port, struct sockaddr_in6* addr) {
 }
 
 
-int uv_ip4_name(const struct sockaddr_in* src, char* dst, size_t size) {
+int uv_ip4_name(const sockaddr_in* src, char* dst, size_t size) {
   return uv_inet_ntop(AF_INET, &src->sin_addr, dst, size);
 }
 
 
-int uv_ip6_name(const struct sockaddr_in6* src, char* dst, size_t size) {
+int uv_ip6_name(const sockaddr_in6* src, char* dst, size_t size) {
   return uv_inet_ntop(AF_INET6, &src->sin6_addr, dst, size);
 }
 
 
 int uv_tcp_bind(uv_tcp_t* handle,
-                const struct sockaddr* addr,
+                const sockaddr* addr,
                 unsigned int flags) {
   unsigned int addrlen;
 
@@ -282,9 +282,9 @@ int uv_tcp_bind(uv_tcp_t* handle,
     return UV_EINVAL;
 
   if (addr->sa_family == AF_INET)
-    addrlen = sizeof(struct sockaddr_in);
+    addrlen = sizeof(sockaddr_in);
   else if (addr->sa_family == AF_INET6)
-    addrlen = sizeof(struct sockaddr_in6);
+    addrlen = sizeof(sockaddr_in6);
   else
     return UV_EINVAL;
 
@@ -293,7 +293,7 @@ int uv_tcp_bind(uv_tcp_t* handle,
 
 
 int uv_udp_bind(uv_udp_t* handle,
-                const struct sockaddr* addr,
+                const sockaddr* addr,
                 unsigned int flags) {
   unsigned int addrlen;
 
@@ -301,9 +301,9 @@ int uv_udp_bind(uv_udp_t* handle,
     return UV_EINVAL;
 
   if (addr->sa_family == AF_INET)
-    addrlen = sizeof(struct sockaddr_in);
+    addrlen = sizeof(sockaddr_in);
   else if (addr->sa_family == AF_INET6)
-    addrlen = sizeof(struct sockaddr_in6);
+    addrlen = sizeof(sockaddr_in6);
   else
     return UV_EINVAL;
 
@@ -313,7 +313,7 @@ int uv_udp_bind(uv_udp_t* handle,
 
 int uv_tcp_connect(uv_connect_t* req,
                    uv_tcp_t* handle,
-                   const struct sockaddr* addr,
+                   const sockaddr* addr,
                    uv_connect_cb cb) {
   unsigned int addrlen;
 
@@ -321,9 +321,9 @@ int uv_tcp_connect(uv_connect_t* req,
     return UV_EINVAL;
 
   if (addr->sa_family == AF_INET)
-    addrlen = sizeof(struct sockaddr_in);
+    addrlen = sizeof(sockaddr_in);
   else if (addr->sa_family == AF_INET6)
-    addrlen = sizeof(struct sockaddr_in6);
+    addrlen = sizeof(sockaddr_in6);
   else
     return UV_EINVAL;
 
@@ -331,7 +331,7 @@ int uv_tcp_connect(uv_connect_t* req,
 }
 
 
-int uv_udp_connect(uv_udp_t* handle, const struct sockaddr* addr) {
+int uv_udp_connect(uv_udp_t* handle, const sockaddr* addr) {
   unsigned int addrlen;
 
   if (handle->type != UV_UDP)
@@ -346,9 +346,9 @@ int uv_udp_connect(uv_udp_t* handle, const struct sockaddr* addr) {
   }
 
   if (addr->sa_family == AF_INET)
-    addrlen = sizeof(struct sockaddr_in);
+    addrlen = sizeof(sockaddr_in);
   else if (addr->sa_family == AF_INET6)
-    addrlen = sizeof(struct sockaddr_in6);
+    addrlen = sizeof(sockaddr_in6);
   else
     return UV_EINVAL;
 
@@ -360,20 +360,20 @@ int uv_udp_connect(uv_udp_t* handle, const struct sockaddr* addr) {
 
 
 int uv__udp_is_connected(uv_udp_t* handle) {
-  struct sockaddr_storage addr;
+  sockaddr_storage addr;
   int addrlen;
   if (handle->type != UV_UDP)
     return 0;
 
   addrlen = sizeof(addr);
-  if (uv_udp_getpeername(handle, (struct sockaddr*) &addr, &addrlen) != 0)
+  if (uv_udp_getpeername(handle, reinterpret_cast<sockaddr*>(&addr), &addrlen) != 0)
     return 0;
 
   return addrlen > 0;
 }
 
 
-int uv__udp_check_before_send(uv_udp_t* handle, const struct sockaddr* addr) {
+int uv__udp_check_before_send(uv_udp_t* handle, const sockaddr* addr) {
   unsigned int addrlen;
 
   if (handle->type != UV_UDP)
@@ -387,12 +387,12 @@ int uv__udp_check_before_send(uv_udp_t* handle, const struct sockaddr* addr) {
 
   if (addr != nullptr) {
     if (addr->sa_family == AF_INET)
-      addrlen = sizeof(struct sockaddr_in);
+      addrlen = sizeof(sockaddr_in);
     else if (addr->sa_family == AF_INET6)
-      addrlen = sizeof(struct sockaddr_in6);
+      addrlen = sizeof(sockaddr_in6);
 #if defined(AF_UNIX) && !defined(_WIN32)
     else if (addr->sa_family == AF_UNIX)
-      addrlen = sizeof(struct sockaddr_un);
+      addrlen = sizeof(sockaddr_un);
 #endif
     else
       return UV_EINVAL;
@@ -408,7 +408,7 @@ int uv_udp_send(uv_udp_send_t* req,
                 uv_udp_t* handle,
                 const uv_buf_t bufs[],
                 unsigned int nbufs,
-                const struct sockaddr* addr,
+                const sockaddr* addr,
                 uv_udp_send_cb send_cb) {
   int addrlen;
 
@@ -423,7 +423,7 @@ int uv_udp_send(uv_udp_send_t* req,
 int uv_udp_try_send(uv_udp_t* handle,
                     const uv_buf_t bufs[],
                     unsigned int nbufs,
-                    const struct sockaddr* addr) {
+                    const sockaddr* addr) {
   int addrlen;
 
   addrlen = uv__udp_check_before_send(handle, addr);
@@ -622,7 +622,7 @@ int uv_fs_scandir_next(uv_fs_t* req, uv_dirent_t* ent) {
 
   /* Check to see if req passed */
   if (req->result < 0)
-    return req->result;
+    return static_cast<int>(req->result);
 
   /* Ptr will be null if req was canceled or no files found */
   if (!req->ptr)

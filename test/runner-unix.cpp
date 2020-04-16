@@ -56,7 +56,7 @@ void notify_parent_process(void) {
   int fd;
 
   arg = getenv("UV_TEST_RUNNER_FD");
-  if (arg == NULL)
+  if (arg == nullptr)
     return;
 
   fd = atoi(arg);
@@ -69,8 +69,8 @@ void notify_parent_process(void) {
 /* Do platform-specific initialization. */
 void platform_init(int argc, char **argv) {
   /* Disable stdio output buffering. */
-  setvbuf(stdout, NULL, _IONBF, 0);
-  setvbuf(stderr, NULL, _IONBF, 0);
+  setvbuf(stdout, nullptr, _IONBF, 0);
+  setvbuf(stderr, nullptr, _IONBF, 0);
   signal(SIGPIPE, SIG_IGN);
   snprintf(executable_path, sizeof(executable_path), "%s", argv[0]);
 }
@@ -95,7 +95,7 @@ int process_start(char* name, char* part, process_info_t* p, int is_helper) {
   /* Disable valgrind for helpers, it complains about helpers leaking memory.
    * They're killed after the test and as such never get a chance to clean up.
    */
-  if (is_helper == 0 && arg != NULL && atoi(arg) != 0) {
+  if (is_helper == 0 && arg != nullptr && atoi(arg) != 0) {
     args[n++] = const_cast<char*>("valgrind");
     args[n++] = const_cast<char*>("--quiet");
     args[n++] = const_cast<char*>("--leak-check=full");
@@ -106,7 +106,7 @@ int process_start(char* name, char* part, process_info_t* p, int is_helper) {
   args[n++] = executable_path;
   args[n++] = name;
   args[n++] = part;
-  args[n++] = NULL;
+  args[n++] = nullptr;
 
   stdout_file = tmpfile();
   stdout_fd = fileno(stdout_file);
@@ -202,7 +202,7 @@ static void* dowait(void* data) {
     r = waitpid(p->pid, &p->status, 0);
     if (r < 0) {
       perror("waitpid");
-      return NULL;
+      return nullptr;
     }
     p->terminated = 1;
   }
@@ -216,7 +216,7 @@ static void* dowait(void* data) {
     while (r == -1 && errno == EINTR);
   }
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -280,7 +280,7 @@ int process_wait(process_info_t* vec, int n, int timeout) {
     goto terminate;
   }
 
-  if (gettimeofday(&timebase, NULL))
+  if (gettimeofday(&timebase, nullptr))
     abort();
 
   tv = timebase;
@@ -304,11 +304,11 @@ int process_wait(process_info_t* vec, int n, int timeout) {
     FD_ZERO(&fds);
     FD_SET(args.pipe[0], &fds);
 
-    r = select(args.pipe[0] + 1, &fds, NULL, NULL, &tv);
+    r = select(args.pipe[0] + 1, &fds, nullptr, nullptr, &tv);
     if (!(r == -1 && errno == EINTR))
       break;
 
-    if (gettimeofday(&tv, NULL))
+    if (gettimeofday(&tv, nullptr))
       abort();
   }
 
@@ -329,7 +329,7 @@ int process_wait(process_info_t* vec, int n, int timeout) {
     retval = -2;
   }
 
-  if (pthread_join(tid, NULL))
+  if (pthread_join(tid, nullptr))
     abort();
 
 terminate:
@@ -391,7 +391,7 @@ int process_read_last_line(process_info_t *p,
 
   buffer[0] = '\0';
 
-  while (fgets(buffer, buffer_len, p->stdout_file) != NULL) {
+  while (fgets(buffer, buffer_len, p->stdout_file) != nullptr) {
     for (ptr = buffer; *ptr && *ptr != '\r' && *ptr != '\n'; ptr++)
       ;
     *ptr = '\0';

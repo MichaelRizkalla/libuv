@@ -356,12 +356,12 @@ int uv__loop_configure(uv_loop_t* loop, uv_loop_option option, va_list ap) {
 }
 
 
-int uv_backend_fd(const uv_loop_t* loop) {
+int uv_backend_fd() {
   return -1;
 }
 
 
-int uv_loop_fork(uv_loop_t* loop) {
+int uv_loop_fork() {
   return UV_ENOSYS;
 }
 

@@ -65,7 +65,7 @@ TEST_IMPL(udp_create_early) {
                 &sockname.sin_addr,
                 sizeof(addr.sin_addr)) == 0);
 
-  uv_close((uv_handle_t*) &client, NULL);
+  uv_close((uv_handle_t*) &client, nullptr);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   MAKE_VALGRIND_HAPPY();
@@ -110,7 +110,7 @@ TEST_IMPL(udp_create_early_bad_bind) {
   ASSERT(r == UV_EFAULT);
 #endif
 
-  uv_close((uv_handle_t*) &client, NULL);
+  uv_close((uv_handle_t*) &client, nullptr);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   MAKE_VALGRIND_HAPPY();

@@ -109,7 +109,7 @@ int uv__platform_loop_init(uv_loop_t* loop) {
 
   loop->backend_fd = fd;
   loop->inotify_fd = -1;
-  loop->inotify_watchers = NULL;
+  loop->inotify_watchers = nullptr;
 
   if (fd == -1)
     return UV__ERR(errno);
@@ -150,12 +150,12 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
   uintptr_t i;
   uintptr_t nfds;
 
-  assert(loop->watchers != NULL);
+  assert(loop->watchers != nullptr);
   assert(fd >= 0);
 
   events = (struct epoll_event*) loop->watchers[loop->nwatchers];
   nfds = (uintptr_t) loop->watchers[loop->nwatchers + 1];
-  if (events != NULL)
+  if (events != nullptr)
     /* Invalidate events with same file descriptor */
     for (i = 0; i < nfds; i++)
       if (events[i].data.fd == fd)
@@ -289,7 +289,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       timeout = max_safe_timeout;
 
     if (sigmask != 0 && no_epoll_pwait != 0)
-      if (pthread_sigmask(SIG_BLOCK, &sigset, NULL))
+      if (pthread_sigmask(SIG_BLOCK, &sigset, nullptr))
         abort();
 
     if (no_epoll_wait != 0 || (sigmask != 0 && no_epoll_pwait == 0)) {
@@ -315,7 +315,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     }
 
     if (sigmask != 0 && no_epoll_pwait != 0)
-      if (pthread_sigmask(SIG_UNBLOCK, &sigset, NULL))
+      if (pthread_sigmask(SIG_UNBLOCK, &sigset, nullptr))
         abort();
 
     /* Update loop->time unconditionally. It's tempting to skip the update when
@@ -367,7 +367,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       } x;
 
       x.events = events;
-      assert(loop->watchers != NULL);
+      assert(loop->watchers != nullptr);
       loop->watchers[loop->nwatchers] = x.watchers;
       loop->watchers[loop->nwatchers + 1] = static_cast<uv__io_t*>((void*) (uintptr_t) nfds);
     }
@@ -385,7 +385,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
 
       w = loop->watchers[fd];
 
-      if (w == NULL) {
+      if (w == nullptr) {
         /* File descriptor that we've stopped watching, disarm it.
          *
          * Ignore all errors because we may be racing with another thread
@@ -437,8 +437,8 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     if (have_signals != 0)
       loop->signal_io_watcher.cb(loop, &loop->signal_io_watcher, POLLIN);
 
-    loop->watchers[loop->nwatchers] = NULL;
-    loop->watchers[loop->nwatchers + 1] = NULL;
+    loop->watchers[loop->nwatchers] = nullptr;
+    loop->watchers[loop->nwatchers + 1] = nullptr;
 
     if (have_signals != 0)
       return;  /* Event loop should cycle now so don't poll again. */
@@ -528,7 +528,7 @@ int uv_resident_set_memory(size_t* rss) {
   buf[n] = '\0';
 
   s = strchr(buf, ' ');
-  if (s == NULL)
+  if (s == nullptr)
     goto err;
 
   s += 1;
@@ -536,17 +536,17 @@ int uv_resident_set_memory(size_t* rss) {
     goto err;
 
   s = strchr(s, ')');
-  if (s == NULL)
+  if (s == nullptr)
     goto err;
 
   for (i = 1; i <= 22; i++) {
     s = strchr(s + 1, ' ');
-    if (s == NULL)
+    if (s == nullptr)
       goto err;
   }
 
   errno = 0;
-  val = strtol(s, NULL, 10);
+  val = strtol(s, nullptr, 10);
   if (errno != 0)
     goto err;
   if (val < 0)
@@ -613,11 +613,11 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   int err;
   FILE* statfile_fp;
 
-  *cpu_infos = NULL;
+  *cpu_infos = nullptr;
   *count = 0;
 
   statfile_fp = uv__open_file("/proc/stat");
-  if (statfile_fp == NULL)
+  if (statfile_fp == nullptr)
     return UV__ERR(errno);
 
   err = uv__cpu_num(statfile_fp, &numcpus);
@@ -626,7 +626,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
 
   err = UV_ENOMEM;
   ci = create_ptrstruct<uv_cpu_info_t>(numcpus, sizeof(uv_cpu_info_t));
-  if (ci == NULL)
+  if (ci == nullptr)
     goto out;
 
   err = read_models(numcpus, ci);
@@ -697,7 +697,7 @@ static int read_models(unsigned int numcpus, uv_cpu_info_t* ci) {
     defined(__mips__) || \
     defined(__x86_64__)
   fp = uv__open_file("/proc/cpuinfo");
-  if (fp == NULL)
+  if (fp == nullptr)
     return UV__ERR(errno);
 
   while (fgets(buf, sizeof(buf), fp)) {
@@ -705,7 +705,7 @@ static int read_models(unsigned int numcpus, uv_cpu_info_t* ci) {
       if (strncmp(buf, model_marker, sizeof(model_marker) - 1) == 0) {
         model = buf + sizeof(model_marker) - 1;
         model = uv__strndup(model, strlen(model) - 1);  /* Strip newline. */
-        if (model == NULL) {
+        if (model == nullptr) {
           fclose(fp);
           return UV_ENOMEM;
         }
@@ -724,7 +724,7 @@ static int read_models(unsigned int numcpus, uv_cpu_info_t* ci) {
       if (strncmp(buf, model_marker, sizeof(model_marker) - 1) == 0) {
         model = buf + sizeof(model_marker) - 1;
         model = uv__strndup(model, strlen(model) - 1);  /* Strip newline. */
-        if (model == NULL) {
+        if (model == nullptr) {
           fclose(fp);
           return UV_ENOMEM;
         }
@@ -755,7 +755,7 @@ static int read_models(unsigned int numcpus, uv_cpu_info_t* ci) {
 
   while (model_idx < numcpus) {
     model = uv__strndup(inferred_model, strlen(inferred_model));
-    if (model == NULL)
+    if (model == nullptr)
       return UV_ENOMEM;
     ci[model_idx++].model = model;
   }
@@ -847,7 +847,7 @@ static uint64_t read_cpufreq(unsigned int cpunum) {
            cpunum);
 
   fp = uv__open_file(buf);
-  if (fp == NULL)
+  if (fp == nullptr)
     return 0;
 
   if (fscanf(fp, "%" PRIu64, &val) != 1)
@@ -862,7 +862,7 @@ static uint64_t read_cpufreq(unsigned int cpunum) {
 static int uv__ifaddr_exclude(struct ifaddrs *ent, int exclude_type) {
   if (!((ent->ifa_flags & IFF_UP) && (ent->ifa_flags & IFF_RUNNING)))
     return 1;
-  if (ent->ifa_addr == NULL)
+  if (ent->ifa_addr == nullptr)
     return 1;
   /*
    * On Linux getifaddrs returns information related to the raw underlying
@@ -876,7 +876,7 @@ static int uv__ifaddr_exclude(struct ifaddrs *ent, int exclude_type) {
 int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 #ifndef HAVE_IFADDRS_H
   *count = 0;
-  *addresses = NULL;
+  *addresses = nullptr;
   return UV_ENOSYS;
 #else
   struct ifaddrs *addrs, *ent;
@@ -885,13 +885,13 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   struct sockaddr_ll *sll;
 
   *count = 0;
-  *addresses = NULL;
+  *addresses = nullptr;
 
   if (getifaddrs(&addrs))
     return UV__ERR(errno);
 
   /* Count the number of interfaces */
-  for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
+  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
 
@@ -912,7 +912,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
   address = *addresses;
 
-  for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
+  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
 
@@ -936,7 +936,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   }
 
   /* Fill in physical addresses for each interface */
-  for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
+  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFPHYS))
       continue;
 
@@ -1001,7 +1001,7 @@ static uint64_t uv__read_proc_meminfo(const char* what) {
   buf[n] = '\0';
   p = strstr(buf, what);
 
-  if (p == NULL)
+  if (p == nullptr)
     goto out;
 
   p += strlen(what);

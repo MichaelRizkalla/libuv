@@ -49,7 +49,7 @@
 #endif
 
 #if !defined(snprintf) && defined(_MSC_VER) && _MSC_VER < 1900
-extern int snprintf(char*, size_t, const char*, ...);
+extern "C" int snprintf(char*, size_t, const char*, ...);
 #endif
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -128,23 +128,23 @@ int uv__loop_configure(uv_loop_t* loop, uv_loop_option option, va_list ap);
 void uv__loop_close(uv_loop_t* loop);
 
 int uv__tcp_bind(uv_tcp_t* tcp,
-                 const struct sockaddr* addr,
+                 const sockaddr* addr,
                  unsigned int addrlen,
                  unsigned int flags);
 
 int uv__tcp_connect(uv_connect_t* req,
                    uv_tcp_t* handle,
-                   const struct sockaddr* addr,
+                   const sockaddr* addr,
                    unsigned int addrlen,
                    uv_connect_cb cb);
 
 int uv__udp_bind(uv_udp_t* handle,
-                 const struct sockaddr* addr,
+                 const sockaddr* addr,
                  unsigned int  addrlen,
                  unsigned int flags);
 
 int uv__udp_connect(uv_udp_t* handle,
-                    const struct sockaddr* addr,
+                    const sockaddr* addr,
                     unsigned int addrlen);
 
 int uv__udp_disconnect(uv_udp_t* handle);
@@ -155,14 +155,14 @@ int uv__udp_send(uv_udp_send_t* req,
                  uv_udp_t* handle,
                  const uv_buf_t bufs[],
                  unsigned int nbufs,
-                 const struct sockaddr* addr,
+                 const sockaddr* addr,
                  unsigned int addrlen,
                  uv_udp_send_cb send_cb);
 
 int uv__udp_try_send(uv_udp_t* handle,
                      const uv_buf_t bufs[],
                      unsigned int nbufs,
-                     const struct sockaddr* addr,
+                     const sockaddr* addr,
                      unsigned int addrlen);
 
 int uv__udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloccb,
@@ -174,17 +174,17 @@ void uv__fs_poll_close(uv_fs_poll_t* handle);
 
 int uv__getaddrinfo_translate_error(int sys_err);    /* EAI_* error. */
 
-enum uv__work_kind {
+enum uv__work_kind : ssize_t {
   UV__WORK_CPU,
   UV__WORK_FAST_IO,
   UV__WORK_SLOW_IO
 };
 
 void uv__work_submit(uv_loop_t* loop,
-                     struct uv__work *w,
-                     enum uv__work_kind kind,
-                     void (*work)(struct uv__work *w),
-                     void (*done)(struct uv__work *w, int status));
+                     uv__work *w,
+                     uv__work_kind kind,
+                     void (*work)(uv__work *w),
+                     void (*done)(uv__work *w, int status));
 
 void uv__work_done(uv_async_t* handle);
 
@@ -277,7 +277,7 @@ void uv__timer_close(uv_timer_t* handle);
 #if defined(_WIN32)
 # define uv__handle_platform_init(h) ((h)->u.fd = -1)
 #else
-# define uv__handle_platform_init(h) ((h)->next_closing = NULL)
+# define uv__handle_platform_init(h) ((h)->next_closing = nullptr)
 #endif
 
 #define uv__handle_init(loop_, h, type_)                                      \

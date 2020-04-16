@@ -174,7 +174,7 @@ static void tcp_pinger_v6_new(int vectored_writes) {
 
   ASSERT(0 ==uv_ip6_addr("::1", TEST_PORT, &server_addr));
   pinger = test_create_ptrstruct<pinger_t>(sizeof(pinger_t));
-  ASSERT(pinger != NULL);
+  ASSERT(pinger != nullptr);
   pinger->vectored_writes = vectored_writes;
   pinger->state = 0;
   pinger->pongs = 0;
@@ -204,7 +204,7 @@ static void tcp_pinger_new(int vectored_writes) {
 
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &server_addr));
   pinger = test_create_ptrstruct<pinger_t>(sizeof(pinger_t));
-  ASSERT(pinger != NULL);
+  ASSERT(pinger != nullptr);
   pinger->vectored_writes = vectored_writes;
   pinger->state = 0;
   pinger->pongs = 0;
@@ -232,7 +232,7 @@ static void pipe_pinger_new(int vectored_writes) {
   pinger_t *pinger;
 
   pinger = (pinger_t*)malloc(sizeof(*pinger));
-  ASSERT(pinger != NULL);
+  ASSERT(pinger != nullptr);
   pinger->vectored_writes = vectored_writes;
   pinger->state = 0;
   pinger->pongs = 0;

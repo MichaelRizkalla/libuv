@@ -17,7 +17,7 @@
 #include "task.h"
 
 static void timer_cb(uv_timer_t* handle) {
-  uv_close((uv_handle_t*) handle, NULL);
+  uv_close((uv_handle_t*) handle, nullptr);
 }
 
 

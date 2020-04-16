@@ -59,9 +59,9 @@ TEST_IMPL(tmpdir) {
   ASSERT(len > SMALLPATH);
 
   /* Test invalid inputs */
-  r = uv_os_tmpdir(NULL, &len);
+  r = uv_os_tmpdir(nullptr, &len);
   ASSERT(r == UV_EINVAL);
-  r = uv_os_tmpdir(tmpdir, NULL);
+  r = uv_os_tmpdir(tmpdir, nullptr);
   ASSERT(r == UV_EINVAL);
   len = 0;
   r = uv_os_tmpdir(tmpdir, &len);

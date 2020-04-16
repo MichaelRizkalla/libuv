@@ -42,7 +42,7 @@ int uv__random_getentropy(void* buf, size_t buflen) {
 
   uv_once(&once, uv__random_getentropy_init);
 
-  if (uv__getentropy == NULL)
+  if (uv__getentropy == nullptr)
     return UV_ENOSYS;
 
   /* getentropy() returns an error for requests > 256 bytes. */

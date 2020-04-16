@@ -210,7 +210,7 @@ static int get_ibmi_system_status(SSTS0200* rcvr) {
   qwcrssts_argv[2] = &format;
   qwcrssts_argv[3] = &reset_status;
   qwcrssts_argv[4] = &errcode;
-  qwcrssts_argv[5] = NULL;
+  qwcrssts_argv[5] = nullptr;
 
   /* Call the IBM i QWCRSSTS API from PASE */
   rc = _PGMCALL(&qwcrssts_pointer, qwcrssts_argv, 0);
@@ -278,7 +278,7 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   unsigned int numcpus, idx = 0;
   uv_cpu_info_t* cpu_info;
 
-  *cpu_infos = NULL;
+  *cpu_infos = nullptr;
   *count = 0;
 
   numcpus = sysconf(_SC_NPROCESSORS_ONLN);
@@ -347,7 +347,7 @@ static int get_ibmi_physical_address(const char* line, char (*phys_addr)[6]) {
   qdcrlind_argv[2] = &format;
   qdcrlind_argv[3] = &line_name;
   qdcrlind_argv[4] = &err;
-  qdcrlind_argv[5] = NULL;
+  qdcrlind_argv[5] = nullptr;
 
   /* Call the IBM i QDCRLIND API from PASE */
   rc = _PGMCALL(&qdcrlind_pointer, qdcrlind_argv, 0);
@@ -379,11 +379,11 @@ static int get_ibmi_physical_address(const char* line, char (*phys_addr)[6]) {
 
 int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   uv_interface_address_t* address;
-  struct ifaddrs_pase *ifap = NULL, *cur;
+  struct ifaddrs_pase *ifap = nullptr, *cur;
   int inet6, r = 0;
 
   *count = 0;
-  *addresses = NULL;
+  *addresses = nullptr;
 
   if (Qp2getifaddrs(&ifap))
     return UV_ENOSYS;
@@ -407,7 +407,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
   /* Alloc the return interface structs */
   *addresses = uv__calloc(*count, sizeof(**addresses));
-  if (*addresses == NULL) {
+  if (*addresses == nullptr) {
     Qp2freeifaddrs(ifap);
     return UV_ENOMEM;
   }

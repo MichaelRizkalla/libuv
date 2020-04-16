@@ -120,7 +120,7 @@ TEST_IMPL(idle_ref) {
 
 TEST_IMPL(async_ref) {
   uv_async_t h;
-  uv_async_init(uv_default_loop(), &h, NULL);
+  uv_async_init(uv_default_loop(), &h, nullptr);
   uv_unref((uv_handle_t*)&h);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
   do_close(&h);
@@ -154,7 +154,7 @@ TEST_IMPL(check_ref) {
 
 
 static void prepare_cb(uv_prepare_t* h) {
-  ASSERT(h != NULL);
+  ASSERT(h != nullptr);
   uv_unref((uv_handle_t*)h);
 }
 
@@ -211,7 +211,7 @@ TEST_IMPL(fs_event_ref) {
 TEST_IMPL(fs_poll_ref) {
   uv_fs_poll_t h;
   uv_fs_poll_init(uv_default_loop(), &h);
-  uv_fs_poll_start(&h, NULL, ".", 999);
+  uv_fs_poll_start(&h, nullptr, ".", 999);
   uv_unref((uv_handle_t*)&h);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
   do_close(&h);
@@ -415,7 +415,7 @@ TEST_IMPL(process_ref) {
   argv[0] = exepath;
   options.file = exepath;
   options.args = argv;
-  options.exit_cb = NULL;
+  options.exit_cb = nullptr;
 
   r = uv_spawn(uv_default_loop(), &h, &options);
   ASSERT(r == 0);

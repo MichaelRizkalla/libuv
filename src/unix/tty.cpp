@@ -53,7 +53,7 @@
 static int isreallyatty(int file) {
   int rc;
  
-  rc = !ioctl(file, TXISATTY + 0x81, NULL);
+  rc = !ioctl(file, TXISATTY + 0x81, nullptr);
   if (!rc && errno != EBADF)
       errno = ENOTTY;
 
@@ -115,12 +115,12 @@ static int uv__tty_is_slave(const int fd) {
 #else
   /* Fallback to ptsname
    */
-  result = ptsname(fd) == NULL;
+  result = ptsname(fd) == nullptr;
 #endif
   return result;
 }
 
-int uv_tty_init(uv_loop_t* loop, uv_tty_t* tty, int fd, int unused) {
+int uv_tty_init(uv_loop_t* loop, uv_tty_t* tty, int fd) {
   uv_handle_type type;
   int flags;
   int newfd;
@@ -128,7 +128,6 @@ int uv_tty_init(uv_loop_t* loop, uv_tty_t* tty, int fd, int unused) {
   int saved_flags;
   int mode;
   char path[256];
-  (void)unused; /* deprecated parameter is no longer needed */
 
   /* File descriptors that refer to files cannot be monitored with epoll.
    * That restriction also applies to character devices like /dev/random
@@ -229,7 +228,7 @@ skip:
 }
 
 static void uv__tty_make_raw(struct termios* tio) {
-  assert(tio != NULL);
+  assert(tio != nullptr);
 
 #if defined __sun || defined __MVS__
   /*

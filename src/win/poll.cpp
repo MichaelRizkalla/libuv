@@ -52,8 +52,8 @@ static AFD_POLL_INFO afd_poll_info_dummy_;
 static void uv__init_overlapped_dummy(void) {
   HANDLE event;
 
-  event = CreateEvent(NULL, TRUE, TRUE, NULL);
-  if (event == NULL)
+  event = CreateEvent(nullptr, TRUE, TRUE, nullptr);
+  if (event == nullptr)
     uv_fatal_error(GetLastError(), "CreateEvent");
 
   memset(&overlapped_dummy_, 0, sizeof overlapped_dummy_);
@@ -285,7 +285,7 @@ static SOCKET uv__fast_poll_create_peer_socket(HANDLE iocp,
   if (CreateIoCompletionPort((HANDLE) sock,
                              iocp,
                              (ULONG_PTR) sock,
-                             0) == NULL) {
+                             0) == nullptr) {
     goto error;
   }
 
@@ -531,13 +531,13 @@ int uv_poll_init_socket(uv_loop_t* loop, uv_poll_t* handle,
 
   if (WSAIoctl(socket,
                SIO_BASE_HANDLE,
-               NULL,
+               nullptr,
                0,
                &base_socket,
                sizeof base_socket,
                &bytes,
-               NULL,
-               NULL) == 0) {
+               nullptr,
+               nullptr) == 0) {
     assert(base_socket != 0 && base_socket != INVALID_SOCKET);
     socket = base_socket;
   }
@@ -557,7 +557,7 @@ int uv_poll_init_socket(uv_loop_t* loop, uv_poll_t* handle,
   }
 
   /* Get the peer socket that is needed to enable fast poll. If the returned
-   * value is NULL, the protocol is not implemented by MSAFD and we'll have to
+   * value is nullptr, the protocol is not implemented by MSAFD and we'll have to
    * use slow mode. */
   peer_socket = uv__fast_poll_get_peer_socket(loop, &protocol_info);
 

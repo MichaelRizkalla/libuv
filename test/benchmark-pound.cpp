@@ -114,11 +114,11 @@ static void connect_cb(uv_connect_t* req, int status) {
     return;
   }
 
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
 
   conn = (conn_rec*)req->data;
-  ASSERT(conn != NULL);
+  ASSERT(conn != nullptr);
 
 #if DEBUG
   printf("connect_cb %d\n", conn->i);
@@ -137,7 +137,7 @@ static void connect_cb(uv_connect_t* req, int status) {
 
 static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 
-  ASSERT(stream != NULL);
+  ASSERT(stream != nullptr);
 
 #if DEBUG
   printf("read_cb %d\n", p->i);
@@ -161,7 +161,7 @@ static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
 static void close_cb(uv_handle_t* handle) {
   conn_rec* p = (conn_rec*)handle->data;
 
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   closed_streams++;
 
 #if DEBUG
@@ -317,7 +317,7 @@ BENCHMARK_IMPL(tcp4_pound_100) {
                   tcp_do_setup,
                   tcp_do_connect,
                   tcp_make_connect,
-                  NULL);
+                  nullptr);
 }
 
 
@@ -327,7 +327,7 @@ BENCHMARK_IMPL(tcp4_pound_1000) {
                   tcp_do_setup,
                   tcp_do_connect,
                   tcp_make_connect,
-                  NULL);
+                  nullptr);
 }
 
 
@@ -337,7 +337,7 @@ BENCHMARK_IMPL(pipe_pound_100) {
                   pipe_do_setup,
                   pipe_do_connect,
                   pipe_make_connect,
-                  NULL);
+                  nullptr);
 }
 
 
@@ -347,5 +347,5 @@ BENCHMARK_IMPL(pipe_pound_1000) {
                   pipe_do_setup,
                   pipe_do_connect,
                   pipe_make_connect,
-                  NULL);
+                  nullptr);
 }

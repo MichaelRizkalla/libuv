@@ -95,7 +95,7 @@ static void connect_cb(uv_connect_t *req, int status) {
    * Write the letter 'Q' to gracefully kill the echo-server. This will not
    * effect our connection.
    */
-  uv_write(&write_req, (uv_stream_t*) &tcp, &qbuf, 1, NULL);
+  uv_write(&write_req, (uv_stream_t*) &tcp, &qbuf, 1, nullptr);
 
   /* Shutdown our end of the connection.  */
   uv_shutdown(&shutdown_req, (uv_stream_t*) &tcp, shutdown_cb);

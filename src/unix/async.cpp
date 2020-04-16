@@ -144,7 +144,7 @@ static void uv__async_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
     if (0 == uv__async_spin(h))
       continue;  /* Not pending. */
 
-    if (h->async_cb == NULL)
+    if (h->async_cb == nullptr)
       continue;
 
     h->async_cb(h);

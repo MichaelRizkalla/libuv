@@ -109,7 +109,7 @@ static void spawn(void) {
 
   args[0] = exepath;
   args[1] = const_cast<char*>("spawn_helper");
-  args[2] = NULL;
+  args[2] = nullptr;
   options.file = exepath;
   options.args = args;
   options.exit_cb = exit_cb;

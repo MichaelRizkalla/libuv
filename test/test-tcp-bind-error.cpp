@@ -29,7 +29,7 @@ static int close_cb_called = 0;
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -50,9 +50,9 @@ TEST_IMPL(tcp_bind_error_addrinuse) {
   r = uv_tcp_bind(&server2, (const struct sockaddr*) &addr, 0);
   ASSERT(r == 0);
 
-  r = uv_listen((uv_stream_t*)&server1, 128, NULL);
+  r = uv_listen((uv_stream_t*)&server1, 128, nullptr);
   ASSERT(r == 0);
-  r = uv_listen((uv_stream_t*)&server2, 128, NULL);
+  r = uv_listen((uv_stream_t*)&server2, 128, nullptr);
   ASSERT(r == UV_EADDRINUSE);
 
   uv_close((uv_handle_t*)&server1, close_cb);
@@ -139,7 +139,7 @@ TEST_IMPL(tcp_bind_error_fault) {
   return 0;
 }
 
-/* Notes: On Linux uv_bind(server, NULL) will segfault the program.  */
+/* Notes: On Linux uv_bind(server, nullptr) will segfault the program.  */
 
 TEST_IMPL(tcp_bind_error_inval) {
   struct sockaddr_in addr1;
@@ -208,7 +208,7 @@ TEST_IMPL(tcp_listen_without_bind) {
 
   r = uv_tcp_init(uv_default_loop(), &server);
   ASSERT(r == 0);
-  r = uv_listen((uv_stream_t*)&server, 128, NULL);
+  r = uv_listen((uv_stream_t*)&server, 128, nullptr);
   ASSERT(r == 0);
 
   MAKE_VALGRIND_HAPPY();
@@ -229,18 +229,18 @@ TEST_IMPL(tcp_bind_writable_flags) {
   ASSERT(r == 0);
   r = uv_tcp_bind(&server, (const struct sockaddr*) &addr, 0);
   ASSERT(r == 0);
-  r = uv_listen((uv_stream_t*)&server, 128, NULL);
+  r = uv_listen((uv_stream_t*)&server, 128, nullptr);
   ASSERT(r == 0);
 
   ASSERT(0 == uv_is_writable((uv_stream_t*) &server));
   ASSERT(0 == uv_is_readable((uv_stream_t*) &server));
 
   buf = uv_buf_init(const_cast<char*>("PING"), 4);
-  r = uv_write(&write_req, (uv_stream_t*) &server, &buf, 1, NULL);
+  r = uv_write(&write_req, (uv_stream_t*) &server, &buf, 1, nullptr);
   ASSERT(r == UV_EPIPE);
-  r = uv_shutdown(&shutdown_req, (uv_stream_t*) &server, NULL);
+  r = uv_shutdown(&shutdown_req, (uv_stream_t*) &server, nullptr);
   ASSERT(r == UV_ENOTCONN);
-  r = uv_read_start((uv_stream_t*) &server, NULL, NULL);
+  r = uv_read_start((uv_stream_t*) &server, nullptr, nullptr);
   ASSERT(r == UV_ENOTCONN);
 
   uv_close((uv_handle_t*)&server, close_cb);

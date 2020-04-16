@@ -70,7 +70,7 @@ static void thread_cb(void *arg) {
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -99,7 +99,7 @@ static void prepare_cb(uv_prepare_t* handle) {
   if (prepare_cb_called++)
     return;
 
-  r = uv_thread_create(&thread, thread_cb, NULL);
+  r = uv_thread_create(&thread, thread_cb, nullptr);
   ASSERT(r == 0);
   uv_mutex_unlock(&mutex);
 }

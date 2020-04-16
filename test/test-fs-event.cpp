@@ -77,7 +77,7 @@ static void fs_event_fail(uv_fs_event_t* handle,
 static void create_dir(const char* name) {
   int r;
   uv_fs_t req;
-  r = uv_fs_mkdir(NULL, &req, name, 0755, NULL);
+  r = uv_fs_mkdir(nullptr, &req, name, 0755, nullptr);
   ASSERT(r == 0 || r == UV_EEXIST);
   uv_fs_req_cleanup(&req);
 }
@@ -87,11 +87,11 @@ static void create_file(const char* name) {
   uv_file file;
   uv_fs_t req;
 
-  r = uv_fs_open(NULL, &req, name, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR, NULL);
+  r = uv_fs_open(nullptr, &req, name, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR, nullptr);
   ASSERT(r >= 0);
   file = r;
   uv_fs_req_cleanup(&req);
-  r = uv_fs_close(NULL, &req, file, NULL);
+  r = uv_fs_close(nullptr, &req, file, nullptr);
   ASSERT(r == 0);
   uv_fs_req_cleanup(&req);
 }
@@ -102,23 +102,23 @@ static void touch_file(const char* name) {
   uv_fs_t req;
   uv_buf_t buf;
 
-  r = uv_fs_open(NULL, &req, name, O_RDWR, 0, NULL);
+  r = uv_fs_open(nullptr, &req, name, O_RDWR, 0, nullptr);
   ASSERT(r >= 0);
   file = r;
   uv_fs_req_cleanup(&req);
 
   buf = uv_buf_init(const_cast<char*>("foo"), 4);
-  r = uv_fs_write(NULL, &req, file, &buf, 1, -1, NULL);
+  r = uv_fs_write(nullptr, &req, file, &buf, 1, -1, nullptr);
   ASSERT(r >= 0);
   uv_fs_req_cleanup(&req);
 
-  r = uv_fs_close(NULL, &req, file, NULL);
+  r = uv_fs_close(nullptr, &req, file, nullptr);
   ASSERT(r == 0);
   uv_fs_req_cleanup(&req);
 }
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -138,7 +138,7 @@ static void fs_event_cb_dir(uv_fs_event_t* handle, const char* filename,
   #if defined(__APPLE__) || defined(_WIN32) || defined(__linux__)
   ASSERT(strcmp(filename, "file1") == 0);
   #else
-  ASSERT(filename == NULL || strcmp(filename, "file1") == 0);
+  ASSERT(filename == nullptr || strcmp(filename, "file1") == 0);
   #endif
   ASSERT(0 == uv_fs_event_stop(handle));
   uv_close((uv_handle_t*)handle, close_cb);
@@ -174,12 +174,12 @@ static void fs_event_unlink_files(uv_timer_t* handle) {
   int r;
   int i;
 
-  /* NOTE: handle might be NULL if invoked not as timer callback */
-  if (handle == NULL) {
+  /* NOTE: handle might be nullptr if invoked not as timer callback */
+  if (handle == nullptr) {
     /* Unlink all files */
     for (i = 0; i < 16; i++) {
       r = remove(fs_event_get_filename(i));
-      if (handle != NULL)
+      if (handle != nullptr)
         ASSERT(r == 0);
     }
   } else {
@@ -208,7 +208,7 @@ static void fs_event_cb_dir_multi_file(uv_fs_event_t* handle,
   #if defined(__APPLE__) || defined(_WIN32) || defined(__linux__)
   ASSERT(strncmp(filename, file_prefix, sizeof(file_prefix) - 1) == 0);
   #else
-  ASSERT(filename == NULL ||
+  ASSERT(filename == nullptr ||
          strncmp(filename, file_prefix, sizeof(file_prefix) - 1) == 0);
   #endif
 
@@ -250,12 +250,12 @@ static void fs_event_unlink_files_in_subdir(uv_timer_t* handle) {
   int r;
   int i;
 
-  /* NOTE: handle might be NULL if invoked not as timer callback */
-  if (handle == NULL) {
+  /* NOTE: handle might be nullptr if invoked not as timer callback */
+  if (handle == nullptr) {
     /* Unlink all files */
     for (i = 0; i < 16; i++) {
       r = remove(fs_event_get_filename_in_subdir(i));
-      if (handle != NULL)
+      if (handle != nullptr)
         ASSERT(r == 0);
     }
   } else {
@@ -300,7 +300,7 @@ static void fs_event_cb_dir_multi_file_in_subdir(uv_fs_event_t* handle,
                  file_prefix_in_subdir,
                  sizeof(file_prefix_in_subdir) - 1) == 0);
   #else
-  ASSERT(filename == NULL ||
+  ASSERT(filename == nullptr ||
          strncmp(filename,
                  file_prefix_in_subdir,
                  sizeof(file_prefix_in_subdir) - 1) == 0);
@@ -328,7 +328,7 @@ static void fs_event_cb_file(uv_fs_event_t* handle, const char* filename,
   #if defined(__APPLE__) || defined(_WIN32) || defined(__linux__)
   ASSERT(strcmp(filename, "file2") == 0);
   #else
-  ASSERT(filename == NULL || strcmp(filename, "file2") == 0);
+  ASSERT(filename == nullptr || strcmp(filename, "file2") == 0);
   #endif
   ASSERT(0 == uv_fs_event_stop(handle));
   uv_close((uv_handle_t*)handle, close_cb);
@@ -337,10 +337,10 @@ static void fs_event_cb_file(uv_fs_event_t* handle, const char* filename,
 static void timer_cb_close_handle(uv_timer_t* timer) {
   uv_handle_t* handle;
 
-  ASSERT(timer != NULL);
+  ASSERT(timer != nullptr);
   handle = static_cast<uv_handle_t*>(timer->data);
 
-  uv_close((uv_handle_t*)timer, NULL);
+  uv_close((uv_handle_t*)timer, nullptr);
   uv_close((uv_handle_t*)handle, close_cb);
 }
 
@@ -355,7 +355,7 @@ static void fs_event_cb_file_current_dir(uv_fs_event_t* handle,
   #if defined(__APPLE__) || defined(_WIN32) || defined(__linux__)
   ASSERT(strcmp(filename, "watch_file") == 0);
   #else
-  ASSERT(filename == NULL || strcmp(filename, "watch_file") == 0);
+  ASSERT(filename == nullptr || strcmp(filename, "watch_file") == 0);
   #endif
 
   /* Regression test for SunOS: touch should generate just one event. */
@@ -379,7 +379,7 @@ static void timer_cb_file(uv_timer_t* handle) {
 }
 
 static void timer_cb_touch(uv_timer_t* timer) {
-  uv_close((uv_handle_t*)timer, NULL);
+  uv_close((uv_handle_t*)timer, nullptr);
   touch_file("watch_file");
   timer_cb_touch_called++;
 }
@@ -390,10 +390,10 @@ static void timer_cb_exact(uv_timer_t* handle) {
   if (timer_cb_exact_called == 0) {
     touch_file("watch_dir/file.js");
   } else {
-    uv_close((uv_handle_t*)handle, NULL);
+    uv_close((uv_handle_t*)handle, nullptr);
     r = uv_fs_event_stop(&fs_event);
     ASSERT(r == 0);
-    uv_close((uv_handle_t*) &fs_event, NULL);
+    uv_close((uv_handle_t*) &fs_event, nullptr);
   }
 
   ++timer_cb_exact_called;
@@ -401,9 +401,9 @@ static void timer_cb_exact(uv_timer_t* handle) {
 
 static void timer_cb_watch_twice(uv_timer_t* handle) {
   uv_fs_event_t* handles = static_cast<uv_fs_event_t*>(handle->data);
-  uv_close((uv_handle_t*) (handles + 0), NULL);
-  uv_close((uv_handle_t*) (handles + 1), NULL);
-  uv_close((uv_handle_t*) handle, NULL);
+  uv_close((uv_handle_t*) (handles + 0), nullptr);
+  uv_close((uv_handle_t*) (handles + 1), nullptr);
+  uv_close((uv_handle_t*) handle, nullptr);
 }
 
 static void fs_event_cb_close(uv_fs_event_t* handle,
@@ -432,7 +432,7 @@ TEST_IMPL(fs_event_watch_dir) {
   int r;
 
   /* Setup */
-  fs_event_unlink_files(NULL);
+  fs_event_unlink_files(nullptr);
   remove("watch_dir/file2");
   remove("watch_dir/file1");
   remove("watch_dir/");
@@ -453,7 +453,7 @@ TEST_IMPL(fs_event_watch_dir) {
   ASSERT(close_cb_called == 2);
 
   /* Cleanup */
-  fs_event_unlink_files(NULL);
+  fs_event_unlink_files(nullptr);
   remove("watch_dir/file2");
   remove("watch_dir/file1");
   remove("watch_dir/");
@@ -471,7 +471,7 @@ TEST_IMPL(fs_event_watch_dir_recursive) {
 
   /* Setup */
   loop = uv_default_loop();
-  fs_event_unlink_files(NULL);
+  fs_event_unlink_files(nullptr);
   remove("watch_dir/file2");
   remove("watch_dir/file1");
   remove("watch_dir/subdir");
@@ -514,7 +514,7 @@ TEST_IMPL(fs_event_watch_dir_recursive) {
   ASSERT(close_cb_called == 3);
 
   /* Cleanup */
-  fs_event_unlink_files_in_subdir(NULL);
+  fs_event_unlink_files_in_subdir(nullptr);
   remove("watch_dir/file2");
   remove("watch_dir/file1");
   remove("watch_dir/subdir");
@@ -545,7 +545,7 @@ TEST_IMPL(fs_event_watch_dir_short_path) {
      HKLM\SYSTEM\CurrentControlSet\Control\FileSystem\NtfsDisable8dot3NameCreation
      not equal to 0. So we verify the files we created are addressable by a 8.3
      short name */
-  has_shortnames = uv_fs_stat(NULL, &req, "watch_~1", NULL) != UV_ENOENT;
+  has_shortnames = uv_fs_stat(nullptr, &req, "watch_~1", nullptr) != UV_ENOENT;
   if (has_shortnames) {
     r = uv_fs_event_init(loop, &fs_event);
     ASSERT(r == 0);
@@ -755,7 +755,7 @@ TEST_IMPL(fs_event_watch_file_root_dir) {
   const char* sys_drive = getenv("SystemDrive");
   char path[] = "\\\\?\\X:\\bootsect.bak";
 
-  ASSERT(sys_drive != NULL);
+  ASSERT(sys_drive != nullptr);
   strncpy(path + sizeof("\\\\?\\") - 1, sys_drive, 1);
 
   loop = uv_default_loop();
@@ -767,7 +767,7 @@ TEST_IMPL(fs_event_watch_file_root_dir) {
     RETURN_SKIP("bootsect.bak doesn't exist in system root.\n");
   ASSERT(r == 0);
 
-  uv_close((uv_handle_t*) &fs_event, NULL);
+  uv_close((uv_handle_t*) &fs_event, nullptr);
 
   MAKE_VALGRIND_HAPPY();
   return 0;
@@ -933,7 +933,7 @@ TEST_IMPL(fs_event_close_in_callback) {
 
   loop = uv_default_loop();
 
-  fs_event_unlink_files(NULL);
+  fs_event_unlink_files(nullptr);
   create_dir("watch_dir");
 
   r = uv_fs_event_init(loop, &fs_event);
@@ -956,7 +956,7 @@ TEST_IMPL(fs_event_close_in_callback) {
   ASSERT(fs_event_cb_called == 3);
 
   /* Clean up */
-  fs_event_unlink_files(NULL);
+  fs_event_unlink_files(nullptr);
   remove("watch_dir/");
 
   MAKE_VALGRIND_HAPPY();
@@ -1069,7 +1069,7 @@ static void timer_cb_nop(uv_timer_t* handle) {
 }
 
 static void fs_event_error_report_close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 
   /* handle is allocated on-stack, no need to free it */

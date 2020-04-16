@@ -35,7 +35,7 @@ TEST_IMPL(get_passwd) {
   ASSERT(len > 0);
 
 #ifdef _WIN32
-  ASSERT(pwd.shell == NULL);
+  ASSERT(pwd.shell == nullptr);
 #else
   len = strlen(pwd.shell);
 # ifndef __PASE__
@@ -69,19 +69,19 @@ TEST_IMPL(get_passwd) {
   /* Test uv_os_free_passwd() */
   uv_os_free_passwd(&pwd);
 
-  ASSERT(pwd.username == NULL);
-  ASSERT(pwd.shell == NULL);
-  ASSERT(pwd.homedir == NULL);
+  ASSERT(pwd.username == nullptr);
+  ASSERT(pwd.shell == nullptr);
+  ASSERT(pwd.homedir == nullptr);
 
   /* Test a double free */
   uv_os_free_passwd(&pwd);
 
-  ASSERT(pwd.username == NULL);
-  ASSERT(pwd.shell == NULL);
-  ASSERT(pwd.homedir == NULL);
+  ASSERT(pwd.username == nullptr);
+  ASSERT(pwd.shell == nullptr);
+  ASSERT(pwd.homedir == nullptr);
 
   /* Test invalid input */
-  r = uv_os_get_passwd(NULL);
+  r = uv_os_get_passwd(nullptr);
   ASSERT(r == UV_EINVAL);
 
   return 0;

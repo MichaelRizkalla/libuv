@@ -140,12 +140,12 @@ static void signal_handling_worker(void* context) {
 
   /* Close the watchers. */
   if (action == ONLY_SIGUSR1 || action == SIGUSR1_AND_SIGUSR2) {
-    uv_close((uv_handle_t*) &signal1a, NULL);
-    uv_close((uv_handle_t*) &signal1b, NULL);
+    uv_close((uv_handle_t*) &signal1a, nullptr);
+    uv_close((uv_handle_t*) &signal1b, nullptr);
   }
 
   if (action == ONLY_SIGUSR2 || action == SIGUSR1_AND_SIGUSR2) {
-    uv_close((uv_handle_t*) &signal2, NULL);
+    uv_close((uv_handle_t*) &signal2, nullptr);
   }
 
   /* Wait for the signal watchers to close. */
@@ -170,7 +170,7 @@ static void loop_creating_worker(void* context) {
     int r;
 
     loop = test_create_ptrstruct<uv_loop_t>(sizeof(uv_loop_t));
-    ASSERT(loop != NULL);
+    ASSERT(loop != nullptr);
     ASSERT(0 == uv_loop_init(loop));
 
     r = uv_signal_init(loop, &signal);
@@ -179,7 +179,7 @@ static void loop_creating_worker(void* context) {
     r = uv_signal_start(&signal, signal_unexpected_cb, SIGTERM);
     ASSERT(r == 0);
 
-    uv_close((uv_handle_t*) &signal, NULL);
+    uv_close((uv_handle_t*) &signal, nullptr);
 
     r = uv_run(loop, UV_RUN_DEFAULT);
     ASSERT(r == 0);
@@ -217,7 +217,7 @@ TEST_IMPL(signal_multiple_loops) {
   for (i = 0; i < NUM_LOOP_CREATING_THREADS; i++) {
     r = uv_thread_create(&loop_creating_threads[i],
                          loop_creating_worker,
-                         NULL);
+                         nullptr);
     ASSERT(r == 0);
   }
 
@@ -253,7 +253,7 @@ TEST_IMPL(signal_multiple_loops) {
    * signal safety issues if there are any.
    */
   sigfillset(&sigset);
-  pthread_sigmask(SIG_SETMASK, &sigset, NULL);
+  pthread_sigmask(SIG_SETMASK, &sigset, nullptr);
 
   r = kill(getpid(), SIGUSR1);
   ASSERT(r == 0);

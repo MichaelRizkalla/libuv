@@ -37,8 +37,8 @@ TEST_IMPL(uname) {
   uv_utsname_t buffer;
   int r;
 
-  /* Verify that NULL is handled properly. */
-  r = uv_os_uname(NULL);
+  /* Verify that nullptr is handled properly. */
+  r = uv_os_uname(nullptr);
   ASSERT(r == UV_EINVAL);
 
   /* Verify the happy path. */

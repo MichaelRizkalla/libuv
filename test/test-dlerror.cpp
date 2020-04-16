@@ -31,29 +31,29 @@ TEST_IMPL(dlerror) {
   uv_lib_t lib;
   int r;
 
-  lib.errmsg = NULL;
-  lib.handle = NULL;
+  lib.errmsg = nullptr;
+  lib.handle = nullptr;
   msg = uv_dlerror(&lib);
-  ASSERT(msg != NULL);
-  ASSERT(strstr(msg, dlerror_no_error) != NULL);
+  ASSERT(msg != nullptr);
+  ASSERT(strstr(msg, dlerror_no_error) != nullptr);
 
   r = uv_dlopen(path, &lib);
   ASSERT(r == -1);
 
   msg = uv_dlerror(&lib);
-  ASSERT(msg != NULL);
+  ASSERT(msg != nullptr);
 #ifndef __OpenBSD__
-  ASSERT(strstr(msg, path) != NULL);
+  ASSERT(strstr(msg, path) != nullptr);
 #endif
-  ASSERT(strstr(msg, dlerror_no_error) == NULL);
+  ASSERT(strstr(msg, dlerror_no_error) == nullptr);
 
   /* Should return the same error twice in a row. */
   msg = uv_dlerror(&lib);
-  ASSERT(msg != NULL);
+  ASSERT(msg != nullptr);
 #ifndef __OpenBSD__
-  ASSERT(strstr(msg, path) != NULL);
+  ASSERT(strstr(msg, path) != nullptr);
 #endif
-  ASSERT(strstr(msg, dlerror_no_error) == NULL);
+  ASSERT(strstr(msg, dlerror_no_error) == nullptr);
 
   uv_dlclose(&lib);
 

@@ -44,14 +44,14 @@ static void send_cb(uv_udp_send_t* req, int status);
 static void idle_cb(uv_idle_t* handle) {
   int r;
 
-  ASSERT(send_req.handle == NULL);
+  ASSERT(send_req.handle == nullptr);
   CHECK_OBJECT(handle, uv_idle_t, idle_handle);
   ASSERT(0 == uv_idle_stop(handle));
 
   /* It probably would have stalled by now if it's going to stall at all. */
   if (++loop_hang_called > 1000) {
-    uv_close((uv_handle_t*) &client, NULL);
-    uv_close((uv_handle_t*) &idle_handle, NULL);
+    uv_close((uv_handle_t*) &client, nullptr);
+    uv_close((uv_handle_t*) &idle_handle, nullptr);
     return;
   }
 
@@ -66,11 +66,11 @@ static void idle_cb(uv_idle_t* handle) {
 
 
 static void send_cb(uv_udp_send_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0 || status == UV_ENETUNREACH);
   CHECK_OBJECT(req->handle, uv_udp_t, client);
   CHECK_OBJECT(req, uv_udp_send_t, send_req);
-  req->handle = NULL;
+  req->handle = nullptr;
 
   ASSERT(0 == uv_idle_start(&idle_handle, idle_cb));
 }

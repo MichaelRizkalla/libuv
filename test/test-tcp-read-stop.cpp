@@ -33,8 +33,8 @@ static void fail_cb(void) {
 
 
 static void write_cb(uv_write_t* req, int status) {
-  uv_close((uv_handle_t*) &timer_handle, NULL);
-  uv_close((uv_handle_t*) &tcp_handle, NULL);
+  uv_close((uv_handle_t*) &timer_handle, nullptr);
+  uv_close((uv_handle_t*) &tcp_handle, nullptr);
 }
 
 

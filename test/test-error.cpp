@@ -47,13 +47,13 @@ TEST_IMPL(error_message) {
     return 0;
   }
 
-  ASSERT(strstr(uv_strerror(UV_EINVAL), "Success") == NULL);
+  ASSERT(strstr(uv_strerror(UV_EINVAL), "Success") == nullptr);
   ASSERT(strcmp(uv_strerror(1337), "Unknown error") == 0);
   ASSERT(strcmp(uv_strerror(-1337), "Unknown error") == 0);
 
-  ASSERT(strstr(uv_strerror_r(UV_EINVAL, buf, sizeof(buf)), "Success") == NULL);
-  ASSERT(strstr(uv_strerror_r(1337, buf, sizeof(buf)), "1337") != NULL);
-  ASSERT(strstr(uv_strerror_r(-1337, buf, sizeof(buf)), "-1337") != NULL);
+  ASSERT(strstr(uv_strerror_r(UV_EINVAL, buf, sizeof(buf)), "Success") == nullptr);
+  ASSERT(strstr(uv_strerror_r(1337, buf, sizeof(buf)), "1337") != nullptr);
+  ASSERT(strstr(uv_strerror_r(-1337, buf, sizeof(buf)), "-1337") != nullptr);
 
   return 0;
 }

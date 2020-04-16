@@ -86,10 +86,10 @@ TEST_IMPL(process_title_threadsafe) {
 #endif
 
   ASSERT(0 == uv_set_process_title(titles[0]));
-  ASSERT(0 == uv_thread_create(&getter_thread, getter_thread_body, NULL));
+  ASSERT(0 == uv_thread_create(&getter_thread, getter_thread_body, nullptr));
 
   for (i = 0; i < (int) ARRAY_SIZE(setter_threads); i++)
-    ASSERT(0 == uv_thread_create(&setter_threads[i], setter_thread_body, NULL));
+    ASSERT(0 == uv_thread_create(&setter_threads[i], setter_thread_body, nullptr));
 
   for (i = 0; i < (int) ARRAY_SIZE(setter_threads); i++)
     ASSERT(0 == uv_thread_join(&setter_threads[i]));

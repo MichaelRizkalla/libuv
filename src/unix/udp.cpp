@@ -42,6 +42,10 @@
 # define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
 #endif
 
+#if(defined __linux__)
+#include <sys/socket.h>
+#endif
+
 
 static void uv__udp_run_completed(uv_udp_t* handle);
 static void uv__udp_io(uv_loop_t* loop, uv__io_t* w, unsigned int revents);
@@ -68,12 +72,12 @@ static void uv__udp_mmsg_init(void) {
   s = uv__socket(AF_INET, SOCK_DGRAM, 0);
   if (s < 0)
     return;
-  ret = uv__sendmmsg(s, NULL, 0, 0);
+  ret = uv__sendmmsg(s, nullptr, 0, 0);
   if (ret == 0 || errno != ENOSYS) {
     uv__sendmmsg_avail = 1;
     uv__recvmmsg_avail = 1;
   } else {
-    ret = uv__recvmmsg(s, NULL, 0, 0, NULL);
+    ret = uv__recvmmsg(s, nullptr, 0, 0, nullptr);
     if (ret == 0 || errno != ENOSYS)
       uv__recvmmsg_avail = 1;
   }
@@ -115,8 +119,8 @@ void uv__udp_finish_close(uv_udp_t* handle) {
   assert(handle->send_queue_count == 0);
 
   /* Now tear down the handle. */
-  handle->recv_cb = NULL;
-  handle->alloc_cb = NULL;
+  handle->recv_cb = nullptr;
+  handle->alloc_cb = nullptr;
   /* but _do not_ touch close_cb */
 }
 
@@ -140,9 +144,9 @@ static void uv__udp_run_completed(uv_udp_t* handle) {
 
     if (req->bufs != req->bufsml)
       uv__free(req->bufs);
-    req->bufs = NULL;
+    req->bufs = nullptr;
 
-    if (req->send_cb == NULL)
+    if (req->send_cb == nullptr)
       continue;
 
     /* req->status >= 0 == bytes written
@@ -205,17 +209,17 @@ static int uv__udp_recvmmsg(uv_udp_t* handle, uv_buf_t* buf) {
   }
 
   do
-    nread = uv__recvmmsg(handle->io_watcher.fd, msgs, chunks, 0, NULL);
+    nread = uv__recvmmsg(handle->io_watcher.fd, msgs, chunks, 0, nullptr);
   while (nread == -1 && errno == EINTR);
 
   if (nread < 1) {
     if (nread == 0 || errno == EAGAIN || errno == EWOULDBLOCK)
-      handle->recv_cb(handle, 0, buf, NULL, 0);
+      handle->recv_cb(handle, 0, buf, nullptr, 0);
     else
-      handle->recv_cb(handle, UV__ERR(errno), buf, NULL, 0);
+      handle->recv_cb(handle, UV__ERR(errno), buf, nullptr, 0);
   } else {
     /* pass each chunk to the application */
-    for (k = 0; k < (size_t) nread && handle->recv_cb != NULL; k++) {
+    for (k = 0; k < (size_t) nread && handle->recv_cb != nullptr; k++) {
       flags = UV_UDP_MMSG_CHUNK;
       if (msgs[k].msg_hdr.msg_flags & MSG_TRUNC)
         flags |= UV_UDP_PARTIAL;
@@ -229,8 +233,8 @@ static int uv__udp_recvmmsg(uv_udp_t* handle, uv_buf_t* buf) {
     }
 
     /* one last callback so the original buffer is freed */
-    if (handle->recv_cb != NULL)
-      handle->recv_cb(handle, 0, buf, NULL, 0);
+    if (handle->recv_cb != nullptr)
+      handle->recv_cb(handle, 0, buf, nullptr, 0);
   }
   return nread;
 }
@@ -244,8 +248,8 @@ static void uv__udp_recvmsg(uv_udp_t* handle) {
   int flags;
   int count;
 
-  assert(handle->recv_cb != NULL);
-  assert(handle->alloc_cb != NULL);
+  assert(handle->recv_cb != nullptr);
+  assert(handle->alloc_cb != nullptr);
 
   /* Prevent loop starvation when the data comes in as fast as (or faster than)
    * we can read it. XXX Need to rearm fd if we switch to edge-triggered I/O.
@@ -253,13 +257,13 @@ static void uv__udp_recvmsg(uv_udp_t* handle) {
   count = 32;
 
   do {
-    buf = uv_buf_init(NULL, 0);
+    buf = uv_buf_init(nullptr, 0);
     handle->alloc_cb((uv_handle_t*) handle, UV__UDP_DGRAM_MAXSIZE, &buf);
-    if (buf.base == NULL || buf.len == 0) {
-      handle->recv_cb(handle, UV_ENOBUFS, &buf, NULL, 0);
+    if (buf.base == nullptr || buf.len == 0) {
+      handle->recv_cb(handle, UV_ENOBUFS, &buf, nullptr, 0);
       return;
     }
-    assert(buf.base != NULL);
+    assert(buf.base != nullptr);
 
 #if HAVE_MMSG
     uv_once(&once, uv__udp_mmsg_init);
@@ -289,9 +293,9 @@ static void uv__udp_recvmsg(uv_udp_t* handle) {
 
     if (nread == -1) {
       if (errno == EAGAIN || errno == EWOULDBLOCK)
-        handle->recv_cb(handle, 0, &buf, NULL, 0);
+        handle->recv_cb(handle, 0, &buf, nullptr, 0);
       else
-        handle->recv_cb(handle, UV__ERR(errno), &buf, NULL, 0);
+        handle->recv_cb(handle, UV__ERR(errno), &buf, nullptr, 0);
     }
     else {
       flags = 0;
@@ -306,7 +310,7 @@ static void uv__udp_recvmsg(uv_udp_t* handle) {
   while (nread != -1
       && count > 0
       && handle->io_watcher.fd != -1
-      && handle->recv_cb != NULL);
+      && handle->recv_cb != nullptr);
 }
 
 #if HAVE_MMSG
@@ -326,14 +330,14 @@ write_queue_drain:
   for (pkts = 0, q = QUEUE_HEAD(&handle->write_queue);
        pkts < UV__MMSG_MAXWIDTH && q != &handle->write_queue;
        ++pkts, q = QUEUE_HEAD(q)) {
-    assert(q != NULL);
+    assert(q != nullptr);
     req = QUEUE_DATA(q, uv_udp_send_t, queue);
-    assert(req != NULL);
+    assert(req != nullptr);
 
     p = &h[pkts];
     memset(p, 0, sizeof(*p));
     if (req->addr.ss_family == AF_UNSPEC) {
-      p->msg_hdr.msg_name = NULL;
+      p->msg_hdr.msg_name = nullptr;
       p->msg_hdr.msg_namelen = 0;
     } else {
       p->msg_hdr.msg_name = &req->addr;
@@ -362,9 +366,9 @@ write_queue_drain:
     for (i = 0, q = QUEUE_HEAD(&handle->write_queue);
          i < pkts && q != &handle->write_queue;
          ++i, q = QUEUE_HEAD(q)) {
-      assert(q != NULL);
+      assert(q != nullptr);
       req = QUEUE_DATA(q, uv_udp_send_t, queue);
-      assert(req != NULL);
+      assert(req != nullptr);
 
       req->status = UV__ERR(errno);
       QUEUE_REMOVE(&req->queue);
@@ -377,9 +381,9 @@ write_queue_drain:
   for (i = 0, q = QUEUE_HEAD(&handle->write_queue);
        i < pkts && q != &handle->write_queue;
        ++i, q = QUEUE_HEAD(&handle->write_queue)) {
-    assert(q != NULL);
+    assert(q != nullptr);
     req = QUEUE_DATA(q, uv_udp_send_t, queue);
-    assert(req != NULL);
+    assert(req != nullptr);
 
     req->status = req->bufs[0].len;
 
@@ -416,14 +420,14 @@ static void uv__udp_sendmsg(uv_udp_t* handle) {
 
   while (!QUEUE_EMPTY(&handle->write_queue)) {
     q = QUEUE_HEAD(&handle->write_queue);
-    assert(q != NULL);
+    assert(q != nullptr);
 
     req = QUEUE_DATA(q, uv_udp_send_t, queue);
-    assert(req != NULL);
+    assert(req != nullptr);
 
     memset(&h, 0, sizeof h);
     if (req->addr.ss_family == AF_UNSPEC) {
-      h.msg_name = NULL;
+      h.msg_name = nullptr;
       h.msg_namelen = 0;
     } else {
       h.msg_name = &req->addr;
@@ -475,13 +479,12 @@ static void uv__udp_sendmsg(uv_udp_t* handle) {
  * AF_UNIX.
  */
 static int uv__set_reuse(int fd) {
-  int yes;
-  yes = 1;
+  int yes = 1;
 
 #if defined(SO_REUSEPORT) && defined(__MVS__)
-  struct sockaddr_in sockfd;
+  sockaddr_in sockfd;
   unsigned int sockfd_len = sizeof(sockfd);
-  if (getsockname(fd, (struct sockaddr*) &sockfd, &sockfd_len) == -1)
+  if (getsockname(fd, (sockaddr*) &sockfd, &sockfd_len) == -1)
       return UV__ERR(errno);
   if (sockfd.sin_family == AF_UNIX) {
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)))
@@ -674,7 +677,7 @@ int uv__udp_send(uv_udp_send_t* req,
 
   uv__req_init(handle->loop, req, UV_UDP_SEND);
   assert(addrlen <= sizeof(req->addr));
-  if (addr == NULL)
+  if (addr == nullptr)
     req->addr.ss_family = AF_UNSPEC;
   else
     memcpy(&req->addr, addr, addrlen);
@@ -686,7 +689,7 @@ int uv__udp_send(uv_udp_send_t* req,
   if (nbufs > ARRAY_SIZE(req->bufsml))
     req->bufs = create_ptrstruct<uv_buf_t>(nbufs * sizeof(bufs[0]));
 
-  if (req->bufs == NULL) {
+  if (req->bufs == nullptr) {
     uv__req_unregister(handle->loop, req);
     return UV_ENOMEM;
   }
@@ -868,7 +871,7 @@ static int uv__udp_set_source_membership4(uv_udp_t* handle,
 
   memset(&mreq, 0, sizeof(mreq));
 
-  if (interface_addr != NULL) {
+  if (interface_addr != nullptr) {
     err = uv_inet_pton(AF_INET, interface_addr, &mreq.imr_interface.s_addr);
     if (err)
       return err;
@@ -914,7 +917,7 @@ static int uv__udp_set_source_membership6(uv_udp_t* handle,
 
   memset(&mreq, 0, sizeof(mreq));
 
-  if (interface_addr != NULL) {
+  if (interface_addr != nullptr) {
     err = uv_ip6_addr(interface_addr, 0, &addr6);
     if (err)
       return err;
@@ -969,8 +972,8 @@ int uv_udp_init_ex(uv_loop_t* loop, uv_udp_t* handle, unsigned int flags) {
   }
 
   uv__handle_init(loop, (uv_handle_t*)handle, UV_UDP);
-  handle->alloc_cb = NULL;
-  handle->recv_cb = NULL;
+  handle->alloc_cb = nullptr;
+  handle->recv_cb = nullptr;
   handle->send_queue_size = 0;
   handle->send_queue_count = 0;
   uv__io_init(&handle->io_watcher, uv__udp_io, fd);
@@ -1302,7 +1305,7 @@ int uv__udp_recv_start(uv_udp_t* handle,
                        uv_udp_recv_cb recv_cb) {
   int err;
 
-  if (alloc_cb == NULL || recv_cb == NULL)
+  if (alloc_cb == nullptr || recv_cb == nullptr)
     return UV_EINVAL;
 
   if (uv__io_active(&handle->io_watcher, POLLIN))
@@ -1328,8 +1331,8 @@ int uv__udp_recv_stop(uv_udp_t* handle) {
   if (!uv__io_active(&handle->io_watcher, POLLOUT))
     uv__handle_stop(handle);
 
-  handle->alloc_cb = NULL;
-  handle->recv_cb = NULL;
+  handle->alloc_cb = nullptr;
+  handle->recv_cb = nullptr;
 
   return 0;
 }

@@ -77,15 +77,15 @@ void uv_disable_stdio_inheritance(void) {
 
   /* Make the windows stdio handles non-inheritable. */
   handle = GetStdHandle(STD_INPUT_HANDLE);
-  if (handle != NULL && handle != INVALID_HANDLE_VALUE)
+  if (handle != nullptr && handle != INVALID_HANDLE_VALUE)
     SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0);
 
   handle = GetStdHandle(STD_OUTPUT_HANDLE);
-  if (handle != NULL && handle != INVALID_HANDLE_VALUE)
+  if (handle != nullptr && handle != INVALID_HANDLE_VALUE)
     SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0);
 
   handle = GetStdHandle(STD_ERROR_HANDLE);
-  if (handle != NULL && handle != INVALID_HANDLE_VALUE)
+  if (handle != nullptr && handle != INVALID_HANDLE_VALUE)
     SetHandleInformation(handle, HANDLE_FLAG_INHERIT, 0);
 
   /* Make inherited CRT FDs non-inheritable. */
@@ -128,7 +128,7 @@ static int uv__create_stdio_pipe_pair(uv_loop_t* loop,
 
   /* Create child pipe handle. */
   sa.nLength = sizeof sa;
-  sa.lpSecurityDescriptor = NULL;
+  sa.lpSecurityDescriptor = nullptr;
   sa.bInheritHandle = TRUE;
 
   overlap = server_pipe->ipc || (flags & UV_OVERLAPPED_PIPE);
@@ -138,7 +138,7 @@ static int uv__create_stdio_pipe_pair(uv_loop_t* loop,
                            &sa,
                            OPEN_EXISTING,
                            overlap ? FILE_FLAG_OVERLAPPED : 0,
-                           NULL);
+                           nullptr);
   if (child_pipe == INVALID_HANDLE_VALUE) {
     err = GetLastError();
     goto error;
@@ -150,10 +150,10 @@ static int uv__create_stdio_pipe_pair(uv_loop_t* loop,
     DWORD mode;
     BOOL r = GetNamedPipeHandleState(child_pipe,
                                      &mode,
-                                     NULL,
-                                     NULL,
-                                     NULL,
-                                     NULL,
+                                     nullptr,
+                                     nullptr,
+                                     nullptr,
+                                     nullptr,
                                      0);
     assert(r == TRUE);
     assert(mode == (PIPE_READMODE_BYTE | PIPE_WAIT));
@@ -162,7 +162,7 @@ static int uv__create_stdio_pipe_pair(uv_loop_t* loop,
 
   /* Do a blocking ConnectNamedPipe. This should not block because we have both
    * ends of the pipe created. */
-  if (!ConnectNamedPipe(server_pipe->handle, NULL)) {
+  if (!ConnectNamedPipe(server_pipe->handle, nullptr)) {
     if (GetLastError() != ERROR_PIPE_CONNECTED) {
       err = GetLastError();
       goto error;
@@ -197,11 +197,11 @@ static int uv__duplicate_handle(uv_loop_t* loop, HANDLE handle, HANDLE* dup) {
 
   /* _get_osfhandle will sometimes return -2 in case of an error. This seems to
    * happen when fd <= 2 and the process' corresponding stdio handle is set to
-   * NULL. Unfortunately DuplicateHandle will happily duplicate (HANDLE) -2, so
+   * nullptr. Unfortunately DuplicateHandle will happily duplicate (HANDLE) -2, so
    * this situation goes unnoticed until someone tries to use the duplicate.
    * Therefore we filter out known-invalid handles here. */
   if (handle == INVALID_HANDLE_VALUE ||
-      handle == NULL ||
+      handle == nullptr ||
       handle == (HANDLE) -2) {
     *dup = INVALID_HANDLE_VALUE;
     return ERROR_INVALID_HANDLE;
@@ -243,7 +243,7 @@ int uv__create_nul_handle(HANDLE* handle_ptr,
   SECURITY_ATTRIBUTES sa;
 
   sa.nLength = sizeof sa;
-  sa.lpSecurityDescriptor = NULL;
+  sa.lpSecurityDescriptor = nullptr;
   sa.bInheritHandle = TRUE;
 
   handle = CreateFileW(L"NUL",
@@ -252,7 +252,7 @@ int uv__create_nul_handle(HANDLE* handle_ptr,
                        &sa,
                        OPEN_EXISTING,
                        0,
-                       NULL);
+                       nullptr);
   if (handle == INVALID_HANDLE_VALUE) {
     return GetLastError();
   }
@@ -281,7 +281,7 @@ int uv__stdio_create(uv_loop_t* loop,
 
   /* Allocate the child stdio buffer */
   buffer = (BYTE*) uv__malloc(CHILD_STDIO_SIZE(count));
-  if (buffer == NULL) {
+  if (buffer == nullptr) {
     return ERROR_OUTOFMEMORY;
   }
 
@@ -417,7 +417,7 @@ int uv__stdio_create(uv_loop_t* loop,
           crt_flags = 0;
         }
 
-        if (stream_handle == NULL ||
+        if (stream_handle == nullptr ||
             stream_handle == INVALID_HANDLE_VALUE) {
           /* The handle is already closed, or not yet created, or the stream
            * type is not supported. */
@@ -482,7 +482,7 @@ int uv__stdio_verify(BYTE* buffer, WORD size) {
   unsigned int count;
 
   /* Check the buffer pointer. */
-  if (buffer == NULL)
+  if (buffer == nullptr)
     return 0;
 
   /* Verify that the buffer is at least big enough to hold the count. */

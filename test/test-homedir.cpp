@@ -60,9 +60,9 @@ TEST_IMPL(homedir) {
   ASSERT(len > SMALLPATH);
 
   /* Test invalid inputs */
-  r = uv_os_homedir(NULL, &len);
+  r = uv_os_homedir(nullptr, &len);
   ASSERT(r == UV_EINVAL);
-  r = uv_os_homedir(homedir, NULL);
+  r = uv_os_homedir(homedir, nullptr);
   ASSERT(r == UV_EINVAL);
   len = 0;
   r = uv_os_homedir(homedir, &len);

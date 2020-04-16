@@ -119,21 +119,25 @@
 #define AFD_NUM_POLL_EVENTS             11
 #define AFD_POLL_ALL                    ((1 << AFD_NUM_POLL_EVENTS) - 1)
 
-typedef struct _AFD_RECV_DATAGRAM_INFO {
+struct _AFD_RECV_DATAGRAM_INFO {
     LPWSABUF BufferArray;
     ULONG BufferCount;
     ULONG AfdFlags;
     ULONG TdiFlags;
-    struct sockaddr* Address;
+    sockaddr* Address;
     int* AddressLength;
-} AFD_RECV_DATAGRAM_INFO, *PAFD_RECV_DATAGRAM_INFO;
+};
+typedef _AFD_RECV_DATAGRAM_INFO AFD_RECV_DATAGRAM_INFO;
+typedef _AFD_RECV_DATAGRAM_INFO *PAFD_RECV_DATAGRAM_INFO;
 
-typedef struct _AFD_RECV_INFO {
+struct _AFD_RECV_INFO {
     LPWSABUF BufferArray;
     ULONG BufferCount;
     ULONG AfdFlags;
     ULONG TdiFlags;
-} AFD_RECV_INFO, *PAFD_RECV_INFO;
+};
+typedef _AFD_RECV_INFO AFD_RECV_INFO;
+typedef _AFD_RECV_INFO *PAFD_RECV_INFO;
 
 
 #define _AFD_CONTROL_CODE(operation, method) \
@@ -155,7 +159,7 @@ typedef struct _AFD_RECV_INFO {
     _AFD_CONTROL_CODE(AFD_POLL, METHOD_BUFFERED)
 
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
-typedef struct _IP_ADAPTER_UNICAST_ADDRESS_XP {
+struct _IP_ADAPTER_UNICAST_ADDRESS_XP {
   /* FIXME: __C89_NAMELESS was removed */
   /* __C89_NAMELESS */ union {
     ULONGLONG Alignment;
@@ -164,7 +168,7 @@ typedef struct _IP_ADAPTER_UNICAST_ADDRESS_XP {
       DWORD Flags;
     };
   };
-  struct _IP_ADAPTER_UNICAST_ADDRESS_XP *Next;
+  _IP_ADAPTER_UNICAST_ADDRESS_XP *Next;
   SOCKET_ADDRESS Address;
   IP_PREFIX_ORIGIN PrefixOrigin;
   IP_SUFFIX_ORIGIN SuffixOrigin;
@@ -172,9 +176,11 @@ typedef struct _IP_ADAPTER_UNICAST_ADDRESS_XP {
   ULONG ValidLifetime;
   ULONG PreferredLifetime;
   ULONG LeaseLifetime;
-} IP_ADAPTER_UNICAST_ADDRESS_XP,*PIP_ADAPTER_UNICAST_ADDRESS_XP;
+};
+typedef _IP_ADAPTER_UNICAST_ADDRESS_XP IP_ADAPTER_UNICAST_ADDRESS_XP; 
+typedef _IP_ADAPTER_UNICAST_ADDRESS_XP *PIP_ADAPTER_UNICAST_ADDRESS_XP;
 
-typedef struct _IP_ADAPTER_UNICAST_ADDRESS_LH {
+struct _IP_ADAPTER_UNICAST_ADDRESS_LH {
   union {
     ULONGLONG Alignment;
     struct {
@@ -182,7 +188,7 @@ typedef struct _IP_ADAPTER_UNICAST_ADDRESS_LH {
       DWORD Flags;
     };
   };
-  struct _IP_ADAPTER_UNICAST_ADDRESS_LH *Next;
+  _IP_ADAPTER_UNICAST_ADDRESS_LH *Next;
   SOCKET_ADDRESS Address;
   IP_PREFIX_ORIGIN PrefixOrigin;
   IP_SUFFIX_ORIGIN SuffixOrigin;
@@ -191,11 +197,13 @@ typedef struct _IP_ADAPTER_UNICAST_ADDRESS_LH {
   ULONG PreferredLifetime;
   ULONG LeaseLifetime;
   UINT8 OnLinkPrefixLength;
-} IP_ADAPTER_UNICAST_ADDRESS_LH,*PIP_ADAPTER_UNICAST_ADDRESS_LH;
+};
+typedef _IP_ADAPTER_UNICAST_ADDRESS_LH IP_ADAPTER_UNICAST_ADDRESS_LH;
+typedef _IP_ADAPTER_UNICAST_ADDRESS_LH *PIP_ADAPTER_UNICAST_ADDRESS_LH;
 
 #endif
 
-int uv__convert_to_localhost_if_unspecified(const struct sockaddr* addr,
-                                            struct sockaddr_storage* storage);
+int uv__convert_to_localhost_if_unspecified(const sockaddr* addr,
+                                            sockaddr_storage* storage);
 
 #endif /* UV_WIN_WINSOCK_H_ */

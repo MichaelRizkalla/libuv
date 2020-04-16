@@ -54,7 +54,7 @@ static int can_ipv6_ipv4_dual(void) {
   int v6only;
   size_t size = sizeof(int);
 
-  if (sysctlbyname("net.inet6.ip6.v6only", &v6only, &size, NULL, 0))
+  if (sysctlbyname("net.inet6.ip6.v6only", &v6only, &size, nullptr, 0))
     return 0;
 
   return v6only != 1;
@@ -112,7 +112,7 @@ static void ipv6_recv_fail(uv_udp_t* handle,
                            const struct sockaddr* addr,
                            unsigned flags) {
   printf("got %d %.*s\n", (int) nread, nread > 0 ? (int) nread : 0, buf->base);
-  if (!is_from_client(addr) || (nread == 0 && addr == NULL))
+  if (!is_from_client(addr) || (nread == 0 && addr == nullptr))
     return;
   ASSERT(0 && "this function should not have been called");
 }

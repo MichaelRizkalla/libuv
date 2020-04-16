@@ -34,27 +34,27 @@ TEST_IMPL(env_vars) {
   uv_env_item_t* envitems;
 
   /* Reject invalid inputs when setting an environment variable */
-  r = uv_os_setenv(NULL, "foo");
+  r = uv_os_setenv(nullptr, "foo");
   ASSERT(r == UV_EINVAL);
-  r = uv_os_setenv(name, NULL);
+  r = uv_os_setenv(name, nullptr);
   ASSERT(r == UV_EINVAL);
-  r = uv_os_setenv(NULL, NULL);
+  r = uv_os_setenv(nullptr, nullptr);
   ASSERT(r == UV_EINVAL);
 
   /* Reject invalid inputs when retrieving an environment variable */
   size = BUF_SIZE;
-  r = uv_os_getenv(NULL, buf, &size);
+  r = uv_os_getenv(nullptr, buf, &size);
   ASSERT(r == UV_EINVAL);
-  r = uv_os_getenv(name, NULL, &size);
+  r = uv_os_getenv(name, nullptr, &size);
   ASSERT(r == UV_EINVAL);
-  r = uv_os_getenv(name, buf, NULL);
+  r = uv_os_getenv(name, buf, nullptr);
   ASSERT(r == UV_EINVAL);
   size = 0;
   r = uv_os_getenv(name, buf, &size);
   ASSERT(r == UV_EINVAL);
 
   /* Reject invalid inputs when deleting an environment variable */
-  r = uv_os_unsetenv(NULL);
+  r = uv_os_unsetenv(nullptr);
   ASSERT(r == UV_EINVAL);
 
   /* Successfully set an environment variable */

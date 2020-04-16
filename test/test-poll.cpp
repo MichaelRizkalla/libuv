@@ -147,7 +147,7 @@ static connection_context_t* create_connection_context(
   connection_context_t* context;
 
   context = (connection_context_t*) malloc(sizeof *context);
-  ASSERT(context != NULL);
+  ASSERT(context != nullptr);
 
   context->sock = sock;
   context->is_server_connection = is_server_connection;
@@ -464,7 +464,7 @@ static server_context_t* create_server_context(
   server_context_t* context;
 
   context = (server_context_t*) malloc(sizeof *context);
-  ASSERT(context != NULL);
+  ASSERT(context != nullptr);
 
   context->sock = sock;
   context->connections = 0;
@@ -653,7 +653,7 @@ TEST_IMPL(poll_nested_epoll) {
   ASSERT(0 == uv_poll_start(&poll_handle, UV_READABLE, (uv_poll_cb) abort));
   ASSERT(0 != uv_run(uv_default_loop(), UV_RUN_NOWAIT));
 
-  uv_close((uv_handle_t*) &poll_handle, NULL);
+  uv_close((uv_handle_t*) &poll_handle, nullptr);
   ASSERT(0 == uv_run(uv_default_loop(), UV_RUN_DEFAULT));
   ASSERT(0 == close(fd));
 
@@ -675,7 +675,7 @@ TEST_IMPL(poll_nested_kqueue) {
   ASSERT(0 == uv_poll_start(&poll_handle, UV_READABLE, (uv_poll_cb) abort));
   ASSERT(0 != uv_run(uv_default_loop(), UV_RUN_NOWAIT));
 
-  uv_close((uv_handle_t*) &poll_handle, NULL);
+  uv_close((uv_handle_t*) &poll_handle, nullptr);
   ASSERT(0 == uv_run(uv_default_loop(), UV_RUN_DEFAULT));
   ASSERT(0 == close(fd));
 

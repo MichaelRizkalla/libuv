@@ -77,7 +77,7 @@ static void embed_thread_runner(void* arg) {
       struct timespec ts;
       ts.tv_sec = timeout / 1000;
       ts.tv_nsec = (timeout % 1000) * 1000000;
-      r = kevent(fd, NULL, 0, NULL, 0, &ts);
+      r = kevent(fd, nullptr, 0, nullptr, 0, &ts);
 #elif defined(HAVE_EPOLL)
       {
         struct epoll_event ev;
@@ -102,7 +102,7 @@ static void embed_timer_cb(uv_timer_t* timer) {
   embed_timer_called++;
   embed_closed = 1;
 
-  uv_close((uv_handle_t*) &embed_async, NULL);
+  uv_close((uv_handle_t*) &embed_async, nullptr);
 }
 #endif
 
@@ -124,7 +124,7 @@ TEST_IMPL(embed) {
 
   /* Start worker that will interrupt external loop */
   uv_sem_init(&embed_sem, 0);
-  uv_thread_create(&embed_thread, embed_thread_runner, NULL);
+  uv_thread_create(&embed_thread, embed_thread_runner, nullptr);
 
   /* But run external loop */
   uv_run(&external, UV_RUN_DEFAULT);

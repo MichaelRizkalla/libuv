@@ -141,7 +141,7 @@ static void process_req(uv_stream_t* handle,
   wr->buf.base = (char*)malloc(WRITE_BUF_LEN);
   wr->buf.len = 0;
 
-  if (dns->state.prevbuf_ptr != NULL) {
+  if (dns->state.prevbuf_ptr != nullptr) {
     dnsreq = dns->state.prevbuf_ptr + dns->state.prevbuf_pos;
     readbuf_remaining = dns->state.prevbuf_rem;
     usingprev = 1;
@@ -151,7 +151,7 @@ static void process_req(uv_stream_t* handle,
   }
   hdrstart = dnsreq;
 
-  while (dnsreq != NULL) {
+  while (dnsreq != nullptr) {
     /* something to process */
     while (readbuf_remaining > 0) {
       /* something to process in current buffer */
@@ -206,7 +206,7 @@ static void process_req(uv_stream_t* handle,
       readbuf_remaining = nread;
       usingprev = 0;
     } else {
-      dnsreq = NULL;
+      dnsreq = nullptr;
     }
   }
 
@@ -224,7 +224,7 @@ static void process_req(uv_stream_t* handle,
     dns->state.prevbuf_rem = nread - dns->state.prevbuf_pos;
   } else {
     /* nothing left in this buffer */
-    dns->state.prevbuf_ptr = NULL;
+    dns->state.prevbuf_ptr = nullptr;
     dns->state.prevbuf_pos = 0;
     dns->state.prevbuf_rem = 0;
     free(buf->base);
@@ -280,7 +280,7 @@ static void on_connection(uv_stream_t* server, int status) {
   ASSERT(status == 0);
 
   handle = (dnshandle*) malloc(sizeof *handle);
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
 
   /* initialize read buffer state */
   handle->state.prevbuf_ptr = 0;

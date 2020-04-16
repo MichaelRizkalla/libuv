@@ -55,7 +55,7 @@
                                                                         \
     if (handle->flags & UV_HANDLE_CLOSING &&                            \
         handle->reqs_pending == 0) {                                    \
-      uv_want_endgame(loop, (uv_handle_t*)handle);                      \
+      uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));    \
     }                                                                   \
   } while (0)
 
@@ -66,7 +66,7 @@
                                                                         \
     if (!(((handle)->flags & UV_HANDLE_ACTIVE) &&                       \
           ((handle)->flags & UV_HANDLE_REF)))                           \
-      uv__active_handle_add((uv_handle_t*) (handle));                   \
+      uv__active_handle_add(reinterpret_cast<uv_handle_t*>(handle));    \
                                                                         \
     (handle)->flags |= UV_HANDLE_CLOSING;                               \
     (handle)->flags &= ~UV_HANDLE_ACTIVE;                               \
@@ -76,12 +76,12 @@
 #define uv__handle_close(handle)                                        \
   do {                                                                  \
     QUEUE_REMOVE(&(handle)->handle_queue);                              \
-    uv__active_handle_rm((uv_handle_t*) (handle));                      \
+    uv__active_handle_rm(reinterpret_cast<uv_handle_t*>(handle));       \
                                                                         \
     (handle)->flags |= UV_HANDLE_CLOSED;                                \
                                                                         \
     if ((handle)->close_cb)                                             \
-      (handle)->close_cb((uv_handle_t*) (handle));                      \
+      (handle)->close_cb(reinterpret_cast<uv_handle_t*>(handle));       \
   } while (0)
 
 
@@ -96,37 +96,36 @@ INLINE static void uv_want_endgame(uv_loop_t* loop, uv_handle_t* handle) {
 
 
 INLINE static void uv_process_endgames(uv_loop_t* loop) {
-  uv_handle_t* handle;
-
+  
   while (loop->endgame_handles) {
-    handle = loop->endgame_handles;
+    auto *handle = loop->endgame_handles;
     loop->endgame_handles = handle->endgame_next;
 
     handle->flags &= ~UV_HANDLE_ENDGAME_QUEUED;
 
     switch (handle->type) {
       case UV_TCP:
-        uv_tcp_endgame(loop, (uv_tcp_t*) handle);
+        uv_tcp_endgame(loop, reinterpret_cast<uv_tcp_t*>(handle));
         break;
 
       case UV_NAMED_PIPE:
-        uv_pipe_endgame(loop, (uv_pipe_t*) handle);
+        uv_pipe_endgame(loop, reinterpret_cast<uv_pipe_t*>(handle));
         break;
 
       case UV_TTY:
-        uv_tty_endgame(loop, (uv_tty_t*) handle);
+        uv_tty_endgame(loop, reinterpret_cast<uv_tty_t*>(handle));
         break;
 
       case UV_UDP:
-        uv_udp_endgame(loop, (uv_udp_t*) handle);
+        uv_udp_endgame(loop, reinterpret_cast<uv_udp_t*>(handle));
         break;
 
       case UV_POLL:
-        uv_poll_endgame(loop, (uv_poll_t*) handle);
+        uv_poll_endgame(loop, reinterpret_cast<uv_poll_t*>(handle));
         break;
 
       case UV_TIMER:
-        uv__timer_close((uv_timer_t*) handle);
+        uv__timer_close(reinterpret_cast<uv_timer_t*>(handle));
         uv__handle_close(handle);
         break;
 
@@ -137,23 +136,23 @@ INLINE static void uv_process_endgames(uv_loop_t* loop) {
         break;
 
       case UV_ASYNC:
-        uv_async_endgame(loop, (uv_async_t*) handle);
+        uv_async_endgame(loop, reinterpret_cast<uv_async_t*>(handle));
         break;
 
       case UV_SIGNAL:
-        uv_signal_endgame(loop, (uv_signal_t*) handle);
+        uv_signal_endgame(loop, reinterpret_cast<uv_signal_t*>(handle));
         break;
 
       case UV_PROCESS:
-        uv_process_endgame(loop, (uv_process_t*) handle);
+        uv_process_endgame(loop, reinterpret_cast<uv_process_t*>(handle));
         break;
 
       case UV_FS_EVENT:
-        uv_fs_event_endgame(loop, (uv_fs_event_t*) handle);
+        uv_fs_event_endgame(loop, reinterpret_cast<uv_fs_event_t*>(handle));
         break;
 
       case UV_FS_POLL:
-        uv__fs_poll_endgame(loop, (uv_fs_poll_t*) handle);
+        uv__fs_poll_endgame(loop, reinterpret_cast<uv_fs_poll_t*>(handle));
         break;
 
       default:
@@ -172,7 +171,7 @@ INLINE static HANDLE uv__get_osfhandle(int fd)
 
   HANDLE handle;
   UV_BEGIN_DISABLE_CRT_ASSERT();
-  handle = (HANDLE) _get_osfhandle(fd);
+  handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
   UV_END_DISABLE_CRT_ASSERT();
   return handle;
 }

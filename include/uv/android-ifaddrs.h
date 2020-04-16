@@ -27,12 +27,12 @@
 #define	_IFADDRS_H_
 
 struct ifaddrs {
-	struct ifaddrs  *ifa_next;
+	ifaddrs  *ifa_next;
 	char		*ifa_name;
 	unsigned int	 ifa_flags;
-	struct sockaddr	*ifa_addr;
-	struct sockaddr	*ifa_netmask;
-	struct sockaddr	*ifa_dstaddr;
+	sockaddr	*ifa_addr;
+	sockaddr	*ifa_netmask;
+	sockaddr	*ifa_dstaddr;
 	void		*ifa_data;
 };
 
@@ -47,8 +47,8 @@ struct ifaddrs {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern int getifaddrs(struct ifaddrs **ifap);
-extern void freeifaddrs(struct ifaddrs *ifa);
+extern int getifaddrs(ifaddrs **ifap);
+extern void freeifaddrs(ifaddrs *ifa);
 __END_DECLS
 
 #endif

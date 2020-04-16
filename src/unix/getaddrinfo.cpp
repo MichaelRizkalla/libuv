@@ -30,7 +30,7 @@
 #include "idna.h"
 
 #include <errno.h>
-#include <stddef.h> /* NULL */
+#include <stddef.h> /* nullptr */
 #include <stdlib.h>
 #include <string.h>
 #include <net/if.h> /* if_indextoname() */
@@ -124,9 +124,9 @@ static void uv__getaddrinfo_done(struct uv__work* w, int status) {
   else
     assert(0);
 
-  req->hints = NULL;
-  req->service = NULL;
-  req->hostname = NULL;
+  req->hints = nullptr;
+  req->service = nullptr;
+  req->hostname = nullptr;
 
   if (status == UV_ECANCELED) {
     assert(req->retcode == 0);
@@ -152,7 +152,7 @@ int uv_getaddrinfo(uv_loop_t* loop,
   char* buf;
   long rc;
 
-  if (req == NULL || (hostname == NULL && service == NULL))
+  if (req == nullptr || (hostname == nullptr && service == nullptr))
     return UV_EINVAL;
 
   /* FIXME(bnoordhuis) IDNA does not seem to work z/OS,
@@ -161,7 +161,7 @@ int uv_getaddrinfo(uv_loop_t* loop,
 #ifdef __MVS__
   (void) &hostname_ascii;
 #else
-  if (hostname != NULL) {
+  if (hostname != nullptr) {
     rc = uv__idna_toascii(hostname,
                           hostname + strlen(hostname),
                           hostname_ascii,
@@ -177,16 +177,16 @@ int uv_getaddrinfo(uv_loop_t* loop,
   hints_len = hints ? sizeof(*hints) : 0;
   buf = create_ptrstruct<char>(hostname_len + service_len + hints_len);
 
-  if (buf == NULL)
+  if (buf == nullptr)
     return UV_ENOMEM;
 
   uv__req_init(loop, req, UV_GETADDRINFO);
   req->loop = loop;
   req->cb = cb;
-  req->addrinfo = NULL;
-  req->hints = NULL;
-  req->service = NULL;
-  req->hostname = NULL;
+  req->addrinfo = nullptr;
+  req->hints = nullptr;
+  req->service = nullptr;
+  req->hostname = nullptr;
   req->retcode = 0;
 
   /* order matters, see uv_getaddrinfo_done() */
@@ -230,10 +230,10 @@ int uv_if_indextoname(unsigned int ifindex, char* buffer, size_t* size) {
   char ifname_buf[UV_IF_NAMESIZE];
   size_t len;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
-  if (if_indextoname(ifindex, ifname_buf) == NULL)
+  if (if_indextoname(ifindex, ifname_buf) == nullptr)
     return UV__ERR(errno);
 
   len = strnlen(ifname_buf, sizeof(ifname_buf));

@@ -72,7 +72,7 @@ static void alloc_cb(uv_handle_t* handle,
 static void send_cb(uv_udp_send_t* req, int status) {
   struct sender_state* s;
 
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
 
   if (status != 0) {
     ASSERT(status == UV_ECANCELED);
@@ -89,7 +89,7 @@ static void send_cb(uv_udp_send_t* req, int status) {
     goto send;
 
   if (packet_counter == 0) {
-    uv_close((uv_handle_t*)&s->udp_handle, NULL);
+    uv_close((uv_handle_t*)&s->udp_handle, nullptr);
     return;
   }
 
@@ -127,7 +127,7 @@ static void recv_cb(uv_udp_t* handle,
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 

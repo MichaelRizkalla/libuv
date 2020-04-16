@@ -33,7 +33,7 @@
 
 static void on_connect(uv_connect_t* req, int status) {
   ASSERT(status == 0);
-  uv_close((uv_handle_t*) req->handle, NULL);
+  uv_close((uv_handle_t*) req->handle, nullptr);
 }
 
 
@@ -43,7 +43,7 @@ static void on_connection(uv_stream_t* server, int status) {
   ASSERT(status == 0);
 
   auto *handle = test_create_ptrstruct<uv_tcp_t>(sizeof(uv_tcp_t));
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
 
   r = uv_tcp_init_ex(server->loop, handle, AF_INET);
   ASSERT(r == 0);
@@ -51,7 +51,7 @@ static void on_connection(uv_stream_t* server, int status) {
   r = uv_accept(server, (uv_stream_t*)handle);
   ASSERT(r == UV_EBUSY);
 
-  uv_close((uv_handle_t*) server, NULL);
+  uv_close((uv_handle_t*) server, nullptr);
   uv_close((uv_handle_t*) handle, (uv_close_cb)free);
 }
 
@@ -124,7 +124,7 @@ TEST_IMPL(tcp_create_early) {
                 &sockname.sin_addr,
                 sizeof(addr.sin_addr)) == 0);
 
-  uv_close((uv_handle_t*) &client, NULL);
+  uv_close((uv_handle_t*) &client, nullptr);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   MAKE_VALGRIND_HAPPY();
@@ -169,7 +169,7 @@ TEST_IMPL(tcp_create_early_bad_bind) {
   ASSERT(r == UV_EFAULT);
 #endif
 
-  uv_close((uv_handle_t*) &client, NULL);
+  uv_close((uv_handle_t*) &client, nullptr);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   MAKE_VALGRIND_HAPPY();

@@ -37,10 +37,10 @@ const unsigned int uv_active_udp_streams_threshold = 0;
 /* A zero-size buffer for use by uv_udp_read */
 static char uv_zero_[] = "";
 int uv_udp_getpeername(const uv_udp_t* handle,
-                       struct sockaddr* name,
+                       sockaddr* name,
                        int* namelen) {
 
-  return uv__getsockpeername((const uv_handle_t*) handle,
+  return uv__getsockpeername(reinterpret_cast<const uv_handle_t*>(handle),
                              getpeername,
                              name,
                              namelen,
@@ -49,10 +49,10 @@ int uv_udp_getpeername(const uv_udp_t* handle,
 
 
 int uv_udp_getsockname(const uv_udp_t* handle,
-                       struct sockaddr* name,
+                       sockaddr* name,
                        int* namelen) {
 
-  return uv__getsockpeername((const uv_handle_t*) handle,
+  return uv__getsockpeername(reinterpret_cast<const uv_handle_t*>(handle),
                              getsockname,
                              name,
                              namelen,
@@ -62,29 +62,27 @@ int uv_udp_getsockname(const uv_udp_t* handle,
 
 static int uv_udp_set_socket(uv_loop_t* loop, uv_udp_t* handle, SOCKET socket,
     int family) {
-  DWORD yes = 1;
-  WSAPROTOCOL_INFOW info;
-  int opt_len;
 
   if (handle->socket != INVALID_SOCKET)
     return UV_EBUSY;
 
+  DWORD yes = 1;
   /* Set the socket to nonblocking mode */
   if (ioctlsocket(socket, FIONBIO, &yes) == SOCKET_ERROR) {
     return WSAGetLastError();
   }
 
   /* Make the socket non-inheritable */
-  if (!SetHandleInformation((HANDLE)socket, HANDLE_FLAG_INHERIT, 0)) {
+  if (!SetHandleInformation(reinterpret_cast<HANDLE>(socket), HANDLE_FLAG_INHERIT, 0)) {
     return GetLastError();
   }
 
   /* Associate it with the I/O completion port. Use uv_handle_t pointer as
    * completion key. */
-  if (CreateIoCompletionPort((HANDLE)socket,
+  if (CreateIoCompletionPort(reinterpret_cast<HANDLE>(socket),
                              loop->iocp,
-                             (ULONG_PTR)socket,
-                             0) == NULL) {
+                             static_cast<ULONG_PTR>(socket),
+                             0) == nullptr) {
     return GetLastError();
   }
 
@@ -93,16 +91,17 @@ static int uv_udp_set_socket(uv_loop_t* loop, uv_udp_t* handle, SOCKET socket,
    * datagram sockets. We can work around that but only if the user is using
    * the default UDP driver (AFD) and has no other. LSPs stacked on top. Here
    * we check whether that is the case. */
-  opt_len = (int) sizeof info;
+  WSAPROTOCOL_INFOW info;
+  int opt_len = static_cast<int>(sizeof(WSAPROTOCOL_INFOW));
   if (getsockopt(
-          socket, SOL_SOCKET, SO_PROTOCOL_INFOW, (char*) &info, &opt_len) ==
+          socket, SOL_SOCKET, SO_PROTOCOL_INFOW, reinterpret_cast<char*>(&info), &opt_len) ==
       SOCKET_ERROR) {
     return GetLastError();
   }
 
   if (info.ProtocolChain.ChainLen == 1) {
     if (SetFileCompletionNotificationModes(
-            (HANDLE) socket,
+            reinterpret_cast<HANDLE>(socket),
             FILE_SKIP_SET_EVENT_ON_HANDLE |
                 FILE_SKIP_COMPLETION_PORT_ON_SUCCESS)) {
       handle->flags |= UV_HANDLE_SYNC_BYPASS_IOCP;
@@ -124,19 +123,34 @@ static int uv_udp_set_socket(uv_loop_t* loop, uv_udp_t* handle, SOCKET socket,
   return 0;
 }
 
+/* todo: replace all macros */
+/*
+template <typename TLoop, typename THandle, typename TType>
+constexpr auto uv__handle_init2(TLoop loop_, THandle h, TType type_){
+  h->loop = (loop_);
+  h->type = (type_);
+  h->flags = (UV_HANDLE_REF);
+  
+  (*(QUEUE **) &((*(&(h)->handle_queue))[0])) = (&(loop_)->handle_queue);
+  (*(QUEUE **) &((*(&(h)->handle_queue))[1])) = (*(QUEUE **) &((*(&(loop_)->handle_queue))[1]));
+  ((*(QUEUE **) &((*((*(QUEUE **) &((*(&(h)->handle_queue))[1]))))[0]))) = (&(h)->handle_queue);
+  (*(QUEUE **) &((*(&(loop_)->handle_queue))[1])) = (&(h)->handle_queue);
+
+  h->u.fd = -1; 
+}
+*/
 
 int uv_udp_init_ex(uv_loop_t* loop, uv_udp_t* handle, unsigned int flags) {
-  int domain;
-
   /* Use the lower 8 bits for the domain */
-  domain = flags & 0xFF;
+  int domain = flags & 0xFF;
   if (domain != AF_INET && domain != AF_INET6 && domain != AF_UNSPEC)
     return UV_EINVAL;
 
   if (flags & ~0xFF)
     return UV_EINVAL;
 
-  uv__handle_init(loop, (uv_handle_t*) handle, UV_UDP);
+  uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(handle), UV_UDP);
+
   handle->socket = INVALID_SOCKET;
   handle->reqs_pending = 0;
   handle->activecnt = 0;
@@ -187,12 +201,13 @@ void uv_udp_close(uv_loop_t* loop, uv_udp_t* handle) {
   uv__handle_closing(handle);
 
   if (handle->reqs_pending == 0) {
-    uv_want_endgame(loop, (uv_handle_t*) handle);
+    uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
   }
 }
 
 
 void uv_udp_endgame(uv_loop_t* loop, uv_udp_t* handle) {
+  (void)loop;
   if (handle->flags & UV_HANDLE_CLOSING &&
       handle->reqs_pending == 0) {
     assert(!(handle->flags & UV_HANDLE_CLOSED));
@@ -202,12 +217,9 @@ void uv_udp_endgame(uv_loop_t* loop, uv_udp_t* handle) {
 
 
 static int uv_udp_maybe_bind(uv_udp_t* handle,
-                             const struct sockaddr* addr,
+                             const sockaddr* addr,
                              unsigned int addrlen,
                              unsigned int flags) {
-  int r;
-  int err;
-  DWORD no = 0;
 
   if (handle->flags & UV_HANDLE_BOUND)
     return 0;
@@ -216,7 +228,8 @@ static int uv_udp_maybe_bind(uv_udp_t* handle,
     /* UV_UDP_IPV6ONLY is supported only for IPV6 sockets */
     return ERROR_INVALID_PARAMETER;
   }
-
+  
+  int err;
   if (handle->socket == INVALID_SOCKET) {
     SOCKET sock = socket(addr->sa_family, SOCK_DGRAM, 0);
     if (sock == INVALID_SOCKET) {
@@ -236,8 +249,8 @@ static int uv_udp_maybe_bind(uv_udp_t* handle,
     if (setsockopt(handle->socket,
                    SOL_SOCKET,
                    SO_REUSEADDR,
-                   (char*) &yes,
-                   sizeof yes) == SOCKET_ERROR) {
+                   reinterpret_cast<char*>(&yes),
+                   sizeof(DWORD)) == SOCKET_ERROR) {
       err = WSAGetLastError();
       return err;
     }
@@ -253,13 +266,15 @@ static int uv_udp_maybe_bind(uv_udp_t* handle,
     /* TODO: how to handle errors? This may fail if there is no ipv4 stack
      * available, or when run on XP/2003 which have no support for dualstack
      * sockets. For now we're silently ignoring the error. */
+    DWORD no = 0;
     setsockopt(handle->socket,
                IPPROTO_IPV6,
                IPV6_V6ONLY,
-               (char*) &no,
-               sizeof no);
+               reinterpret_cast<char*>(&no),
+               sizeof(DWORD));
   }
 
+  int r;
   r = bind(handle->socket, addr, addrlen);
   if (r == SOCKET_ERROR) {
     return WSAGetLastError();
@@ -272,31 +287,29 @@ static int uv_udp_maybe_bind(uv_udp_t* handle,
 
 
 static void uv_udp_queue_recv(uv_loop_t* loop, uv_udp_t* handle) {
-  uv_req_t* req;
-  uv_buf_t buf;
-  DWORD bytes, flags;
-  int result;
-
   assert(handle->flags & UV_HANDLE_READING);
   assert(!(handle->flags & UV_HANDLE_READ_PENDING));
 
-  req = &handle->recv_req;
+  uv_req_t* req = &handle->recv_req;
   memset(&req->u.io.overlapped, 0, sizeof(req->u.io.overlapped));
 
   /*
    * Preallocate a read buffer if the number of active streams is below
    * the threshold.
   */
+  uv_buf_t buf;
+  DWORD bytes, flags;
+  int result;
   if (loop->active_udp_streams < uv_active_udp_streams_threshold) {
     handle->flags &= ~UV_HANDLE_ZERO_READ;
 
-    handle->recv_buffer = uv_buf_init(NULL, 0);
-    handle->alloc_cb((uv_handle_t*) handle, 65536, &handle->recv_buffer);
-    if (handle->recv_buffer.base == NULL || handle->recv_buffer.len == 0) {
-      handle->recv_cb(handle, UV_ENOBUFS, &handle->recv_buffer, NULL, 0);
+    handle->recv_buffer = uv_buf_init(nullptr, 0);
+    handle->alloc_cb(reinterpret_cast<uv_handle_t*>(handle), 65536, &handle->recv_buffer);
+    if (handle->recv_buffer.base == nullptr || handle->recv_buffer.len == 0) {
+      handle->recv_cb(handle, UV_ENOBUFS, &handle->recv_buffer, nullptr, 0);
       return;
     }
-    assert(handle->recv_buffer.base != NULL);
+    assert(handle->recv_buffer.base != nullptr);
 
     buf = handle->recv_buffer;
     memset(&handle->recv_from, 0, sizeof handle->recv_from);
@@ -304,14 +317,14 @@ static void uv_udp_queue_recv(uv_loop_t* loop, uv_udp_t* handle) {
     flags = 0;
 
     result = handle->func_wsarecvfrom(handle->socket,
-                                      (WSABUF*) &buf,
+                                      reinterpret_cast<WSABUF*>(&buf),
                                       1,
                                       &bytes,
                                       &flags,
-                                      (struct sockaddr*) &handle->recv_from,
+                                      reinterpret_cast<sockaddr*>(&handle->recv_from),
                                       &handle->recv_from_len,
                                       &req->u.io.overlapped,
-                                      NULL);
+                                      nullptr);
 
     if (UV_SUCCEEDED_WITHOUT_IOCP(result == 0)) {
       /* Process the req without IOCP. */
@@ -333,17 +346,17 @@ static void uv_udp_queue_recv(uv_loop_t* loop, uv_udp_t* handle) {
   } else {
     handle->flags |= UV_HANDLE_ZERO_READ;
 
-    buf.base = (char*) uv_zero_;
+    buf.base = uv_zero_;
     buf.len = 0;
     flags = MSG_PEEK;
 
     result = handle->func_wsarecv(handle->socket,
-                                  (WSABUF*) &buf,
+                                  reinterpret_cast<WSABUF*>(&buf),
                                   1,
                                   &bytes,
                                   &flags,
                                   &req->u.io.overlapped,
-                                  NULL);
+                                  nullptr);
 
     if (UV_SUCCEEDED_WITHOUT_IOCP(result == 0)) {
       /* Process the req without IOCP. */
@@ -368,15 +381,14 @@ static void uv_udp_queue_recv(uv_loop_t* loop, uv_udp_t* handle) {
 int uv__udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloc_cb,
     uv_udp_recv_cb recv_cb) {
   uv_loop_t* loop = handle->loop;
-  int err;
 
   if (handle->flags & UV_HANDLE_READING) {
     return UV_EALREADY;
   }
 
-  err = uv_udp_maybe_bind(handle,
-                          (const struct sockaddr*) &uv_addr_ip4_any_,
-                          sizeof(uv_addr_ip4_any_),
+  int err = uv_udp_maybe_bind(handle,
+                          reinterpret_cast<const sockaddr*>(&uv_addr_ip4_any_),
+                          sizeof(sockaddr_in),
                           0);
   if (err)
     return uv_translate_sys_error(err);
@@ -412,26 +424,26 @@ static int uv__send(uv_udp_send_t* req,
                     uv_udp_t* handle,
                     const uv_buf_t bufs[],
                     unsigned int nbufs,
-                    const struct sockaddr* addr,
+                    const sockaddr* addr,
                     unsigned int addrlen,
                     uv_udp_send_cb cb) {
   uv_loop_t* loop = handle->loop;
-  DWORD result, bytes;
 
   UV_REQ_INIT(req, UV_UDP_SEND);
   req->handle = handle;
   req->cb = cb;
   memset(&req->u.io.overlapped, 0, sizeof(req->u.io.overlapped));
 
-  result = WSASendTo(handle->socket,
-                     (WSABUF*)bufs,
+  DWORD bytes;
+  DWORD result = WSASendTo(handle->socket,
+                     reinterpret_cast<WSABUF*>(const_cast<uv_buf_t*>(bufs)),
                      nbufs,
                      &bytes,
                      0,
                      addr,
                      addrlen,
                      &req->u.io.overlapped,
-                     NULL);
+                     nullptr);
 
   if (UV_SUCCEEDED_WITHOUT_IOCP(result == 0)) {
     /* Request completed immediately. */
@@ -440,7 +452,7 @@ static int uv__send(uv_udp_send_t* req,
     handle->send_queue_size += req->u.io.queued_bytes;
     handle->send_queue_count++;
     REGISTER_HANDLE_REQ(loop, handle, req);
-    uv_insert_pending_req(loop, (uv_req_t*)req);
+    uv_insert_pending_req(loop, reinterpret_cast<uv_req_t*>(req));
   } else if (UV_SUCCEEDED_WITH_IOCP(result == 0)) {
     /* Request queued by the kernel. */
     req->u.io.queued_bytes = uv__count_bufs(bufs, nbufs);
@@ -456,12 +468,19 @@ static int uv__send(uv_udp_send_t* req,
   return 0;
 }
 
+void uv_process_udp_recv_req_done(uv_loop_t* loop, uv_udp_t* handle){
+  /* Post another read if still reading and not closing. */
+  if ((handle->flags & UV_HANDLE_READING) &&
+      !(handle->flags & UV_HANDLE_READ_PENDING)) {
+    uv_udp_queue_recv(loop, handle);
+  }
+
+  DECREASE_PENDING_REQ_COUNT(handle);
+}
 
 void uv_process_udp_recv_req(uv_loop_t* loop, uv_udp_t* handle,
     uv_req_t* req) {
-  uv_buf_t buf;
-  int partial;
-
+  
   assert(handle->type == UV_UDP);
 
   handle->flags &= ~UV_HANDLE_READ_PENDING;
@@ -477,100 +496,92 @@ void uv_process_udp_recv_req(uv_loop_t* loop, uv_udp_t* handle,
        * clear out the error queue. For nonzero reads, immediately queue a new
        * receive. */
       if (!(handle->flags & UV_HANDLE_ZERO_READ)) {
-        goto done;
+        return uv_process_udp_recv_req_done(loop, handle);
       }
     } else {
       /* A real error occurred. Report the error to the user only if we're
        * currently reading. */
       if (handle->flags & UV_HANDLE_READING) {
         uv_udp_recv_stop(handle);
-        buf = (handle->flags & UV_HANDLE_ZERO_READ) ?
-              uv_buf_init(NULL, 0) : handle->recv_buffer;
-        handle->recv_cb(handle, uv_translate_sys_error(err), &buf, NULL, 0);
+        uv_buf_t buf = (handle->flags & UV_HANDLE_ZERO_READ) ?
+              uv_buf_init(nullptr, 0) : handle->recv_buffer;
+        handle->recv_cb(handle, uv_translate_sys_error(err), &buf, nullptr, 0);
       }
-      goto done;
+      return uv_process_udp_recv_req_done(loop, handle);
     }
   }
 
   if (!(handle->flags & UV_HANDLE_ZERO_READ)) {
     /* Successful read */
-    partial = !REQ_SUCCESS(req);
+    int partial = !REQ_SUCCESS(req);
     handle->recv_cb(handle,
                     req->u.io.overlapped.InternalHigh,
                     &handle->recv_buffer,
-                    (const struct sockaddr*) &handle->recv_from,
+                    reinterpret_cast<const sockaddr*>(&handle->recv_from),
                     partial ? UV_UDP_PARTIAL : 0);
-  } else if (handle->flags & UV_HANDLE_READING) {
-    DWORD bytes, err, flags;
-    struct sockaddr_storage from;
-    int from_len;
-
+  } 
+  else if (handle->flags & UV_HANDLE_READING) {
     /* Do a nonblocking receive.
      * TODO: try to read multiple datagrams at once. FIONREAD maybe? */
-    buf = uv_buf_init(NULL, 0);
-    handle->alloc_cb((uv_handle_t*) handle, 65536, &buf);
-    if (buf.base == NULL || buf.len == 0) {
-      handle->recv_cb(handle, UV_ENOBUFS, &buf, NULL, 0);
-      goto done;
+    uv_buf_t buf = uv_buf_init(nullptr, 0);
+    handle->alloc_cb(reinterpret_cast<uv_handle_t*>(handle), 65536, &buf);
+    if (buf.base == nullptr || buf.len == 0) {
+      handle->recv_cb(handle, UV_ENOBUFS, &buf, nullptr, 0);
+      return uv_process_udp_recv_req_done(loop, handle);
     }
-    assert(buf.base != NULL);
+    assert(buf.base != nullptr);
 
-    memset(&from, 0, sizeof from);
-    from_len = sizeof from;
+    sockaddr_storage from;
+    memset(&from, 0, sizeof(sockaddr_storage));
+    int from_len = static_cast<int>(sizeof(sockaddr_storage));
 
-    flags = 0;
-
+    DWORD flags = 0, bytes;
     if (WSARecvFrom(handle->socket,
-                    (WSABUF*)&buf,
+                    reinterpret_cast<WSABUF*>(&buf),
                     1,
                     &bytes,
                     &flags,
-                    (struct sockaddr*) &from,
+                    reinterpret_cast<sockaddr*>(&from),
                     &from_len,
-                    NULL,
-                    NULL) != SOCKET_ERROR) {
+                    nullptr,
+                    nullptr) != SOCKET_ERROR) {
 
       /* Message received */
-      handle->recv_cb(handle, bytes, &buf, (const struct sockaddr*) &from, 0);
-    } else {
-      err = WSAGetLastError();
+      handle->recv_cb(handle, bytes, &buf, reinterpret_cast<const sockaddr*>(&from), 0);
+    } 
+    else {
+      int err = WSAGetLastError();
       if (err == WSAEMSGSIZE) {
         /* Message truncated */
         handle->recv_cb(handle,
                         bytes,
                         &buf,
-                        (const struct sockaddr*) &from,
+                        reinterpret_cast<const sockaddr*>(&from),
                         UV_UDP_PARTIAL);
-      } else if (err == WSAEWOULDBLOCK) {
+      } 
+      else if (err == WSAEWOULDBLOCK) {
         /* Kernel buffer empty */
-        handle->recv_cb(handle, 0, &buf, NULL, 0);
-      } else if (err == WSAECONNRESET || err == WSAENETRESET) {
+        handle->recv_cb(handle, 0, &buf, nullptr, 0);
+      } 
+      else if (err == WSAECONNRESET || err == WSAENETRESET) {
         /* WSAECONNRESET/WSANETRESET is ignored because this just indicates
          * that a previous sendto operation failed.
          */
-        handle->recv_cb(handle, 0, &buf, NULL, 0);
-      } else {
+        handle->recv_cb(handle, 0, &buf, nullptr, 0);
+      } 
+      else {
         /* Any other error that we want to report back to the user. */
         uv_udp_recv_stop(handle);
-        handle->recv_cb(handle, uv_translate_sys_error(err), &buf, NULL, 0);
+        handle->recv_cb(handle, uv_translate_sys_error(err), &buf, nullptr, 0);
       }
     }
   }
 
-done:
-  /* Post another read if still reading and not closing. */
-  if ((handle->flags & UV_HANDLE_READING) &&
-      !(handle->flags & UV_HANDLE_READ_PENDING)) {
-    uv_udp_queue_recv(loop, handle);
-  }
-
-  DECREASE_PENDING_REQ_COUNT(handle);
+  return uv_process_udp_recv_req_done(loop, handle);
 }
-
 
 void uv_process_udp_send_req(uv_loop_t* loop, uv_udp_t* handle,
     uv_udp_send_t* req) {
-  int err;
 
   assert(handle->type == UV_UDP);
 
@@ -582,7 +593,7 @@ void uv_process_udp_send_req(uv_loop_t* loop, uv_udp_t* handle,
   UNREGISTER_HANDLE_REQ(loop, handle, req);
 
   if (req->cb) {
-    err = 0;
+    int err = 0;
     if (!REQ_SUCCESS(req)) {
       err = GET_REQ_SOCK_ERROR(req);
     }
@@ -594,24 +605,22 @@ void uv_process_udp_send_req(uv_loop_t* loop, uv_udp_t* handle,
 
 
 static int uv__udp_set_membership4(uv_udp_t* handle,
-                                   const struct sockaddr_in* multicast_addr,
+                                   const sockaddr_in* multicast_addr,
                                    const char* interface_addr,
                                    uv_membership membership) {
-  int err;
-  int optname;
-  struct ip_mreq mreq;
 
   if (handle->flags & UV_HANDLE_IPV6)
     return UV_EINVAL;
 
   /* If the socket is unbound, bind to inaddr_any. */
-  err = uv_udp_maybe_bind(handle,
-                          (const struct sockaddr*) &uv_addr_ip4_any_,
-                          sizeof(uv_addr_ip4_any_),
+  int err = uv_udp_maybe_bind(handle,
+                          reinterpret_cast<const struct sockaddr*>(&uv_addr_ip4_any_),
+                          sizeof(sockaddr_in),
                           UV_UDP_REUSEADDR);
   if (err)
     return uv_translate_sys_error(err);
 
+  ip_mreq mreq;
   memset(&mreq, 0, sizeof mreq);
 
   if (interface_addr) {
@@ -624,6 +633,7 @@ static int uv__udp_set_membership4(uv_udp_t* handle,
 
   mreq.imr_multiaddr.s_addr = multicast_addr->sin_addr.s_addr;
 
+  int optname;
   switch (membership) {
     case UV_JOIN_GROUP:
       optname = IP_ADD_MEMBERSHIP;
@@ -638,8 +648,8 @@ static int uv__udp_set_membership4(uv_udp_t* handle,
   if (setsockopt(handle->socket,
                  IPPROTO_IP,
                  optname,
-                 (char*) &mreq,
-                 sizeof mreq) == SOCKET_ERROR) {
+                 reinterpret_cast<char*>(&mreq),
+                 sizeof(ip_mreq)) == SOCKET_ERROR) {
     return uv_translate_sys_error(WSAGetLastError());
   }
 
@@ -648,28 +658,26 @@ static int uv__udp_set_membership4(uv_udp_t* handle,
 
 
 int uv__udp_set_membership6(uv_udp_t* handle,
-                            const struct sockaddr_in6* multicast_addr,
+                            const sockaddr_in6* multicast_addr,
                             const char* interface_addr,
                             uv_membership membership) {
-  int optname;
-  int err;
-  struct ipv6_mreq mreq;
-  struct sockaddr_in6 addr6;
 
   if ((handle->flags & UV_HANDLE_BOUND) && !(handle->flags & UV_HANDLE_IPV6))
     return UV_EINVAL;
 
-  err = uv_udp_maybe_bind(handle,
-                          (const struct sockaddr*) &uv_addr_ip6_any_,
-                          sizeof(uv_addr_ip6_any_),
+  int err = uv_udp_maybe_bind(handle,
+                          reinterpret_cast<const sockaddr*>(&uv_addr_ip6_any_),
+                          sizeof(sockaddr_in6),
                           UV_UDP_REUSEADDR);
 
   if (err)
     return uv_translate_sys_error(err);
 
+  ipv6_mreq mreq;
   memset(&mreq, 0, sizeof(mreq));
 
   if (interface_addr) {
+    sockaddr_in6 addr6;
     if (uv_ip6_addr(interface_addr, 0, &addr6))
       return UV_EINVAL;
     mreq.ipv6mr_interface = addr6.sin6_scope_id;
@@ -679,6 +687,7 @@ int uv__udp_set_membership6(uv_udp_t* handle,
 
   mreq.ipv6mr_multiaddr = multicast_addr->sin6_addr;
 
+  int optname;
   switch (membership) {
   case UV_JOIN_GROUP:
     optname = IPV6_ADD_MEMBERSHIP;
@@ -693,8 +702,8 @@ int uv__udp_set_membership6(uv_udp_t* handle,
   if (setsockopt(handle->socket,
                  IPPROTO_IPV6,
                  optname,
-                 (char*) &mreq,
-                 sizeof mreq) == SOCKET_ERROR) {
+                 reinterpret_cast<char*>(&mreq),
+                 sizeof(ipv6_mreq)) == SOCKET_ERROR) {
     return uv_translate_sys_error(WSAGetLastError());
   }
 
@@ -703,28 +712,26 @@ int uv__udp_set_membership6(uv_udp_t* handle,
 
 
 static int uv__udp_set_source_membership4(uv_udp_t* handle,
-                                          const struct sockaddr_in* multicast_addr,
+                                          const sockaddr_in* multicast_addr,
                                           const char* interface_addr,
-                                          const struct sockaddr_in* source_addr,
+                                          const sockaddr_in* source_addr,
                                           uv_membership membership) {
-  struct ip_mreq_source mreq;
-  int optname;
-  int err;
 
   if (handle->flags & UV_HANDLE_IPV6)
     return UV_EINVAL;
 
   /* If the socket is unbound, bind to inaddr_any. */
-  err = uv_udp_maybe_bind(handle,
-                          (const struct sockaddr*) &uv_addr_ip4_any_,
-                          sizeof(uv_addr_ip4_any_),
+  int err = uv_udp_maybe_bind(handle,
+                          reinterpret_cast<const sockaddr*>(&uv_addr_ip4_any_),
+                          sizeof(sockaddr_in),
                           UV_UDP_REUSEADDR);
   if (err)
     return uv_translate_sys_error(err);
 
+  ip_mreq_source mreq;
   memset(&mreq, 0, sizeof(mreq));
 
-  if (interface_addr != NULL) {
+  if (interface_addr != nullptr) {
     err = uv_inet_pton(AF_INET, interface_addr, &mreq.imr_interface.s_addr);
     if (err)
       return err;
@@ -735,6 +742,7 @@ static int uv__udp_set_source_membership4(uv_udp_t* handle,
   mreq.imr_multiaddr.s_addr = multicast_addr->sin_addr.s_addr;
   mreq.imr_sourceaddr.s_addr = source_addr->sin_addr.s_addr;
 
+  int optname;
   if (membership == UV_JOIN_GROUP)
     optname = IP_ADD_SOURCE_MEMBERSHIP;
   else if (membership == UV_LEAVE_GROUP)
@@ -745,8 +753,8 @@ static int uv__udp_set_source_membership4(uv_udp_t* handle,
   if (setsockopt(handle->socket,
                  IPPROTO_IP,
                  optname,
-                 (char*) &mreq,
-                 sizeof(mreq)) == SOCKET_ERROR) {
+                 reinterpret_cast<char*>(&mreq),
+                 sizeof(ip_mreq_source)) == SOCKET_ERROR) {
     return uv_translate_sys_error(WSAGetLastError());
   }
 
@@ -755,29 +763,27 @@ static int uv__udp_set_source_membership4(uv_udp_t* handle,
 
 
 int uv__udp_set_source_membership6(uv_udp_t* handle,
-                                   const struct sockaddr_in6* multicast_addr,
+                                   const sockaddr_in6* multicast_addr,
                                    const char* interface_addr,
-                                   const struct sockaddr_in6* source_addr,
+                                   const sockaddr_in6* source_addr,
                                    uv_membership membership) {
-  struct group_source_req mreq;
-  struct sockaddr_in6 addr6;
-  int optname;
-  int err;
 
   if ((handle->flags & UV_HANDLE_BOUND) && !(handle->flags & UV_HANDLE_IPV6))
     return UV_EINVAL;
 
-  err = uv_udp_maybe_bind(handle,
-                          (const struct sockaddr*) &uv_addr_ip6_any_,
-                          sizeof(uv_addr_ip6_any_),
+  int err = uv_udp_maybe_bind(handle,
+                          reinterpret_cast<const sockaddr*>(&uv_addr_ip6_any_),
+                          sizeof(sockaddr_in6),
                           UV_UDP_REUSEADDR);
 
   if (err)
     return uv_translate_sys_error(err);
 
+  group_source_req mreq;
   memset(&mreq, 0, sizeof(mreq));
 
-  if (interface_addr != NULL) {
+  sockaddr_in6 addr6;
+  if (interface_addr != nullptr) {
     err = uv_ip6_addr(interface_addr, 0, &addr6);
     if (err)
       return err;
@@ -789,6 +795,7 @@ int uv__udp_set_source_membership6(uv_udp_t* handle,
   memcpy(&mreq.gsr_group, multicast_addr, sizeof(mreq.gsr_group));
   memcpy(&mreq.gsr_source, source_addr, sizeof(mreq.gsr_source));
 
+  int optname;
   if (membership == UV_JOIN_GROUP)
     optname = MCAST_JOIN_SOURCE_GROUP;
   else if (membership == UV_LEAVE_GROUP)
@@ -799,8 +806,8 @@ int uv__udp_set_source_membership6(uv_udp_t* handle,
   if (setsockopt(handle->socket,
                  IPPROTO_IPV6,
                  optname,
-                 (char*) &mreq,
-                 sizeof(mreq)) == SOCKET_ERROR) {
+                 reinterpret_cast<char*>(&mreq),
+                 sizeof(group_source_req)) == SOCKET_ERROR) {
     return uv_translate_sys_error(WSAGetLastError());
   }
 
@@ -812,8 +819,8 @@ int uv_udp_set_membership(uv_udp_t* handle,
                           const char* multicast_addr,
                           const char* interface_addr,
                           uv_membership membership) {
-  struct sockaddr_in addr4;
-  struct sockaddr_in6 addr6;
+  sockaddr_in addr4;
+  sockaddr_in6 addr6;
 
   if (uv_ip4_addr(multicast_addr, 0, &addr4) == 0)
     return uv__udp_set_membership4(handle, &addr4, interface_addr, membership);
@@ -829,20 +836,15 @@ int uv_udp_set_source_membership(uv_udp_t* handle,
                                  const char* interface_addr,
                                  const char* source_addr,
                                  uv_membership membership) {
-  int err;
-  struct sockaddr_storage mcast_addr;
-  struct sockaddr_in* mcast_addr4;
-  struct sockaddr_in6* mcast_addr6;
-  struct sockaddr_storage src_addr;
-  struct sockaddr_in* src_addr4;
-  struct sockaddr_in6* src_addr6;
+  sockaddr_storage mcast_addr;
+  sockaddr_storage src_addr;
 
-  mcast_addr4 = (struct sockaddr_in*)&mcast_addr;
-  mcast_addr6 = (struct sockaddr_in6*)&mcast_addr;
-  src_addr4 = (struct sockaddr_in*)&src_addr;
-  src_addr6 = (struct sockaddr_in6*)&src_addr;
+  auto *mcast_addr4 = reinterpret_cast<sockaddr_in*>(&mcast_addr);
+  auto *mcast_addr6 = reinterpret_cast<sockaddr_in6*>(&mcast_addr);
+  auto *src_addr4 = reinterpret_cast<sockaddr_in*>(&src_addr);
+  auto *src_addr6 = reinterpret_cast<sockaddr_in6*>(&src_addr);
 
-  err = uv_ip4_addr(multicast_addr, 0, mcast_addr4);
+  int err = uv_ip4_addr(multicast_addr, 0, mcast_addr4);
   if (err) {
     err = uv_ip6_addr(multicast_addr, 0, mcast_addr6);
     if (err)
@@ -869,15 +871,15 @@ int uv_udp_set_source_membership(uv_udp_t* handle,
 
 
 int uv_udp_set_multicast_interface(uv_udp_t* handle, const char* interface_addr) {
-  struct sockaddr_storage addr_st;
-  struct sockaddr_in* addr4;
-  struct sockaddr_in6* addr6;
+  sockaddr_storage addr_st;
+  sockaddr_in* addr4;
+  sockaddr_in6* addr6;
 
-  addr4 = (struct sockaddr_in*) &addr_st;
-  addr6 = (struct sockaddr_in6*) &addr_st;
+  addr4 = reinterpret_cast<sockaddr_in*>(&addr_st);
+  addr6 = reinterpret_cast<sockaddr_in6*>(&addr_st);
 
   if (!interface_addr) {
-    memset(&addr_st, 0, sizeof addr_st);
+    memset(&addr_st, 0, sizeof(sockaddr_storage));
     if (handle->flags & UV_HANDLE_IPV6) {
       addr_st.ss_family = AF_INET6;
       addr6->sin6_scope_id = 0;
@@ -900,16 +902,16 @@ int uv_udp_set_multicast_interface(uv_udp_t* handle, const char* interface_addr)
     if (setsockopt(handle->socket,
                    IPPROTO_IP,
                    IP_MULTICAST_IF,
-                   (char*) &addr4->sin_addr,
-                   sizeof(addr4->sin_addr)) == SOCKET_ERROR) {
+                   reinterpret_cast<char*>(&addr4->sin_addr),
+                   sizeof(sockaddr_in)) == SOCKET_ERROR) {
       return uv_translate_sys_error(WSAGetLastError());
     }
   } else if (addr_st.ss_family == AF_INET6) {
     if (setsockopt(handle->socket,
                    IPPROTO_IPV6,
                    IPV6_MULTICAST_IF,
-                   (char*) &addr6->sin6_scope_id,
-                   sizeof(addr6->sin6_scope_id)) == SOCKET_ERROR) {
+                   reinterpret_cast<char*>(&addr6->sin6_scope_id),
+                   sizeof(sockaddr_in6)) == SOCKET_ERROR) {
       return uv_translate_sys_error(WSAGetLastError());
     }
   } else {
@@ -922,7 +924,7 @@ int uv_udp_set_multicast_interface(uv_udp_t* handle, const char* interface_addr)
 
 
 int uv_udp_set_broadcast(uv_udp_t* handle, int value) {
-  BOOL optval = (BOOL) value;
+  BOOL optval = static_cast<BOOL>(value);
 
   if (handle->socket == INVALID_SOCKET)
     return UV_EBADF;
@@ -930,8 +932,8 @@ int uv_udp_set_broadcast(uv_udp_t* handle, int value) {
   if (setsockopt(handle->socket,
                  SOL_SOCKET,
                  SO_BROADCAST,
-                 (char*) &optval,
-                 sizeof optval)) {
+                 reinterpret_cast<char*>(&optval),
+                 sizeof(BOOL))) {
     return uv_translate_sys_error(WSAGetLastError());
   }
 
@@ -940,11 +942,10 @@ int uv_udp_set_broadcast(uv_udp_t* handle, int value) {
 
 
 int uv__udp_is_bound(uv_udp_t* handle) {
-  struct sockaddr_storage addr;
-  int addrlen;
+  sockaddr_storage addr;
 
-  addrlen = sizeof(addr);
-  if (uv_udp_getsockname(handle, (struct sockaddr*) &addr, &addrlen) != 0)
+  int addrlen = static_cast<int>(sizeof(sockaddr_storage));
+  if (uv_udp_getsockname(handle, reinterpret_cast<sockaddr*>(&addr), &addrlen) != 0)
     return 0;
 
   return addrlen > 0;
@@ -953,23 +954,21 @@ int uv__udp_is_bound(uv_udp_t* handle) {
 
 int uv_udp_open(uv_udp_t* handle, uv_os_sock_t sock) {
   WSAPROTOCOL_INFOW protocol_info;
-  int opt_len;
-  int err;
 
   /* Detect the address family of the socket. */
-  opt_len = (int) sizeof protocol_info;
+  int opt_len = static_cast<int>(sizeof(WSAPROTOCOL_INFOW));
   if (getsockopt(sock,
                  SOL_SOCKET,
                  SO_PROTOCOL_INFOW,
-                 (char*) &protocol_info,
+                 reinterpret_cast<char*>(&protocol_info),
                  &opt_len) == SOCKET_ERROR) {
     return uv_translate_sys_error(GetLastError());
   }
 
-  err = uv_udp_set_socket(handle->loop,
-                          handle,
-                          sock,
-                          protocol_info.iAddressFamily);
+  int err = uv_udp_set_socket(handle->loop,
+                              handle,
+                              sock,
+                              protocol_info.iAddressFamily);
   if (err)
     return uv_translate_sys_error(err);
 
@@ -999,8 +998,8 @@ int uv_udp_open(uv_udp_t* handle, uv_os_sock_t sock) {
       if (setsockopt(handle->socket,                                          \
                      IPPROTO_IP,                                              \
                      option4,                                                 \
-                     (char*) &optval,                                         \
-                     sizeof optval)) {                                        \
+                     reinterpret_cast<char*>(&optval),                        \
+                     sizeof(DWORD))) {                                        \
         return uv_translate_sys_error(WSAGetLastError());                     \
       }                                                                       \
     } else {                                                                  \
@@ -1008,8 +1007,8 @@ int uv_udp_open(uv_udp_t* handle, uv_os_sock_t sock) {
       if (setsockopt(handle->socket,                                          \
                      IPPROTO_IPV6,                                            \
                      option6,                                                 \
-                     (char*) &optval,                                         \
-                     sizeof optval)) {                                        \
+                     reinterpret_cast<char*>(&optval),                        \
+                     sizeof(DWORD))) {                                        \
         return uv_translate_sys_error(WSAGetLastError());                     \
       }                                                                       \
     }                                                                         \
@@ -1043,12 +1042,10 @@ SOCKOPT_SETTER(multicast_loop,
  * system errors.
  */
 int uv__udp_bind(uv_udp_t* handle,
-                 const struct sockaddr* addr,
+                 const sockaddr* addr,
                  unsigned int addrlen,
                  unsigned int flags) {
-  int err;
-
-  err = uv_udp_maybe_bind(handle, addr, addrlen, flags);
+  int err = uv_udp_maybe_bind(handle, addr, addrlen, flags);
   if (err)
     return uv_translate_sys_error(err);
 
@@ -1057,25 +1054,24 @@ int uv__udp_bind(uv_udp_t* handle,
 
 
 int uv__udp_connect(uv_udp_t* handle,
-                    const struct sockaddr* addr,
+                    const sockaddr* addr,
                     unsigned int addrlen) {
-  const struct sockaddr* bind_addr;
-  int err;
 
-  if (!(handle->flags & UV_HANDLE_BOUND)) {
+  if (!(handle->flags & UV_HANDLE_BOUND)) {  
+    const sockaddr* bind_addr;
     if (addrlen == sizeof(uv_addr_ip4_any_))
-      bind_addr = (const struct sockaddr*) &uv_addr_ip4_any_;
+      bind_addr = reinterpret_cast<const sockaddr*>(&uv_addr_ip4_any_);
     else if (addrlen == sizeof(uv_addr_ip6_any_))
-      bind_addr = (const struct sockaddr*) &uv_addr_ip6_any_;
+      bind_addr = reinterpret_cast<const sockaddr*>(&uv_addr_ip6_any_);
     else
       return UV_EINVAL;
 
-    err = uv_udp_maybe_bind(handle, bind_addr, addrlen, 0);
+    int err = uv_udp_maybe_bind(handle, bind_addr, addrlen, 0);
     if (err)
       return uv_translate_sys_error(err);
   }
 
-  err = connect(handle->socket, addr, addrlen);
+  int err = connect(handle->socket, addr, addrlen);
   if (err)
     return uv_translate_sys_error(err);
 
@@ -1086,12 +1082,11 @@ int uv__udp_connect(uv_udp_t* handle,
 
 
 int uv__udp_disconnect(uv_udp_t* handle) {
-    int err;
-    struct sockaddr addr;
 
+    sockaddr addr;
     memset(&addr, 0, sizeof(addr));
 
-    err = connect(handle->socket, &addr, sizeof(addr));
+    int err = connect(handle->socket, &addr, sizeof(addr));
     if (err)
       return uv_translate_sys_error(err);
 
@@ -1107,26 +1102,25 @@ int uv__udp_send(uv_udp_send_t* req,
                  uv_udp_t* handle,
                  const uv_buf_t bufs[],
                  unsigned int nbufs,
-                 const struct sockaddr* addr,
+                 const sockaddr* addr,
                  unsigned int addrlen,
                  uv_udp_send_cb send_cb) {
-  const struct sockaddr* bind_addr;
-  int err;
 
   if (!(handle->flags & UV_HANDLE_BOUND)) {
-    if (addrlen == sizeof(uv_addr_ip4_any_))
-      bind_addr = (const struct sockaddr*) &uv_addr_ip4_any_;
-    else if (addrlen == sizeof(uv_addr_ip6_any_))
-      bind_addr = (const struct sockaddr*) &uv_addr_ip6_any_;
+    const sockaddr* bind_addr;
+    if (addrlen == sizeof(sockaddr_in))
+      bind_addr = reinterpret_cast<const sockaddr*>(&uv_addr_ip4_any_);
+    else if (addrlen == sizeof(sockaddr_in6))
+      bind_addr = reinterpret_cast<const sockaddr*>(&uv_addr_ip6_any_);
     else
       return UV_EINVAL;
 
-    err = uv_udp_maybe_bind(handle, bind_addr, addrlen, 0);
+    int err = uv_udp_maybe_bind(handle, bind_addr, addrlen, 0);
     if (err)
       return uv_translate_sys_error(err);
   }
 
-  err = uv__send(req, handle, bufs, nbufs, addr, addrlen, send_cb);
+  int err = uv__send(req, handle, bufs, nbufs, addr, addrlen, send_cb);
   if (err)
     return uv_translate_sys_error(err);
 
@@ -1137,17 +1131,13 @@ int uv__udp_send(uv_udp_send_t* req,
 int uv__udp_try_send(uv_udp_t* handle,
                      const uv_buf_t bufs[],
                      unsigned int nbufs,
-                     const struct sockaddr* addr,
+                     const sockaddr* addr,
                      unsigned int addrlen) {
-  DWORD bytes;
-  const struct sockaddr* bind_addr;
-  struct sockaddr_storage converted;
-  int err;
-
   assert(nbufs > 0);
-
-  if (addr != NULL) {
-    err = uv__convert_to_localhost_if_unspecified(addr, &converted);
+  
+  sockaddr_storage converted;
+  if (addr != nullptr) {
+    int err = uv__convert_to_localhost_if_unspecified(addr, &converted);
     if (err)
       return err;
   }
@@ -1156,28 +1146,29 @@ int uv__udp_try_send(uv_udp_t* handle,
   if (handle->send_queue_count != 0)
     return UV_EAGAIN;
 
+  const sockaddr* bind_addr;
   if (!(handle->flags & UV_HANDLE_BOUND)) {
     if (addrlen == sizeof(uv_addr_ip4_any_))
-      bind_addr = (const struct sockaddr*) &uv_addr_ip4_any_;
+      bind_addr = reinterpret_cast<const sockaddr*>(&uv_addr_ip4_any_);
     else if (addrlen == sizeof(uv_addr_ip6_any_))
-      bind_addr = (const struct sockaddr*) &uv_addr_ip6_any_;
+      bind_addr = reinterpret_cast<const sockaddr*>(&uv_addr_ip6_any_);
     else
       return UV_EINVAL;
-    err = uv_udp_maybe_bind(handle, bind_addr, addrlen, 0);
+    int err = uv_udp_maybe_bind(handle, bind_addr, addrlen, 0);
     if (err)
       return uv_translate_sys_error(err);
   }
 
-  err = WSASendTo(handle->socket,
-                  (WSABUF*)bufs,
+  DWORD bytes;
+  int err = WSASendTo(handle->socket,
+                  reinterpret_cast<WSABUF*>(const_cast<uv_buf_t*>(bufs)),
                   nbufs,
                   &bytes,
                   0,
-                  (const struct sockaddr*) &converted,
+                  reinterpret_cast<const sockaddr*>(&converted),
                   addrlen,
-                  NULL,
-                  NULL);
-
+                  nullptr,
+                  nullptr);
   if (err)
     return uv_translate_sys_error(WSAGetLastError());
 

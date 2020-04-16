@@ -71,9 +71,9 @@ TEST_IMPL(timer_from_check) {
   ASSERT(1 == prepare_cb_called);
   ASSERT(1 == check_cb_called);
   ASSERT(1 == timer_cb_called);
-  uv_close((uv_handle_t*) &prepare_handle, NULL);
-  uv_close((uv_handle_t*) &check_handle, NULL);
-  uv_close((uv_handle_t*) &timer_handle, NULL);
+  uv_close((uv_handle_t*) &prepare_handle, nullptr);
+  uv_close((uv_handle_t*) &check_handle, nullptr);
+  uv_close((uv_handle_t*) &timer_handle, nullptr);
   ASSERT(0 == uv_run(uv_default_loop(), UV_RUN_ONCE));
   MAKE_VALGRIND_HAPPY();
   return 0;

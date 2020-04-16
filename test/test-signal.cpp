@@ -111,7 +111,7 @@ static void signal_cb(uv_signal_t* handle, int signum) {
     if (ctx->stop_or_close == STOP)
       uv_signal_stop(handle);
     else if (ctx->stop_or_close == CLOSE)
-      uv_close((uv_handle_t*)handle, NULL);
+      uv_close((uv_handle_t*)handle, nullptr);
     else
       ASSERT(0);
   }
@@ -122,7 +122,7 @@ static void signal_cb_one_shot(uv_signal_t* handle, int signum) {
   ASSERT(signum == ctx->signum);
   ASSERT(++ctx->ncalls == 1);
   if (ctx->stop_or_close == CLOSE)
-    uv_close((uv_handle_t*)handle, NULL);
+    uv_close((uv_handle_t*)handle, nullptr);
 }
 
 
@@ -132,7 +132,7 @@ static void timer_cb(uv_timer_t* handle) {
   raise(ctx->signum);
 
   if (++ctx->ncalls == NSIGNALS)
-    uv_close((uv_handle_t*)handle, NULL);
+    uv_close((uv_handle_t*)handle, nullptr);
 }
 
 
@@ -270,7 +270,7 @@ TEST_IMPL(we_get_signals_mixed) {
   sc[0].stop_or_close = CLOSE;
   sc[1].stop_or_close = CLOSE;
   start_watcher(loop, SIGCHLD, sc + 2, 0);
-  uv_close((uv_handle_t*)&(sc[2]).handle, NULL);
+  uv_close((uv_handle_t*)&(sc[2]).handle, nullptr);
   ASSERT(0 == uv_run(loop, UV_RUN_DEFAULT));
   ASSERT(tc.ncalls == NSIGNALS);
   ASSERT(sc[0].ncalls == 1);
@@ -284,7 +284,7 @@ TEST_IMPL(we_get_signals_mixed) {
   sc[0].stop_or_close = CLOSE;
   sc[1].stop_or_close = CLOSE;
   start_watcher(loop, SIGCHLD, sc + 2, 1);
-  uv_close((uv_handle_t*)&(sc[2]).handle, NULL);
+  uv_close((uv_handle_t*)&(sc[2]).handle, nullptr);
   ASSERT(0 == uv_run(loop, UV_RUN_DEFAULT));
   ASSERT(tc.ncalls == NSIGNALS);
   ASSERT(sc[0].ncalls == NSIGNALS);
@@ -299,8 +299,8 @@ TEST_IMPL(we_get_signals_mixed) {
   start_watcher(loop, SIGCHLD, sc + 3, 1);
   sc[2].stop_or_close = CLOSE;
   sc[3].stop_or_close = CLOSE;
-  uv_close((uv_handle_t*)&(sc[0]).handle, NULL);
-  uv_close((uv_handle_t*)&(sc[1]).handle, NULL);
+  uv_close((uv_handle_t*)&(sc[0]).handle, nullptr);
+  uv_close((uv_handle_t*)&(sc[1]).handle, nullptr);
   ASSERT(0 == uv_run(loop, UV_RUN_DEFAULT));
   ASSERT(tc.ncalls == NSIGNALS);
   ASSERT(sc[0].ncalls == 0);
@@ -315,8 +315,8 @@ TEST_IMPL(we_get_signals_mixed) {
   start_watcher(loop, SIGCHLD, sc + 2, 0);
   start_watcher(loop, SIGCHLD, sc + 3, 0);
   sc[3].stop_or_close = CLOSE;
-  uv_close((uv_handle_t*)&(sc[0]).handle, NULL);
-  uv_close((uv_handle_t*)&(sc[2]).handle, NULL);
+  uv_close((uv_handle_t*)&(sc[0]).handle, nullptr);
+  uv_close((uv_handle_t*)&(sc[2]).handle, nullptr);
   ASSERT(0 == uv_run(loop, UV_RUN_DEFAULT));
   ASSERT(tc.ncalls == NSIGNALS);
   ASSERT(sc[0].ncalls == 0);

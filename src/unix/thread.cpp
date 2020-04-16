@@ -56,11 +56,11 @@ int uv_barrier_init(uv_barrier_t* barrier, unsigned int count) {
   struct _uv_barrier* b;
   int rc;
 
-  if (barrier == NULL || count == 0)
+  if (barrier == nullptr || count == 0)
     return UV_EINVAL;
 
   b = uv__malloc(sizeof(*b));
-  if (b == NULL)
+  if (b == nullptr)
     return UV_ENOMEM;
 
   b->in = 0;
@@ -90,7 +90,7 @@ int uv_barrier_wait(uv_barrier_t* barrier) {
   struct _uv_barrier* b;
   int last;
 
-  if (barrier == NULL || barrier->b == NULL)
+  if (barrier == nullptr || barrier->b == nullptr)
     return UV_EINVAL;
 
   b = barrier->b;
@@ -132,13 +132,13 @@ void uv_barrier_destroy(uv_barrier_t* barrier) {
   uv_cond_destroy(&b->cond);
 
   uv__free(barrier->b);
-  barrier->b = NULL;
+  barrier->b = nullptr;
 }
 
 #else
 
 int uv_barrier_init(uv_barrier_t* barrier, unsigned int count) {
-  return UV__ERR(pthread_barrier_init(barrier, NULL, count));
+  return UV__ERR(pthread_barrier_init(barrier, nullptr, count));
 }
 
 
@@ -231,7 +231,7 @@ int uv_thread_create_ex(uv_thread_t* tid,
   stack_size =
       params->flags & UV_THREAD_HAS_STACK_SIZE ? params->stack_size : 0;
 
-  attr = NULL;
+  attr = nullptr;
   if (stack_size == 0) {
     stack_size = thread_stack_size();
   } else {
@@ -257,7 +257,7 @@ int uv_thread_create_ex(uv_thread_t* tid,
   f.in = entry;
   err = pthread_create(tid, attr, f.out, arg);
 
-  if (attr != NULL)
+  if (attr != nullptr)
     pthread_attr_destroy(attr);
 
   return UV__ERR(err);
@@ -269,7 +269,7 @@ uv_thread_t uv_thread_self(void) {
 }
 
 int uv_thread_join(uv_thread_t *tid) {
-  return UV__ERR(pthread_join(*tid, NULL));
+  return UV__ERR(pthread_join(*tid, nullptr));
 }
 
 
@@ -280,7 +280,7 @@ int uv_thread_equal(const uv_thread_t* t1, const uv_thread_t* t2) {
 
 int uv_mutex_init(uv_mutex_t* mutex) {
 #if defined(NDEBUG) || !defined(PTHREAD_MUTEX_ERRORCHECK)
-  return UV__ERR(pthread_mutex_init(mutex, NULL));
+  return UV__ERR(pthread_mutex_init(mutex, nullptr));
 #else
   pthread_mutexattr_t attr;
   int err;
@@ -353,7 +353,7 @@ void uv_mutex_unlock(uv_mutex_t* mutex) {
 
 
 int uv_rwlock_init(uv_rwlock_t* rwlock) {
-  return UV__ERR(pthread_rwlock_init(rwlock, NULL));
+  return UV__ERR(pthread_rwlock_init(rwlock, nullptr));
 }
 
 
@@ -526,7 +526,7 @@ static int uv__custom_sem_init(uv_sem_t* sem_, unsigned int value) {
   int err;
 
   auto *sem = create_ptrstruct<uv_semaphore_t>(sizeof(uv_semaphore_t));
-  if (sem == NULL)
+  if (sem == nullptr)
     return UV_ENOMEM;
 
   if ((err = uv_mutex_init(&sem->mutex)) != 0) {
@@ -694,7 +694,7 @@ int uv_sem_trywait(uv_sem_t* sem) {
 #if defined(__APPLE__) && defined(__MACH__) || defined(__MVS__)
 
 int uv_cond_init(uv_cond_t* cond) {
-  return UV__ERR(pthread_cond_init(cond, NULL));
+  return UV__ERR(pthread_cond_init(cond, nullptr));
 }
 
 #else /* !(defined(__APPLE__) && defined(__MACH__)) */
@@ -742,7 +742,7 @@ void uv_cond_destroy(uv_cond_t* cond) {
   struct timespec ts;
   int err;
 
-  if (pthread_mutex_init(&mutex, NULL))
+  if (pthread_mutex_init(&mutex, nullptr))
     abort();
 
   if (pthread_mutex_lock(&mutex))
@@ -795,7 +795,7 @@ int uv_cond_timedwait(uv_cond_t* cond, uv_mutex_t* mutex, uint64_t timeout) {
   r = pthread_cond_timedwait_relative_np(cond, mutex, &ts);
 #else
 #if defined(__MVS__)
-  if (gettimeofday(&tv, NULL))
+  if (gettimeofday(&tv, nullptr))
     abort();
   timeout += tv.tv_sec * NANOSEC + tv.tv_usec * 1e3;
 #else
@@ -830,7 +830,7 @@ int uv_cond_timedwait(uv_cond_t* cond, uv_mutex_t* mutex, uint64_t timeout) {
 
 
 int uv_key_create(uv_key_t* key) {
-  return UV__ERR(pthread_key_create(key, NULL));
+  return UV__ERR(pthread_key_create(key, nullptr));
 }
 
 

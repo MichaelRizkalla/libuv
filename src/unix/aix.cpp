@@ -67,10 +67,10 @@
 
 static uv_mutex_t process_title_mutex;
 static uv_once_t process_title_mutex_once = UV_ONCE_INIT;
-static void* args_mem = NULL;
-static char** process_argv = NULL;
+static void* args_mem = nullptr;
+static char** process_argv = nullptr;
 static int process_argc = 0;
-static char* process_title_ptr = NULL;
+static char* process_title_ptr = nullptr;
 
 static void init_process_title_mutex_once(void) {
   uv_mutex_init(&process_title_mutex);
@@ -249,7 +249,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     have_signals = 0;
     nevents = 0;
 
-    assert(loop->watchers != NULL);
+    assert(loop->watchers != nullptr);
     loop->watchers[loop->nwatchers] = (void*) events;
     loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
 
@@ -267,7 +267,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
 
       w = loop->watchers[pc.fd];
 
-      if (w == NULL) {
+      if (w == nullptr) {
         /* File descriptor that we've stopped watching, disarm it.
          *
          * Ignore all errors because we may be racing with another thread
@@ -291,8 +291,8 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     if (have_signals != 0)
       loop->signal_io_watcher.cb(loop, &loop->signal_io_watcher, POLLIN);
 
-    loop->watchers[loop->nwatchers] = NULL;
-    loop->watchers[loop->nwatchers + 1] = NULL;
+    loop->watchers[loop->nwatchers] = nullptr;
+    loop->watchers[loop->nwatchers + 1] = nullptr;
 
     if (have_signals != 0)
       return;  /* Event loop should cycle now so don't poll again. */
@@ -326,7 +326,7 @@ update_timeout:
 
 uint64_t uv_get_free_memory(void) {
   perfstat_memory_total_t mem_total;
-  int result = perfstat_memory_total(NULL, &mem_total, sizeof(mem_total), 1);
+  int result = perfstat_memory_total(nullptr, &mem_total, sizeof(mem_total), 1);
   if (result == -1) {
     return 0;
   }
@@ -336,7 +336,7 @@ uint64_t uv_get_free_memory(void) {
 
 uint64_t uv_get_total_memory(void) {
   perfstat_memory_total_t mem_total;
-  int result = perfstat_memory_total(NULL, &mem_total, sizeof(mem_total), 1);
+  int result = perfstat_memory_total(nullptr, &mem_total, sizeof(mem_total), 1);
   if (result == -1) {
     return 0;
   }
@@ -351,7 +351,7 @@ uint64_t uv_get_constrained_memory(void) {
 
 void uv_loadavg(double avg[3]) {
   perfstat_cpu_total_t ps_total;
-  int result = perfstat_cpu_total(NULL, &ps_total, sizeof(ps_total), 1);
+  int result = perfstat_cpu_total(nullptr, &ps_total, sizeof(ps_total), 1);
   if (result == -1) {
     avg[0] = 0.; avg[1] = 0.; avg[2] = 0.;
     return;
@@ -410,7 +410,7 @@ static int uv__is_ahafs_mounted(void){
   char *obj, *stub;
 
   p = uv__malloc(siz);
-  if (p == NULL)
+  if (p == nullptr)
     return UV__ERR(errno);
 
   /* Retrieve all mounted filesystems */
@@ -422,7 +422,7 @@ static int uv__is_ahafs_mounted(void){
     siz = *(int*)p;
     uv__free(p);
     p = uv__malloc(siz);
-    if (p == NULL)
+    if (p == nullptr)
       return UV__ERR(errno);
     rv = mntctl(MCTL_QUERY, siz, (char*)p);
     if (rv < 0)
@@ -451,7 +451,7 @@ static int uv__is_ahafs_mounted(void){
  */
 static int uv__makedir_p(const char *dir) {
   char tmp[256];
-  char *p = NULL;
+  char *p = nullptr;
   size_t len;
   int err;
 
@@ -485,7 +485,7 @@ static int uv__make_subdirs_p(const char *filename) {
   /* Strip off the monitor file name */
   p = strrchr(filename, '/');
 
-  if (p == NULL)
+  if (p == nullptr)
     return 0;
 
   if (uv__path_is_a_directory((char*)filename) == 0) {
@@ -630,7 +630,7 @@ static int uv__parse_data(char *buf, int *events, uv_fs_event_t* handle) {
       if (evp_rc == AHAFS_MODDIR_UNMOUNT || evp_rc == AHAFS_MODDIR_REMOVE_SELF) {
         /* The directory is no longer available for monitoring */
         *events = UV_RENAME;
-        handle->dir_filename = NULL;
+        handle->dir_filename = nullptr;
       } else {
         /* A file was added/removed inside the directory */
         *events = UV_CHANGE;
@@ -700,7 +700,7 @@ static void uv__ahafs_event(uv_loop_t* loop, uv__io_t* event_watch, unsigned int
     p = handle->dir_filename;
   } else {
     p = strrchr(handle->path, '/');
-    if (p == NULL)
+    if (p == nullptr)
       p = handle->path;
     else
       p++;
@@ -775,7 +775,7 @@ int uv_fs_event_start(uv_fs_event_t* handle,
   uv__io_init(&handle->event_watcher, uv__ahafs_event, fd);
   handle->path = uv__strdup(filename);
   handle->cb = cb;
-  handle->dir_filename = NULL;
+  handle->dir_filename = nullptr;
 
   uv__io_start(handle->loop, &handle->event_watcher, POLLIN);
 
@@ -786,7 +786,7 @@ int uv_fs_event_start(uv_fs_event_t* handle,
     memset(&zt, 0, sizeof(zt));
     FD_ZERO(&pollfd);
     FD_SET(fd, &pollfd);
-    rc = select(fd + 1, &pollfd, NULL, NULL, &zt);
+    rc = select(fd + 1, &pollfd, nullptr, nullptr, &zt);
   } while (rc == -1 && errno == EINTR);
   return 0;
 #else
@@ -805,11 +805,11 @@ int uv_fs_event_stop(uv_fs_event_t* handle) {
 
   if (uv__path_is_a_directory(handle->path) == 0) {
     uv__free(handle->dir_filename);
-    handle->dir_filename = NULL;
+    handle->dir_filename = nullptr;
   }
 
   uv__free(handle->path);
-  handle->path = NULL;
+  handle->path = nullptr;
   uv__close(handle->event_watcher.fd);
   handle->event_watcher.fd = -1;
 
@@ -854,7 +854,7 @@ char** uv_setup_args(int argc, char** argv) {
   size += (argc + 1) * sizeof(char*);
 
   new_argv = uv__malloc(size);
-  if (new_argv == NULL)
+  if (new_argv == nullptr)
     return argv;
   args_mem = new_argv;
 
@@ -866,7 +866,7 @@ char** uv_setup_args(int argc, char** argv) {
     new_argv[i] = s;
     s += size;
   }
-  new_argv[i] = NULL;
+  new_argv[i] = nullptr;
 
   return new_argv;
 }
@@ -879,23 +879,23 @@ int uv_set_process_title(const char* title) {
    * the process may still be using it.
    */
   new_title = uv__strdup(title);
-  if (new_title == NULL)
+  if (new_title == nullptr)
     return UV_ENOMEM;
 
   uv_once(&process_title_mutex_once, init_process_title_mutex_once);
   uv_mutex_lock(&process_title_mutex);
 
   /* If this is the first time this is set,
-   * don't free and set argv[1] to NULL.
+   * don't free and set argv[1] to nullptr.
    */
-  if (process_title_ptr != NULL)
+  if (process_title_ptr != nullptr)
     uv__free(process_title_ptr);
 
   process_title_ptr = new_title;
 
   process_argv[0] = process_title_ptr;
   if (process_argc > 1)
-     process_argv[1] = NULL;
+     process_argv[1] = nullptr;
 
   uv_mutex_unlock(&process_title_mutex);
 
@@ -905,7 +905,7 @@ int uv_set_process_title(const char* title) {
 
 int uv_get_process_title(char* buffer, size_t size) {
   size_t len;
-  if (buffer == NULL || size == 0)
+  if (buffer == nullptr || size == 0)
     return UV_EINVAL;
 
   uv_once(&process_title_mutex_once, init_process_title_mutex_once);
@@ -928,7 +928,7 @@ int uv_get_process_title(char* buffer, size_t size) {
 
 UV_DESTRUCTOR(static void free_args_mem(void)) {
   uv__free(args_mem);  /* Keep valgrind happy. */
-  args_mem = NULL;
+  args_mem = nullptr;
 }
 
 
@@ -966,7 +966,7 @@ int uv_uptime(double* uptime) {
 
   setutent();
 
-  while ((utmp_buf = getutent()) != NULL) {
+  while ((utmp_buf = getutent()) != nullptr) {
     if (utmp_buf->ut_user[0] && utmp_buf->ut_type == USER_PROCESS)
       ++entries;
     if (utmp_buf->ut_type == BOOT_TIME)
@@ -978,7 +978,7 @@ int uv_uptime(double* uptime) {
   if (boot_time == 0)
     return UV_ENOSYS;
 
-  *uptime = time(NULL) - boot_time;
+  *uptime = time(nullptr) - boot_time;
   return 0;
 }
 
@@ -990,12 +990,12 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   perfstat_id_t cpu_id;
   int result, ncpus, idx = 0;
 
-  result = perfstat_cpu_total(NULL, &ps_total, sizeof(ps_total), 1);
+  result = perfstat_cpu_total(nullptr, &ps_total, sizeof(ps_total), 1);
   if (result == -1) {
     return UV_ENOSYS;
   }
 
-  ncpus = result = perfstat_cpu(NULL, NULL, sizeof(perfstat_cpu_t), 0);
+  ncpus = result = perfstat_cpu(nullptr, nullptr, sizeof(perfstat_cpu_t), 0);
   if (result == -1) {
     return UV_ENOSYS;
   }
@@ -1047,11 +1047,11 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   struct in6_ifreq if6;
   struct sockaddr_dl* sa_addr;
 
-  ifc.ifc_req = NULL;
+  ifc.ifc_req = nullptr;
   sock6fd = -1;
   r = 0;
   *count = 0;
-  *addresses = NULL;
+  *addresses = nullptr;
 
   if (0 > (sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP))) {
     r = UV__ERR(errno);
@@ -1069,7 +1069,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   }
 
   ifc.ifc_req = (struct ifreq*)uv__malloc(size);
-  if (ifc.ifc_req == NULL) {
+  if (ifc.ifc_req == nullptr) {
     r = UV_ENOMEM;
     goto cleanup;
   }
@@ -1193,7 +1193,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
 syserror:
   uv_free_interface_addresses(*addresses, *count);
-  *addresses = NULL;
+  *addresses = nullptr;
   *count = 0;
   r = UV_ENOSYS;
 
@@ -1225,13 +1225,13 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
   uintptr_t nfds;
   struct poll_ctl pc;
 
-  assert(loop->watchers != NULL);
+  assert(loop->watchers != nullptr);
   assert(fd >= 0);
 
   events = (struct pollfd*) loop->watchers[loop->nwatchers];
   nfds = (uintptr_t) loop->watchers[loop->nwatchers + 1];
 
-  if (events != NULL)
+  if (events != nullptr)
     /* Invalidate events with same file descriptor */
     for (i = 0; i < nfds; i++)
       if ((int) events[i].fd == fd)

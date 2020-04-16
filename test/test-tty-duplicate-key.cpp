@@ -155,7 +155,7 @@ TEST_IMPL(tty_duplicate_vt100_fn_key) {
   ASSERT(ttyin_fd >= 0);
   ASSERT(UV_TTY == uv_guess_handle(ttyin_fd));
 
-  r = uv_tty_init(uv_default_loop(), &tty_in, ttyin_fd, 1);  /* Readable. */
+  r = uv_tty_init(uv_default_loop(), &tty_in, ttyin_fd);  /* Readable. */
   ASSERT(r == 0);
   ASSERT(uv_is_readable((uv_stream_t*) &tty_in));
   ASSERT(!uv_is_writable((uv_stream_t*) &tty_in));
@@ -209,7 +209,7 @@ TEST_IMPL(tty_duplicate_alt_modifier_key) {
   ASSERT(ttyin_fd >= 0);
   ASSERT(UV_TTY == uv_guess_handle(ttyin_fd));
 
-  r = uv_tty_init(uv_default_loop(), &tty_in, ttyin_fd, 1);  /* Readable. */
+  r = uv_tty_init(uv_default_loop(), &tty_in, ttyin_fd);  /* Readable. */
   ASSERT(r == 0);
   ASSERT(uv_is_readable((uv_stream_t*) &tty_in));
   ASSERT(!uv_is_writable((uv_stream_t*) &tty_in));
@@ -275,7 +275,7 @@ TEST_IMPL(tty_composing_character) {
   ASSERT(ttyin_fd >= 0);
   ASSERT(UV_TTY == uv_guess_handle(ttyin_fd));
 
-  r = uv_tty_init(uv_default_loop(), &tty_in, ttyin_fd, 1);  /* Readable. */
+  r = uv_tty_init(uv_default_loop(), &tty_in, ttyin_fd);  /* Readable. */
   ASSERT(r == 0);
   ASSERT(uv_is_readable((uv_stream_t*) &tty_in));
   ASSERT(!uv_is_writable((uv_stream_t*) &tty_in));

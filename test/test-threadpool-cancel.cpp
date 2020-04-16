@@ -98,7 +98,7 @@ static void getaddrinfo_cb(uv_getaddrinfo_t* req,
                            int status,
                            struct addrinfo* res) {
   ASSERT(status == UV_EAI_CANCELED);
-  ASSERT(res == NULL);
+  ASSERT(res == nullptr);
   uv_freeaddrinfo(res);  /* Should not crash. */
 }
 
@@ -108,8 +108,8 @@ static void getnameinfo_cb(uv_getnameinfo_t* handle,
                            const char* hostname,
                            const char* service) {
   ASSERT(status == UV_EAI_CANCELED);
-  ASSERT(hostname == NULL);
-  ASSERT(service == NULL);
+  ASSERT(hostname == nullptr);
+  ASSERT(service == nullptr);
 }
 
 
@@ -136,7 +136,7 @@ static void timer_cb(uv_timer_t* handle) {
     ASSERT(0 == uv_cancel(req));
   }
 
-  uv_close((uv_handle_t*) &ci->timer_handle, NULL);
+  uv_close((uv_handle_t*) &ci->timer_handle, nullptr);
   unblock_threadpool();
   timer_cb_called++;
 }
@@ -172,16 +172,16 @@ TEST_IMPL(threadpool_cancel_getaddrinfo) {
   loop = uv_default_loop();
   saturate_threadpool();
 
-  r = uv_getaddrinfo(loop, reqs + 0, getaddrinfo_cb, "fail", NULL, NULL);
+  r = uv_getaddrinfo(loop, reqs + 0, getaddrinfo_cb, "fail", nullptr, nullptr);
   ASSERT(r == 0);
 
-  r = uv_getaddrinfo(loop, reqs + 1, getaddrinfo_cb, NULL, "fail", NULL);
+  r = uv_getaddrinfo(loop, reqs + 1, getaddrinfo_cb, nullptr, "fail", nullptr);
   ASSERT(r == 0);
 
-  r = uv_getaddrinfo(loop, reqs + 2, getaddrinfo_cb, "fail", "fail", NULL);
+  r = uv_getaddrinfo(loop, reqs + 2, getaddrinfo_cb, "fail", "fail", nullptr);
   ASSERT(r == 0);
 
-  r = uv_getaddrinfo(loop, reqs + 3, getaddrinfo_cb, "fail", NULL, &hints);
+  r = uv_getaddrinfo(loop, reqs + 3, getaddrinfo_cb, "fail", nullptr, &hints);
   ASSERT(r == 0);
 
   ASSERT(0 == uv_timer_init(loop, &ci.timer_handle));
@@ -287,7 +287,7 @@ TEST_IMPL(threadpool_cancel_fs) {
   INIT_CANCEL_INFO(&ci, reqs);
   loop = uv_default_loop();
   saturate_threadpool();
-  iov = uv_buf_init(NULL, 0);
+  iov = uv_buf_init(nullptr, 0);
 
   /* Needs to match ARRAY_SIZE(fs_reqs). */
   n = 0;

@@ -238,7 +238,7 @@ TEST_IMPL(condvar_5) {
   timeout = 100 * 1000 * 1000; /* 100 ms in ns */
 
   /* Mostly irrelevant. We need cond and mutex initialized. */
-  worker_config_init(&wc, 0, NULL, NULL);
+  worker_config_init(&wc, 0, nullptr, nullptr);
 
   uv_mutex_lock(&wc.mutex);
 

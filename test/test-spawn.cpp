@@ -1357,7 +1357,7 @@ TEST_IMPL(spawn_with_an_odd_path) {
   char *path = getenv("PATH");
   ASSERT(path != nullptr);
   snprintf(newpath, 2048, ";.;%s", path);
-  SetEnvironmentVariable(TEXT("PATH"), (LPCWSTR)newpath);
+  SetEnvironmentVariable(static_cast<LPCSTR>("PATH"), static_cast<LPCSTR>(newpath));
 
   init_process_options("", exit_cb);
   options.file = options.args[0] = "program-that-had-better-not-exist";

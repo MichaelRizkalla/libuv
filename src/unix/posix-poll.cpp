@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 int uv__platform_loop_init(uv_loop_t* loop) {
-  loop->poll_fds = NULL;
+  loop->poll_fds = nullptr;
   loop->poll_fds_used = 0;
   loop->poll_fds_size = 0;
   loop->poll_fds_iterating = 0;
@@ -43,7 +43,7 @@ int uv__platform_loop_init(uv_loop_t* loop) {
 
 void uv__platform_loop_delete(uv_loop_t* loop) {
   uv__free(loop->poll_fds);
-  loop->poll_fds = NULL;
+  loop->poll_fds = nullptr;
 }
 
 int uv__io_fork(uv_loop_t* loop) {
@@ -62,7 +62,7 @@ static void uv__pollfds_maybe_resize(uv_loop_t* loop) {
 
   n = loop->poll_fds_size ? loop->poll_fds_size * 2 : 64;
   p = uv__reallocf(loop->poll_fds, n * sizeof(*loop->poll_fds));
-  if (p == NULL)
+  if (p == nullptr)
     abort();
 
   loop->poll_fds = p;
@@ -167,7 +167,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
   }
 
   /* Prepare a set of signals to block around poll(), if any.  */
-  pset = NULL;
+  pset = nullptr;
   if (loop->flags & UV_LOOP_BLOCK_SIGPROF) {
     pset = &set;
     sigemptyset(pset);
@@ -182,12 +182,12 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
    * our caller then we need to loop around and poll() again.
    */
   for (;;) {
-    if (pset != NULL)
-      if (pthread_sigmask(SIG_BLOCK, pset, NULL))
+    if (pset != nullptr)
+      if (pthread_sigmask(SIG_BLOCK, pset, nullptr))
         abort();
     nfds = poll(loop->poll_fds, (nfds_t)loop->poll_fds_used, timeout);
-    if (pset != NULL)
-      if (pthread_sigmask(SIG_UNBLOCK, pset, NULL))
+    if (pset != nullptr)
+      if (pthread_sigmask(SIG_UNBLOCK, pset, nullptr))
         abort();
 
     /* Update loop->time unconditionally. It's tempting to skip the update when
@@ -238,7 +238,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
 
       w = loop->watchers[fd];
 
-      if (w == NULL) {
+      if (w == nullptr) {
         /* File descriptor that we've stopped watching, ignore.  */
         uv__platform_invalidate_fd(loop, fd);
         continue;

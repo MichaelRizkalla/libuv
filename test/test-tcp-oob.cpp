@@ -48,10 +48,10 @@ static void idle_cb(uv_idle_t* idle) {
   if (++ticks < kMaxTicks)
     return;
 
-  uv_close((uv_handle_t*) &server_handle, NULL);
-  uv_close((uv_handle_t*) &client_handle, NULL);
-  uv_close((uv_handle_t*) &peer_handle, NULL);
-  uv_close((uv_handle_t*) idle, NULL);
+  uv_close((uv_handle_t*) &server_handle, nullptr);
+  uv_close((uv_handle_t*) &client_handle, nullptr);
+  uv_close((uv_handle_t*) &peer_handle, nullptr);
+  uv_close((uv_handle_t*) idle, nullptr);
 }
 
 

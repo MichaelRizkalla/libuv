@@ -47,7 +47,7 @@ static char PING[] = "PING\n";
 
 static uv_loop_t* loop;
 
-static buf_t* buf_freelist = NULL;
+static buf_t* buf_freelist = nullptr;
 static int pinger_shutdown_cb_called;
 static int completed_pingers = 0;
 static int64_t start_time;
@@ -57,7 +57,7 @@ static void buf_alloc(uv_handle_t* tcp, size_t size, uv_buf_t* buf) {
   buf_t* ab;
 
   ab = buf_freelist;
-  if (ab != NULL)
+  if (ab != nullptr)
     buf_freelist = ab->next;
   else {
     ab = test_create_ptrstruct<buf_t>(size + sizeof(buf_t));

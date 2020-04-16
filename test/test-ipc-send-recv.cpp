@@ -131,7 +131,7 @@ static void recv_cb(uv_stream_t* handle,
 
   /* Close after two writes received */
   if (recv_cb_count == 2) {
-    uv_close((uv_handle_t*)&ctx.channel, NULL);
+    uv_close((uv_handle_t*)&ctx.channel, nullptr);
   }
 }
 
@@ -147,7 +147,7 @@ static void connect_cb(uv_connect_t* req, int status) {
                 (uv_stream_t*)&ctx.channel,
                 &buf, 1,
                 &ctx.send.stream,
-                NULL);
+                nullptr);
   ASSERT(r == 0);
 
   /* Perform two writes to the same pipe to make sure that on Windows we are
@@ -158,7 +158,7 @@ static void connect_cb(uv_connect_t* req, int status) {
                 (uv_stream_t*)&ctx.channel,
                 &buf, 1,
                 &ctx.send2.stream,
-                NULL);
+                nullptr);
   ASSERT(r == 0);
 
   r = uv_read_start((uv_stream_t*)&ctx.channel, alloc_cb, recv_cb);
@@ -287,10 +287,10 @@ static void write2_cb(uv_write_t* req, int status) {
   /* After two successful writes in the child process, allow the child
    * process to be closed. */
   if (++write2_cb_called == 2 && (is_child_process || is_in_process)) {
-    uv_close(&ctx2.recv.handle, NULL);
-    uv_close(&ctx2.recv2.handle, NULL);
-    uv_close((uv_handle_t*)&ctx2.channel, NULL);
-    uv_close((uv_handle_t*)&ctx2.listen, NULL);
+    uv_close(&ctx2.recv.handle, nullptr);
+    uv_close(&ctx2.recv2.handle, nullptr);
+    uv_close((uv_handle_t*)&ctx2.channel, nullptr);
+    uv_close((uv_handle_t*)&ctx2.listen, nullptr);
   }
 }
 

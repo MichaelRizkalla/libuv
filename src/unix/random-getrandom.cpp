@@ -45,7 +45,7 @@ static void uv__random_getrandom_init_once(void) {
 static int uv__random_getrandom_init(void) {
   uv_once(&once, uv__random_getrandom_init_once);
 
-  if (uv__getrandom == NULL)
+  if (uv__getrandom == nullptr)
     return UV_ENOSYS;
 
   return 0;

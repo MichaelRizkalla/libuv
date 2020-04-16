@@ -91,7 +91,7 @@ static void alloc_cb(uv_handle_t* handle,
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -109,13 +109,13 @@ static void recv_cb(uv_udp_t* handle,
 
   if (nread == 0) {
     /* Returning unused buffer. Don't count towards sv_recv_cb_called */
-    ASSERT(addr == NULL);
+    ASSERT(addr == nullptr);
     return;
   }
 
   ASSERT(flags == 0);
 
-  ASSERT(addr != NULL);
+  ASSERT(addr != nullptr);
   ASSERT(nread == 4);
   ASSERT(memcmp("PING", buf->base, nread) == 0);
 
@@ -127,7 +127,7 @@ static void recv_cb(uv_udp_t* handle,
 
 
 static void send_cb(uv_udp_send_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
 
   send_cb_called++;
@@ -177,7 +177,7 @@ TEST_IMPL(udp_open) {
     r = uv_udp_open(&client2, sock);
     ASSERT(r == UV_EEXIST);
 
-    uv_close((uv_handle_t*) &client2, NULL);
+    uv_close((uv_handle_t*) &client2, nullptr);
   }
 #endif  /* !_WIN32 */
 
@@ -212,7 +212,7 @@ TEST_IMPL(udp_open_twice) {
   ASSERT(r == UV_EBUSY);
   close_socket(sock2);
 
-  uv_close((uv_handle_t*) &client, NULL);
+  uv_close((uv_handle_t*) &client, nullptr);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   MAKE_VALGRIND_HAPPY();
@@ -242,7 +242,7 @@ TEST_IMPL(udp_open_bound) {
   r = uv_udp_recv_start(&client, alloc_cb, recv_cb);
   ASSERT(r == 0);
 
-  uv_close((uv_handle_t*) &client, NULL);
+  uv_close((uv_handle_t*) &client, nullptr);
   uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 
   MAKE_VALGRIND_HAPPY();
@@ -284,7 +284,7 @@ TEST_IMPL(udp_open_connect) {
                   &client,
                   &buf,
                   1,
-                  NULL,
+                  nullptr,
                   send_cb);
   ASSERT(r == 0);
 
@@ -336,10 +336,10 @@ TEST_IMPL(udp_send_unix) {
                   &buf,
                   1,
                   (const struct sockaddr*) &addr,
-                  NULL);
+                  nullptr);
   ASSERT(r == 0);
 
-  uv_close((uv_handle_t*)&handle, NULL);
+  uv_close((uv_handle_t*)&handle, nullptr);
   uv_run(loop, UV_RUN_DEFAULT);
   close(fd);
   unlink(TEST_PIPENAME);

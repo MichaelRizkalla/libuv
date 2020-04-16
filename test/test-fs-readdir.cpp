@@ -36,13 +36,13 @@ static int empty_closedir_cb_count;
 static void cleanup_test_files(void) {
   uv_fs_t req;
 
-  uv_fs_unlink(NULL, &req, "test_dir/file1", NULL);
+  uv_fs_unlink(nullptr, &req, "test_dir/file1", nullptr);
   uv_fs_req_cleanup(&req);
-  uv_fs_unlink(NULL, &req, "test_dir/file2", NULL);
+  uv_fs_unlink(nullptr, &req, "test_dir/file2", nullptr);
   uv_fs_req_cleanup(&req);
-  uv_fs_rmdir(NULL, &req, "test_dir/test_subdir", NULL);
+  uv_fs_rmdir(nullptr, &req, "test_dir/test_subdir", nullptr);
   uv_fs_req_cleanup(&req);
-  uv_fs_rmdir(NULL, &req, "test_dir", NULL);
+  uv_fs_rmdir(nullptr, &req, "test_dir", nullptr);
   uv_fs_req_cleanup(&req);
 }
 
@@ -77,7 +77,7 @@ static void empty_opendir_cb(uv_fs_t* req) {
   ASSERT(req == &opendir_req);
   ASSERT(req->fs_type == UV_FS_OPENDIR);
   ASSERT(req->result == 0);
-  ASSERT(req->ptr != NULL);
+  ASSERT(req->ptr != nullptr);
   dir = static_cast<uv_dir_t*>(req->ptr);
   dir->dirents = dirents;
   dir->nentries = ARRAY_SIZE(dirents);
@@ -104,7 +104,7 @@ TEST_IMPL(fs_readdir_empty_dir) {
   uv_dir_t* dir;
 
   path = "./empty_dir/";
-  uv_fs_mkdir(uv_default_loop(), &mkdir_req, path, 0777, NULL);
+  uv_fs_mkdir(uv_default_loop(), &mkdir_req, path, 0777, nullptr);
   uv_fs_req_cleanup(&mkdir_req);
 
   /* Fill the req to ensure that required fields are cleaned up. */
@@ -114,11 +114,11 @@ TEST_IMPL(fs_readdir_empty_dir) {
   r = uv_fs_opendir(uv_default_loop(),
                     &opendir_req,
                     path,
-                    NULL);
+                    nullptr);
   ASSERT(r == 0);
   ASSERT(opendir_req.fs_type == UV_FS_OPENDIR);
   ASSERT(opendir_req.result == 0);
-  ASSERT(opendir_req.ptr != NULL);
+  ASSERT(opendir_req.ptr != nullptr);
   dir = static_cast<uv_dir_t*>(opendir_req.ptr);
   uv_fs_req_cleanup(&opendir_req);
 
@@ -129,13 +129,13 @@ TEST_IMPL(fs_readdir_empty_dir) {
   nb_entries_read = uv_fs_readdir(uv_default_loop(),
                                   &readdir_req,
                                   dir,
-                                  NULL);
+                                  nullptr);
   ASSERT(nb_entries_read == 0);
   uv_fs_req_cleanup(&readdir_req);
 
   /* Fill the req to ensure that required fields are cleaned up. */
   memset(&closedir_req, 0xdb, sizeof(closedir_req));
-  uv_fs_closedir(uv_default_loop(), &closedir_req, dir, NULL);
+  uv_fs_closedir(uv_default_loop(), &closedir_req, dir, nullptr);
   ASSERT(closedir_req.result == 0);
   uv_fs_req_cleanup(&closedir_req);
 
@@ -154,7 +154,7 @@ TEST_IMPL(fs_readdir_empty_dir) {
   ASSERT(r == 0);
   ASSERT(empty_opendir_cb_count == 1);
   ASSERT(empty_closedir_cb_count == 1);
-  uv_fs_rmdir(uv_default_loop(), &rmdir_req, path, NULL);
+  uv_fs_rmdir(uv_default_loop(), &rmdir_req, path, nullptr);
   uv_fs_req_cleanup(&rmdir_req);
   MAKE_VALGRIND_HAPPY();
   return 0;
@@ -171,7 +171,7 @@ static void non_existing_opendir_cb(uv_fs_t* req) {
   ASSERT(req == &opendir_req);
   ASSERT(req->fs_type == UV_FS_OPENDIR);
   ASSERT(req->result == UV_ENOENT);
-  ASSERT(req->ptr == NULL);
+  ASSERT(req->ptr == nullptr);
 
   uv_fs_req_cleanup(req);
   ++non_existing_opendir_cb_count;
@@ -187,11 +187,11 @@ TEST_IMPL(fs_readdir_non_existing_dir) {
   memset(&opendir_req, 0xdb, sizeof(opendir_req));
 
   /* Testing the synchronous flavor. */
-  r = uv_fs_opendir(uv_default_loop(), &opendir_req, path, NULL);
+  r = uv_fs_opendir(uv_default_loop(), &opendir_req, path, nullptr);
   ASSERT(r == UV_ENOENT);
   ASSERT(opendir_req.fs_type == UV_FS_OPENDIR);
   ASSERT(opendir_req.result == UV_ENOENT);
-  ASSERT(opendir_req.ptr == NULL);
+  ASSERT(opendir_req.ptr == nullptr);
   uv_fs_req_cleanup(&opendir_req);
 
   /* Fill the req to ensure that required fields are cleaned up. */
@@ -223,7 +223,7 @@ static void file_opendir_cb(uv_fs_t* req) {
   ASSERT(req == &opendir_req);
   ASSERT(req->fs_type == UV_FS_OPENDIR);
   ASSERT(req->result == UV_ENOTDIR);
-  ASSERT(req->ptr == NULL);
+  ASSERT(req->ptr == nullptr);
 
   uv_fs_req_cleanup(req);
   ++file_opendir_cb_count;
@@ -239,12 +239,12 @@ TEST_IMPL(fs_readdir_file) {
   memset(&opendir_req, 0xdb, sizeof(opendir_req));
 
   /* Testing the synchronous flavor. */
-  r = uv_fs_opendir(uv_default_loop(), &opendir_req, path, NULL);
+  r = uv_fs_opendir(uv_default_loop(), &opendir_req, path, nullptr);
 
   ASSERT(r == UV_ENOTDIR);
   ASSERT(opendir_req.fs_type == UV_FS_OPENDIR);
   ASSERT(opendir_req.result == UV_ENOTDIR);
-  ASSERT(opendir_req.ptr == NULL);
+  ASSERT(opendir_req.ptr == nullptr);
 
   uv_fs_req_cleanup(&opendir_req);
 
@@ -326,7 +326,7 @@ static void non_empty_opendir_cb(uv_fs_t* req) {
   ASSERT(req == &opendir_req);
   ASSERT(req->fs_type == UV_FS_OPENDIR);
   ASSERT(req->result == 0);
-  ASSERT(req->ptr != NULL);
+  ASSERT(req->ptr != nullptr);
 
   dir = static_cast<uv_dir_t*>(req->ptr);
   dir->dirents = dirents;
@@ -352,7 +352,7 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
 
   cleanup_test_files();
 
-  r = uv_fs_mkdir(uv_default_loop(), &mkdir_req, "test_dir", 0755, NULL);
+  r = uv_fs_mkdir(uv_default_loop(), &mkdir_req, "test_dir", 0755, nullptr);
   ASSERT(r == 0);
 
   /* Create two files synchronously. */
@@ -360,13 +360,13 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
                  &create_req,
                  "test_dir/file1",
                  O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR,
-                 NULL);
+                 nullptr);
   ASSERT(r >= 0);
   uv_fs_req_cleanup(&create_req);
   r = uv_fs_close(uv_default_loop(),
                   &close_req,
                   create_req.result,
-                  NULL);
+                  nullptr);
   ASSERT(r == 0);
   uv_fs_req_cleanup(&close_req);
 
@@ -374,13 +374,13 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
                  &create_req,
                  "test_dir/file2",
                  O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR,
-                 NULL);
+                 nullptr);
   ASSERT(r >= 0);
   uv_fs_req_cleanup(&create_req);
   r = uv_fs_close(uv_default_loop(),
                   &close_req,
                   create_req.result,
-                  NULL);
+                  nullptr);
   ASSERT(r == 0);
   uv_fs_req_cleanup(&close_req);
 
@@ -388,7 +388,7 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
                   &mkdir_req,
                   "test_dir/test_subdir",
                   0755,
-                  NULL);
+                  nullptr);
   ASSERT(r == 0);
   uv_fs_req_cleanup(&mkdir_req);
 
@@ -396,11 +396,11 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
   memset(&opendir_req, 0xdb, sizeof(opendir_req));
 
   /* Testing the synchronous flavor. */
-  r = uv_fs_opendir(uv_default_loop(), &opendir_req, "test_dir", NULL);
+  r = uv_fs_opendir(uv_default_loop(), &opendir_req, "test_dir", nullptr);
   ASSERT(r == 0);
   ASSERT(opendir_req.fs_type == UV_FS_OPENDIR);
   ASSERT(opendir_req.result == 0);
-  ASSERT(opendir_req.ptr != NULL);
+  ASSERT(opendir_req.ptr != nullptr);
 
   entries_count = 0;
   dir = static_cast<uv_dir_t*>(opendir_req.ptr);
@@ -411,7 +411,7 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
   while (uv_fs_readdir(uv_default_loop(),
                        &readdir_req,
                        dir,
-                       NULL) != 0) {
+                       nullptr) != 0) {
   ASSERT(strcmp(dirents[0].name, "file1") == 0 ||
          strcmp(dirents[0].name, "file2") == 0 ||
          strcmp(dirents[0].name, "test_subdir") == 0);
@@ -432,7 +432,7 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
 
   /* Fill the req to ensure that required fields are cleaned up. */
   memset(&closedir_req, 0xdb, sizeof(closedir_req));
-  uv_fs_closedir(uv_default_loop(), &closedir_req, dir, NULL);
+  uv_fs_closedir(uv_default_loop(), &closedir_req, dir, nullptr);
   ASSERT(closedir_req.result == 0);
   uv_fs_req_cleanup(&closedir_req);
 
@@ -453,7 +453,7 @@ TEST_IMPL(fs_readdir_non_empty_dir) {
   ASSERT(non_empty_opendir_cb_count == 1);
   ASSERT(non_empty_closedir_cb_count == 1);
 
-  uv_fs_rmdir(uv_default_loop(), &rmdir_req, "test_subdir", NULL);
+  uv_fs_rmdir(uv_default_loop(), &rmdir_req, "test_subdir", nullptr);
   uv_fs_req_cleanup(&rmdir_req);
 
   cleanup_test_files();

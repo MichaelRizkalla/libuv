@@ -110,9 +110,9 @@ static void show_stats(uv_timer_t* handle) {
 
     for (i = 0; i < write_sockets; i++) {
       if (type == TCP)
-        uv_close((uv_handle_t*) &tcp_write_handles[i], NULL);
+        uv_close((uv_handle_t*) &tcp_write_handles[i], nullptr);
       else
-        uv_close((uv_handle_t*) &pipe_write_handles[i], NULL);
+        uv_close((uv_handle_t*) &pipe_write_handles[i], nullptr);
     }
 
     exit(0);
@@ -148,7 +148,7 @@ static void read_sockets_close_cb(uv_handle_t* handle) {
    */
   if (uv_now(loop) - start_time > 1000 && read_sockets == 0) {
     read_show_stats();
-    uv_close((uv_handle_t*)server, NULL);
+    uv_close((uv_handle_t*)server, nullptr);
   }
 }
 
@@ -312,14 +312,14 @@ typedef struct req_list_s {
 } req_list_t;
 
 
-static req_list_t* req_freelist = NULL;
+static req_list_t* req_freelist = nullptr;
 
 
 static uv_req_t* req_alloc(void) {
   req_list_t* req;
 
   req = req_freelist;
-  if (req != NULL) {
+  if (req != nullptr) {
     req_freelist = req->next;
     return (uv_req_t*) req;
   }
@@ -347,14 +347,14 @@ typedef struct buf_list_s {
 } buf_list_t;
 
 
-static buf_list_t* buf_freelist = NULL;
+static buf_list_t* buf_freelist = nullptr;
 
 
 static void buf_alloc(uv_handle_t* handle, size_t size, uv_buf_t* buf) {
   buf_list_t* ab;
 
   ab = buf_freelist;
-  if (ab != NULL)
+  if (ab != nullptr)
     buf_freelist = ab->next;
   else {
     ab = test_create_ptrstruct<buf_list_t>(size + sizeof(*ab));

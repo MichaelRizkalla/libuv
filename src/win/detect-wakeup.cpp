@@ -24,11 +24,11 @@ static void uv__register_system_resume_callback(void) {
   _DEVICE_NOTIFY_SUBSCRIBE_PARAMETERS recipient;
   _HPOWERNOTIFY registration_handle;
 
-  if (pPowerRegisterSuspendResumeNotification == NULL)
+  if (pPowerRegisterSuspendResumeNotification == nullptr)
     return;
 
   recipient.Callback = uv__system_resume_callback;
-  recipient.Context = NULL;
+  recipient.Context = nullptr;
   (*pPowerRegisterSuspendResumeNotification)(DEVICE_NOTIFY_CALLBACK,
                                              &recipient,
                                              &registration_handle);

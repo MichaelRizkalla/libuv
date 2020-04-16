@@ -72,8 +72,8 @@ static const unsigned first_handle_number_fs_event = 0;
   static void name##2_cb(__VA_ARGS__) {                                       \
     ASSERT(handle == &(name)[2]);                                             \
     if (first_handle_number_##name == 2) {                                    \
-      uv_close((uv_handle_t*)&(name)[2], NULL);                               \
-      uv_close((uv_handle_t*)&(name)[1], NULL);                               \
+      uv_close((uv_handle_t*)&(name)[2], nullptr);                               \
+      uv_close((uv_handle_t*)&(name)[1], nullptr);                               \
     }                                                                         \
     name##_cb_calls[2]++;                                                     \
   }                                                                           \
@@ -86,8 +86,8 @@ static const unsigned first_handle_number_fs_event = 0;
   static void name##0_cb(__VA_ARGS__) {                                       \
     ASSERT(handle == &(name)[0]);                                             \
     if (first_handle_number_##name == 0) {                                    \
-      uv_close((uv_handle_t*)&(name)[0], NULL);                               \
-      uv_close((uv_handle_t*)&(name)[1], NULL);                               \
+      uv_close((uv_handle_t*)&(name)[0], nullptr);                               \
+      uv_close((uv_handle_t*)&(name)[1], nullptr);                               \
     }                                                                         \
     name##_cb_calls[0]++;                                                     \
   }                                                                           \
@@ -154,7 +154,7 @@ static void helper_timer_cb(uv_timer_t* thandle) {
   uv_fs_t fs_req;
 
   /* fire all fs_events */
-  r = uv_fs_utime(thandle->loop, &fs_req, watched_dir, 0, 0, NULL);
+  r = uv_fs_utime(thandle->loop, &fs_req, watched_dir, 0, 0, nullptr);
   ASSERT(r == 0);
   ASSERT(fs_req.result == 0);
   ASSERT(fs_req.fs_type == UV_FS_UTIME);

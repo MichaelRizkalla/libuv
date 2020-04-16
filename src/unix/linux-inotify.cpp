@@ -94,7 +94,7 @@ int uv__inotify_fork(uv_loop_t* loop, void* old_watchers) {
   uv_fs_event_t* handle;
   char* tmp_path;
 
-  if (old_watchers != NULL) {
+  if (old_watchers != nullptr) {
     /* We must restore the old watcher list to be able to close items
      * out of it.
      */
@@ -114,11 +114,11 @@ int uv__inotify_fork(uv_loop_t* loop, void* old_watchers) {
         q = QUEUE_HEAD(&queue);
         handle = QUEUE_DATA(q, uv_fs_event_t, watchers);
         /* It's critical to keep a copy of path here, because it
-         * will be set to NULL by stop() and then deallocated by
+         * will be set to nullptr by stop() and then deallocated by
          * maybe_free_watcher_list
          */
         tmp_path = uv__strdup(handle->path);
-        assert(tmp_path != NULL);
+        assert(tmp_path != nullptr);
         QUEUE_REMOVE(q);
         QUEUE_INSERT_TAIL(&watcher_list->watchers, q);
         uv_fs_event_stop(handle);
@@ -136,7 +136,7 @@ int uv__inotify_fork(uv_loop_t* loop, void* old_watchers) {
         QUEUE_REMOVE(q);
         handle = QUEUE_DATA(q, uv_fs_event_t, watchers);
         tmp_path = handle->path;
-        handle->path = NULL;
+        handle->path = nullptr;
         err = uv_fs_event_start(handle, handle->cb, tmp_path, 0);
         uv__free(tmp_path);
         if (err)
@@ -201,7 +201,7 @@ static void uv__inotify_read(uv_loop_t* loop,
         events |= UV_RENAME;
 
       w = find_watcher(loop, e->wd);
-      if (w == NULL)
+      if (w == nullptr)
         continue; /* Stale event, no watchers left. */
 
       /* inotify does not return the filename when monitoring a single file
@@ -282,7 +282,7 @@ int uv_fs_event_start(uv_fs_event_t* handle,
 
   len = strlen(path) + 1;
   w = create_ptrstruct<watcher_list>(sizeof(watcher_list) + len);
-  if (w == NULL)
+  if (w == nullptr)
     return UV_ENOMEM;
 
   w->wd = wd;
@@ -309,10 +309,10 @@ int uv_fs_event_stop(uv_fs_event_t* handle) {
     return 0;
 
   w = find_watcher(handle->loop, handle->wd);
-  assert(w != NULL);
+  assert(w != nullptr);
 
   handle->wd = -1;
-  handle->path = NULL;
+  handle->path = nullptr;
   uv__handle_stop(handle);
   QUEUE_REMOVE(&handle->watchers);
 

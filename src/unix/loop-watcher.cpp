@@ -25,13 +25,13 @@
 #define UV_LOOP_WATCHER_DEFINE(name, type)                                    \
   int uv_##name##_init(uv_loop_t* loop, uv_##name##_t* handle) {              \
     uv__handle_init(loop, (uv_handle_t*)handle, UV_##type);                   \
-    handle->name##_cb = NULL;                                                 \
+    handle->name##_cb = nullptr;                                                 \
     return 0;                                                                 \
   }                                                                           \
                                                                               \
   int uv_##name##_start(uv_##name##_t* handle, uv_##name##_cb cb) {           \
     if (uv__is_active(handle)) return 0;                                      \
-    if (cb == NULL) return UV_EINVAL;                                         \
+    if (cb == nullptr) return UV_EINVAL;                                         \
     QUEUE_INSERT_HEAD(&handle->loop->name##_handles, &handle->queue);         \
     handle->name##_cb = cb;                                                   \
     uv__handle_start(handle);                                                 \

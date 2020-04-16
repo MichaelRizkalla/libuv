@@ -39,6 +39,7 @@
 #include <userenv.h>
 #include <math.h>
 #include "../utils/allocator.cpp"
+#include <memory>
 /*
  * Max title length; the only thing MSDN tells us about the maximum length
  * of the console title is that it is smaller than 64K. However in practice
@@ -78,7 +79,7 @@ static double hrtime_interval_ = 0;
 /*
  * One-time initialization code for functionality defined in util.c.
  */
-void uv__util_init(void) {
+void uv__util_init() {
   LARGE_INTEGER perf_frequency;
 
   /* Initialize process title access mutex. */
@@ -97,7 +98,6 @@ void uv__util_init(void) {
 
 int uv_exepath(char* buffer, size_t* size_ptr) {
   int utf8_len, utf16_buffer_len, utf16_len;
-  WCHAR* utf16_buffer;
   int err;
 
   if (buffer == nullptr || size_ptr == nullptr || *size_ptr == 0) {
@@ -108,31 +108,31 @@ int uv_exepath(char* buffer, size_t* size_ptr) {
     /* Windows paths can never be longer than this. */
     utf16_buffer_len = 32768;
   } else {
-    utf16_buffer_len = (int) *size_ptr;
+    utf16_buffer_len = static_cast<int>(*size_ptr);
   }
 
-  utf16_buffer = (WCHAR*) uv__malloc(sizeof(WCHAR) * utf16_buffer_len);
-  if (!utf16_buffer) {
+  auto utf16_buffer = std::make_unique<WCHAR[]>(sizeof(WCHAR) * static_cast<size_t>(utf16_buffer_len));
+  if (!utf16_buffer.get()) {
     return UV_ENOMEM;
   }
 
   /* Get the path as UTF-16. */
-  utf16_len = GetModuleFileNameW(nullptr, utf16_buffer, utf16_buffer_len);
+  utf16_len = GetModuleFileNameW(nullptr, utf16_buffer.get(), utf16_buffer_len);
   if (utf16_len <= 0) {
     err = GetLastError();
     goto error;
   }
 
   /* utf16_len contains the length, *not* including the terminating null. */
-  utf16_buffer[utf16_len] = L'\0';
+  utf16_buffer.get()[utf16_len] = L'\0';
 
   /* Convert to UTF-8 */
   utf8_len = WideCharToMultiByte(CP_UTF8,
                                  0,
-                                 utf16_buffer,
+                                 utf16_buffer.get(),
                                  -1,
                                  buffer,
-                                 (int) *size_ptr,
+                                 static_cast<int>(*size_ptr),
                                  nullptr,
                                  nullptr);
   if (utf8_len == 0) {
@@ -140,15 +140,12 @@ int uv_exepath(char* buffer, size_t* size_ptr) {
     goto error;
   }
 
-  uv__free(utf16_buffer);
-
   /* utf8_len *does* include the terminating null at this point, but the
    * returned size shouldn't. */
   *size_ptr = utf8_len - 1;
   return 0;
 
  error:
-  uv__free(utf16_buffer);
   return uv_translate_sys_error(err);
 }
 
@@ -305,10 +302,10 @@ uint64_t uv_get_free_memory(void) {
   memory_status.dwLength = sizeof(memory_status);
 
   if (!GlobalMemoryStatusEx(&memory_status)) {
-     return -1;
+     return static_cast<uint64_t>(-1);
   }
 
-  return (uint64_t)memory_status.ullAvailPhys;
+  return static_cast<uint64_t>(memory_status.ullAvailPhys);
 }
 
 
@@ -317,10 +314,10 @@ uint64_t uv_get_total_memory(void) {
   memory_status.dwLength = sizeof(memory_status);
 
   if (!GlobalMemoryStatusEx(&memory_status)) {
-    return -1;
+    return static_cast<uint64_t>(-1);
   }
 
-  return (uint64_t)memory_status.ullTotalPhys;
+  return static_cast<uint64_t>(memory_status.ullTotalPhys);
 }
 
 
@@ -358,6 +355,7 @@ uv_pid_t uv_os_getppid(void) {
 
 
 char** uv_setup_args(int argc, char** argv) {
+  (void)argc;
   return argv;
 }
 
@@ -653,10 +651,10 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos_ptr, int* cpu_count_ptr) {
     DWORD cpu_brand_size = sizeof(cpu_brand);
     size_t len;
 
-    len = _snwprintf(key_name,
+    len = static_cast<size_t>(_snwprintf_s(key_name,
                      ARRAY_SIZE(key_name),
                      L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\%d",
-                     i);
+                     i));
 
     assert(len > 0 && len < ARRAY_SIZE(key_name));
 
@@ -731,7 +729,7 @@ static int is_windows_version_or_greater(DWORD os_major,
                                          WORD service_pack_minor) {
   OSVERSIONINFOEX osvi;
   DWORDLONG condition_mask = 0;
-  int op = VER_GREATER_EQUAL;
+  BYTE op = VER_GREATER_EQUAL;
 
   /* Initialize the OSVERSIONINFOEX structure. */
   ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
@@ -1064,8 +1062,8 @@ int uv_interface_addresses(uv_interface_address_t** addresses_ptr,
 }
 
 
-void uv_free_interface_addresses(uv_interface_address_t* addresses,
-    int count) {
+void uv_free_interface_addresses(uv_interface_address_t* addresses, int count) {
+  (void)count;
   uv__free(addresses);
 }
 
@@ -1204,7 +1202,7 @@ int uv_os_tmpdir(char* buffer, size_t* size) {
                                 path,
                                 -1,
                                 buffer,
-                                *size,
+                                static_cast<int>(*size),
                                 nullptr,
                                 nullptr);
 
@@ -1503,7 +1501,7 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
                                 var,
                                 -1,
                                 buffer,
-                                *size,
+                                static_cast<int>(*size),
                                 nullptr,
                                 nullptr);
 
@@ -1810,7 +1808,7 @@ int uv_os_uname(uv_utsname_t* buffer) {
       if (system_info.wProcessorLevel > 3) {
         processor_level = system_info.wProcessorLevel < 6 ?
                           system_info.wProcessorLevel : 6;
-        buffer->machine[1] = '0' + processor_level;
+        buffer->machine[1] = static_cast<char>(static_cast<int>('0') + processor_level);
       }
 
       break;
@@ -1869,7 +1867,7 @@ int uv__random_rtlgenrandom(void* buf, size_t buflen) {
   if (buflen == 0)
     return 0;
 
-  if (SystemFunction036(buf, buflen) == FALSE)
+  if (SystemFunction036(buf, static_cast<ULONG>(buflen)) == FALSE)
     return UV_EIO;
 
   return 0;

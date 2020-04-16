@@ -69,8 +69,8 @@ static void getaddrinfo_do(struct getaddrinfo_req* req) {
                      &req->handle,
                      getaddrinfo_cb,
                      "localhost",
-                     NULL,
-                     NULL);
+                     nullptr,
+                     nullptr);
   ASSERT(r == 0);
 }
 
@@ -185,11 +185,11 @@ TEST_IMPL(threadpool_multiple_event_loops) {
 
 
 static void tls_thread(void* arg) {
-  ASSERT(NULL == uv_key_get(&tls_key));
+  ASSERT(nullptr == uv_key_get(&tls_key));
   uv_key_set(&tls_key, arg);
   ASSERT(arg == uv_key_get(&tls_key));
-  uv_key_set(&tls_key, NULL);
-  ASSERT(NULL == uv_key_get(&tls_key));
+  uv_key_set(&tls_key, nullptr);
+  ASSERT(nullptr == uv_key_get(&tls_key));
 }
 
 
@@ -197,7 +197,7 @@ TEST_IMPL(thread_local_storage) {
   char name[] = "main";
   uv_thread_t threads[2];
   ASSERT(0 == uv_key_create(&tls_key));
-  ASSERT(NULL == uv_key_get(&tls_key));
+  ASSERT(nullptr == uv_key_get(&tls_key));
   uv_key_set(&tls_key, name);
   ASSERT(name == uv_key_get(&tls_key));
   ASSERT(0 == uv_thread_create(threads + 0, tls_thread, threads + 0));
@@ -212,7 +212,7 @@ TEST_IMPL(thread_local_storage) {
 static void thread_check_stack(void* arg) {
 #if defined(__APPLE__)
   size_t expected;
-  expected = arg == NULL ? 0 : ((uv_thread_options_t*)arg)->stack_size;
+  expected = arg == nullptr ? 0 : ((uv_thread_options_t*)arg)->stack_size;
   /* 512 kB is the default stack size of threads other than the main thread
    * on MacOS. */
   if (expected == 0)
@@ -228,7 +228,7 @@ static void thread_check_stack(void* arg) {
     lim.rlim_cur = 2 << 20;  /* glibc default. */
   ASSERT(0 == pthread_getattr_np(pthread_self(), &attr));
   ASSERT(0 == pthread_attr_getstacksize(&attr, &stack_size));
-  expected = arg == NULL ? 0 : ((uv_thread_options_t*)arg)->stack_size;
+  expected = arg == nullptr ? 0 : ((uv_thread_options_t*)arg)->stack_size;
   if (expected == 0)
     expected = (size_t)lim.rlim_cur;
   ASSERT(stack_size >= expected);
@@ -239,7 +239,7 @@ static void thread_check_stack(void* arg) {
 
 TEST_IMPL(thread_stack_size) {
   uv_thread_t thread;
-  ASSERT(0 == uv_thread_create(&thread, thread_check_stack, NULL));
+  ASSERT(0 == uv_thread_create(&thread, thread_check_stack, nullptr));
   ASSERT(0 == uv_thread_join(&thread));
   return 0;
 }

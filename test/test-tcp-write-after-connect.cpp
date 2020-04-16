@@ -33,7 +33,7 @@ uv_buf_t buf = { const_cast<char*>("HELLO"), 4 };
 
 static void write_cb(uv_write_t *req, int status) {
   ASSERT(status == UV_ECANCELED);
-  uv_close((uv_handle_t*) req->handle, NULL);
+  uv_close((uv_handle_t*) req->handle, nullptr);
 }
 
 

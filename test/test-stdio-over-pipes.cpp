@@ -66,7 +66,7 @@ static void init_process_options(char* test, uv_exit_cb exit_cb) {
   exepath[exepath_size] = '\0';
   args[0] = exepath;
   args[1] = test;
-  args[2] = NULL;
+  args[2] = nullptr;
   options.file = exepath;
   options.args = args;
   options.exit_cb = exit_cb;

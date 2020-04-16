@@ -48,7 +48,7 @@ static void worker_async_cb(uv_async_t* handle) {
   _ctx->worker_seen++;
 
   if (_ctx->worker_sent >= NUM_PINGS)
-    uv_close((uv_handle_t*) &_ctx->worker_async, NULL);
+    uv_close((uv_handle_t*) &_ctx->worker_async, nullptr);
 }
 
 
@@ -60,7 +60,7 @@ static void main_async_cb(uv_async_t* handle) {
   _ctx->main_seen++;
 
   if (_ctx->main_sent >= NUM_PINGS)
-    uv_close((uv_handle_t*) &_ctx->main_async, NULL);
+    uv_close((uv_handle_t*) &_ctx->main_async, nullptr);
 }
 
 
@@ -78,7 +78,7 @@ static int test_async(int nthreads) {
   int i;
 
   auto *threads = test_create_ptrstruct<struct ctx>(nthreads, sizeof(struct ctx));
-  ASSERT(threads != NULL);
+  ASSERT(threads != nullptr);
 
   for (i = 0; i < nthreads; i++) {
     ctx = threads + i;

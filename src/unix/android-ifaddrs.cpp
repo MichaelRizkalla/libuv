@@ -115,7 +115,7 @@ static int netlink_recv(int p_socket, void *p_buffer, size_t p_len)
         l_msg.msg_namelen = sizeof(l_addr);
         l_msg.msg_iov = &l_iov;
         l_msg.msg_iovlen = 1;
-        l_msg.msg_control = NULL;
+        l_msg.msg_control = nullptr;
         l_msg.msg_controllen = 0;
         l_msg.msg_flags = 0;
         l_result = recvmsg(p_socket, &l_msg, 0);
@@ -141,7 +141,7 @@ static int netlink_recv(int p_socket, void *p_buffer, size_t p_len)
 static struct nlmsghdr *getNetlinkResponse(int p_socket, pid_t p_pid, int *p_size, int *p_done)
 {
     size_t l_size = 4096;
-    void *l_buffer = NULL;
+    void *l_buffer = nullptr;
 
     for(;;)
     {
@@ -149,9 +149,9 @@ static struct nlmsghdr *getNetlinkResponse(int p_socket, pid_t p_pid, int *p_siz
 
         uv__free(l_buffer);
         l_buffer = uv__malloc(l_size);
-        if (l_buffer == NULL)
+        if (l_buffer == nullptr)
         {
-            return NULL;
+            return nullptr;
         }
 
         l_read = netlink_recv(p_socket, l_buffer, l_size);
@@ -159,7 +159,7 @@ static struct nlmsghdr *getNetlinkResponse(int p_socket, pid_t p_pid, int *p_siz
         if(l_read == -2)
         {
             uv__free(l_buffer);
-            return NULL;
+            return nullptr;
         }
         if(l_read >= 0)
         {
@@ -180,7 +180,7 @@ static struct nlmsghdr *getNetlinkResponse(int p_socket, pid_t p_pid, int *p_siz
                 if(l_hdr->nlmsg_type == NLMSG_ERROR)
                 {
                     uv__free(l_buffer);
-                    return NULL;
+                    return nullptr;
                 }
             }
             return l_buffer;
@@ -193,12 +193,12 @@ static struct nlmsghdr *getNetlinkResponse(int p_socket, pid_t p_pid, int *p_siz
 static NetlinkList *newListItem(struct nlmsghdr *p_data, unsigned int p_size)
 {
     NetlinkList *l_item = uv__malloc(sizeof(NetlinkList));
-    if (l_item == NULL)
+    if (l_item == nullptr)
     {
-        return NULL;
+        return nullptr;
     }
 
-    l_item->m_next = NULL;
+    l_item->m_next = nullptr;
     l_item->m_data = p_data;
     l_item->m_size = p_size;
     return l_item;
@@ -225,11 +225,11 @@ static NetlinkList *getResultList(int p_socket, int p_request, pid_t p_pid)
 
     if(netlink_send(p_socket, p_request) < 0)
     {
-        return NULL;
+        return nullptr;
     }
 
-    l_list = NULL;
-    l_end = NULL;
+    l_list = nullptr;
+    l_end = nullptr;
 
     l_done = 0;
     while(!l_done)
@@ -241,14 +241,14 @@ static NetlinkList *getResultList(int p_socket, int p_request, pid_t p_pid)
         if(!l_hdr)
         {
             freeResultList(l_list);
-            return NULL;
+            return nullptr;
         }
 
         l_item = newListItem(l_hdr, l_size);
         if (!l_item)
         {
             freeResultList(l_list);
-            return NULL;
+            return nullptr;
         }
         if(!l_list)
         {
@@ -359,7 +359,7 @@ static int interpretLink(struct nlmsghdr *p_hdr, struct ifaddrs **p_resultList)
     }
 
     l_entry = uv__malloc(sizeof(struct ifaddrs) + sizeof(int) + l_nameSize + l_addrSize + l_dataSize);
-    if (l_entry == NULL)
+    if (l_entry == nullptr)
     {
         return -1;
     }
@@ -438,7 +438,7 @@ static struct ifaddrs *findInterface(int p_index, struct ifaddrs **p_links, int 
         l_cur = l_cur->ifa_next;
         ++l_num;
     }
-    return NULL;
+    return nullptr;
 }
 
 static int interpretAddr(struct nlmsghdr *p_hdr, struct ifaddrs **p_resultList, int p_numLinks)
@@ -490,7 +490,7 @@ static int interpretAddr(struct nlmsghdr *p_hdr, struct ifaddrs **p_resultList, 
     }
 
     l_entry = uv__malloc(sizeof(struct ifaddrs) + l_nameSize + l_addrSize);
-    if (l_entry == NULL)
+    if (l_entry == nullptr)
     {
         return -1;
     }
@@ -665,7 +665,7 @@ int getifaddrs(struct ifaddrs **ifap)
     {
         return -1;
     }
-    *ifap = NULL;
+    *ifap = nullptr;
 
     l_socket = netlink_socket(&l_pid);
     if(l_socket < 0)

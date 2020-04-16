@@ -31,9 +31,9 @@ TEST_IMPL(gethostname) {
 
   /* Reject invalid inputs */
   size = 1;
-  r = uv_os_gethostname(NULL, &size);
+  r = uv_os_gethostname(nullptr, &size);
   ASSERT(r == UV_EINVAL);
-  r = uv_os_gethostname(buf, NULL);
+  r = uv_os_gethostname(buf, nullptr);
   ASSERT(r == UV_EINVAL);
   size = 0;
   r = uv_os_gethostname(buf, &size);

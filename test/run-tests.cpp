@@ -53,7 +53,7 @@ static int maybe_run_test(int argc, char **argv);
 
 int main(int argc, char **argv) {
 #ifndef _WIN32
-  if (0 == geteuid() && NULL == getenv("UV_RUN_AS_ROOT")) {
+  if (0 == geteuid() && nullptr == getenv("UV_RUN_AS_ROOT")) {
     fprintf(stderr, "The libuv test suite cannot be run as root.\n");
     return EXIT_FAILURE;
   }
@@ -158,7 +158,7 @@ static int maybe_run_test(int argc, char **argv) {
     {
 #ifdef _WIN32
       DWORD bytes;
-      WriteFile((HANDLE) _get_osfhandle(3), out, sizeof(out) - 1, &bytes, NULL);
+      WriteFile((HANDLE) _get_osfhandle(3), out, sizeof(out) - 1, &bytes, nullptr);
 #else
       ssize_t r;
 
@@ -194,7 +194,7 @@ static int maybe_run_test(int argc, char **argv) {
 
     /* Test if the test value from the parent is still set */
     test = getenv("ENV_TEST");
-    ASSERT(test != NULL);
+    ASSERT(test != nullptr);
 
     r = fprintf(stdout, "%s", test);
     ASSERT(r > 0);

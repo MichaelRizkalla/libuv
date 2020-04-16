@@ -79,11 +79,11 @@ TEST_IMPL(random_sync) {
   char zero[256];
   char buf[256];
 
-  ASSERT(UV_EINVAL == uv_random(NULL, NULL, buf, sizeof(buf), -1, NULL));
-  ASSERT(UV_E2BIG == uv_random(NULL, NULL, buf, -1, -1, NULL));
+  ASSERT(UV_EINVAL == uv_random(nullptr, nullptr, buf, sizeof(buf), -1, nullptr));
+  ASSERT(UV_E2BIG == uv_random(nullptr, nullptr, buf, -1, -1, nullptr));
 
   memset(buf, 0, sizeof(buf));
-  ASSERT(0 == uv_random(NULL, NULL, buf, sizeof(buf), 0, NULL));
+  ASSERT(0 == uv_random(nullptr, nullptr, buf, sizeof(buf), 0, nullptr));
 
   /* Buy a lottery ticket if you manage to trip this assertion. */
   memset(zero, 0, sizeof(zero));

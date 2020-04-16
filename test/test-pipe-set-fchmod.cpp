@@ -75,13 +75,13 @@ TEST_IMPL(pipe_set_chmod) {
   ASSERT(stat_buf.st_mode & S_IWOTH);
 #endif
 
-  r = uv_pipe_chmod(NULL, UV_WRITABLE | UV_READABLE);
+  r = uv_pipe_chmod(nullptr, UV_WRITABLE | UV_READABLE);
   ASSERT(r == UV_EBADF);
 
   r = uv_pipe_chmod(&pipe_handle, 12345678);
   ASSERT(r == UV_EINVAL);
 
-  uv_close((uv_handle_t*)&pipe_handle, NULL);
+  uv_close((uv_handle_t*)&pipe_handle, nullptr);
   r = uv_pipe_chmod(&pipe_handle, UV_WRITABLE | UV_READABLE);
   ASSERT(r == UV_EBADF);
 

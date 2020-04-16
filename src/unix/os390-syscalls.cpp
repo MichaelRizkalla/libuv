@@ -49,7 +49,7 @@ int scandir(const char* maindir, struct dirent*** namelist,
   size_t allocated;
   DIR* mdir;
 
-  nl = NULL;
+  nl = nullptr;
   count = 0;
   allocated = 0;
   mdir = opendir(maindir);
@@ -68,7 +68,7 @@ int scandir(const char* maindir, struct dirent*** namelist,
       memcpy(copy, dirent, sizeof(*copy));
 
       nl_copy = uv__realloc(nl, sizeof(*copy) * (count + 1));
-      if (nl_copy == NULL) {
+      if (nl_copy == nullptr) {
         uv__free(copy);
         goto error;
       }
@@ -130,7 +130,7 @@ static void maybe_resize(uv__os390_epoll* lst, unsigned int len) {
   newsize = next_power_of_two(len);
   newlst = uv__reallocf(lst->items, newsize * sizeof(lst->items[0]));
 
-  if (newlst == NULL)
+  if (newlst == nullptr)
     abort();
   for (i = lst->size; i < newsize; ++i)
     newlst[i].fd = -1;
@@ -193,7 +193,7 @@ static void child_fork(void) {
     QUEUE_REMOVE(q);
     lst = QUEUE_DATA(q, uv__os390_epoll, member);
     uv__free(lst->items);
-    lst->items = NULL;
+    lst->items = nullptr;
     lst->size = 0;
   }
 
@@ -216,10 +216,10 @@ uv__os390_epoll* epoll_create1(int flags) {
   uv__os390_epoll* lst;
 
   lst = uv__malloc(sizeof(*lst));
-  if (lst != NULL) {
+  if (lst != nullptr) {
     /* initialize list */
     lst->size = 0;
-    lst->items = NULL;
+    lst->items = nullptr;
     init_message_queue(lst);
     maybe_resize(lst, 1);
     lst->items[lst->size - 1].fd = lst->msg_queue;
@@ -360,7 +360,7 @@ int epoll_file_close(int fd) {
     uv__os390_epoll* lst;
 
     lst = QUEUE_DATA(q, uv__os390_epoll, member);
-    if (fd < lst->size && lst->items != NULL && lst->items[fd].fd != -1)
+    if (fd < lst->size && lst->items != nullptr && lst->items[fd].fd != -1)
       lst->items[fd].fd = -1;
   }
 
@@ -375,10 +375,10 @@ void epoll_queue_close(uv__os390_epoll* lst) {
   uv_mutex_unlock(&global_epoll_lock);
 
   /* Free resources */
-  msgctl(lst->msg_queue, IPC_RMID, NULL);
+  msgctl(lst->msg_queue, IPC_RMID, nullptr);
   lst->msg_queue = -1;
   uv__free(lst->items);
-  lst->items = NULL;
+  lst->items = nullptr;
 }
 
 
@@ -413,7 +413,7 @@ int nanosleep(const struct timespec* req, struct timespec* rem) {
     else
       errno = err;
 
-  if (rem != NULL && (rv == 0 || err == EINTR)) {
+  if (rem != nullptr && (rv == 0 || err == EINTR)) {
     rem->tv_nsec = nanorem;
     rem->tv_sec = secrem;
   }
@@ -439,12 +439,12 @@ char* mkdtemp(char* path) {
   ep = path + len;
   if (len < num_x || strncmp(ep - num_x, "XXXXXX", num_x)) {
     errno = EINVAL;
-    return NULL;
+    return nullptr;
   }
 
   fd = open("/dev/urandom", O_RDONLY);
   if (fd == -1)
-    return NULL;
+    return nullptr;
 
   tries = TMP_MAX;
   retval = -1;
@@ -470,12 +470,12 @@ char* mkdtemp(char* path) {
   uv__close(fd);
   if (tries == 0) {
     errno = EEXIST;
-    return NULL;
+    return nullptr;
   }
 
   if (retval == -1) {
     errno = saved_errno;
-    return NULL;
+    return nullptr;
   }
 
   return path;
@@ -492,7 +492,7 @@ ssize_t os390_readlink(const char* path, char* buf, size_t len) {
   char realpathstr[PATH_MAX + 1];
 
   tmpbuf = uv__malloc(len + 1);
-  if (tmpbuf == NULL) {
+  if (tmpbuf == nullptr) {
     errno = ENOMEM;
     return -1;
   }
@@ -516,14 +516,14 @@ ssize_t os390_readlink(const char* path, char* buf, size_t len) {
    */
   tmpbuf[rlen] = '\0';
   delimiter = strchr(tmpbuf + 2, '/');
-  if (delimiter == NULL)
+  if (delimiter == nullptr)
     /* No slash at the end */
     delimiter = strchr(tmpbuf + 2, '\0');
 
   /* Read real path of the variable. */
   old_delim = *delimiter;
   *delimiter = '\0';
-  if (realpath(tmpbuf, realpathstr) == NULL) {
+  if (realpath(tmpbuf, realpathstr) == nullptr) {
     uv__free(tmpbuf);
     return -1;
   }
@@ -553,7 +553,7 @@ ssize_t os390_readlink(const char* path, char* buf, size_t len) {
 
 size_t strnlen(const char* str, size_t maxlen) {
   char* p = memchr(str, 0, maxlen);
-  if (p == NULL)
+  if (p == nullptr)
     return maxlen;
   else
     return p - str;

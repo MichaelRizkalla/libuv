@@ -34,7 +34,7 @@
 
 
 int uv__platform_loop_init(uv_loop_t* loop) {
-  loop->cf_state = NULL;
+  loop->cf_state = nullptr;
 
   if (uv__kqueue_init(loop))
     return UV__ERR(errno);
@@ -67,7 +67,7 @@ int uv_exepath(char* buffer, size_t* size) {
   uint32_t exepath_size;
   size_t abspath_size;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   exepath_size = sizeof(exepath);
@@ -110,7 +110,7 @@ uint64_t uv_get_total_memory(void) {
   int which[] = {CTL_HW, HW_MEMSIZE};
   size_t size = sizeof(info);
 
-  if (sysctl(which, ARRAY_SIZE(which), &info, &size, NULL, 0))
+  if (sysctl(which, ARRAY_SIZE(which), &info, &size, nullptr, 0))
     return UV__ERR(errno);
 
   return (uint64_t) info;
@@ -127,7 +127,7 @@ void uv_loadavg(double avg[3]) {
   size_t size = sizeof(info);
   int which[] = {CTL_VM, VM_LOADAVG};
 
-  if (sysctl(which, ARRAY_SIZE(which), &info, &size, NULL, 0) < 0) return;
+  if (sysctl(which, ARRAY_SIZE(which), &info, &size, nullptr, 0) < 0) return;
 
   avg[0] = (double) info.ldavg[0] / info.fscale;
   avg[1] = (double) info.ldavg[1] / info.fscale;
@@ -162,10 +162,10 @@ int uv_uptime(double* uptime) {
   size_t size = sizeof(info);
   static int which[] = {CTL_KERN, KERN_BOOTTIME};
 
-  if (sysctl(which, ARRAY_SIZE(which), &info, &size, NULL, 0))
+  if (sysctl(which, ARRAY_SIZE(which), &info, &size, nullptr, 0))
     return UV__ERR(errno);
 
-  now = time(NULL);
+  now = time(nullptr);
   *uptime = now - info.tv_sec;
 
   return 0;
@@ -184,13 +184,13 @@ int uv_cpu_info(uv_cpu_info_t** cpu_infos, int* count) {
   uv_cpu_info_t* cpu_info;
 
   size = sizeof(model);
-  if (sysctlbyname("machdep.cpu.brand_string", &model, &size, NULL, 0) &&
-      sysctlbyname("hw.model", &model, &size, NULL, 0)) {
+  if (sysctlbyname("machdep.cpu.brand_string", &model, &size, nullptr, 0) &&
+      sysctlbyname("hw.model", &model, &size, nullptr, 0)) {
     return UV__ERR(errno);
   }
 
   size = sizeof(cpuspeed);
-  if (sysctlbyname("hw.cpufrequency", &cpuspeed, &size, NULL, 0))
+  if (sysctlbyname("hw.cpufrequency", &cpuspeed, &size, nullptr, 0))
     return UV__ERR(errno);
 
   if (host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numcpus,

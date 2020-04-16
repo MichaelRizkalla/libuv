@@ -47,12 +47,12 @@ int uv_loop_init(uv_loop_t* loop) {
   loop->active_handles = 0;
   loop->active_reqs.count = 0;
   loop->nfds = 0;
-  loop->watchers = NULL;
+  loop->watchers = nullptr;
   loop->nwatchers = 0;
   QUEUE_INIT(&loop->pending_queue);
   QUEUE_INIT(&loop->watcher_queue);
 
-  loop->closing_handles = NULL;
+  loop->closing_handles = nullptr;
   uv__update_time(loop);
   loop->async_io_watcher.fd = -1;
   loop->async_wfd = -1;
@@ -130,7 +130,7 @@ int uv_loop_fork(uv_loop_t* loop) {
   /* Rearm all the watchers that aren't re-queued by the above. */
   for (i = 0; i < loop->nwatchers; i++) {
     w = loop->watchers[i];
-    if (w == NULL)
+    if (w == nullptr)
       continue;
 
     if (w->pevents != 0 && QUEUE_EMPTY(&w->watcher_queue)) {
@@ -177,7 +177,7 @@ void uv__loop_close(uv_loop_t* loop) {
 #endif
 
   uv__free(loop->watchers);
-  loop->watchers = NULL;
+  loop->watchers = nullptr;
   loop->nwatchers = 0;
 }
 

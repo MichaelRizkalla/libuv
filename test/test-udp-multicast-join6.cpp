@@ -40,7 +40,7 @@
   #define INTERFACE_ADDR "::1%lo0"
 #else
   #define MULTICAST_ADDR "ff02::1"
-  #define INTERFACE_ADDR NULL
+  #define INTERFACE_ADDR nullptr
 #endif
 
 static uv_udp_t server;
@@ -72,7 +72,7 @@ static void close_cb(uv_handle_t* handle) {
 
 
 static void sv_send_cb(uv_udp_send_t* req, int status) {
-  ASSERT(req != NULL);
+  ASSERT(req != nullptr);
   ASSERT(status == 0);
   CHECK_HANDLE(req->handle);
 
@@ -115,11 +115,11 @@ static void cl_recv_cb(uv_udp_t* handle,
 
   if (nread == 0) {
     /* Returning unused buffer. Don't count towards cl_recv_cb_called */
-    ASSERT(addr == NULL);
+    ASSERT(addr == nullptr);
     return;
   }
 
-  ASSERT(addr != NULL);
+  ASSERT(addr != nullptr);
   ASSERT(nread == 4);
   ASSERT(!memcmp("PING", buf->base, nread));
 

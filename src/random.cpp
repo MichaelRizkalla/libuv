@@ -70,7 +70,7 @@ static int uv__random(void* buf, size_t buflen) {
 }
 
 
-static void uv__random_work(struct uv__work* w) {
+static void uv__random_work(uv__work* w) {
   uv_random_t* req;
 
   req = container_of(w, uv_random_t, work_req);
@@ -78,7 +78,7 @@ static void uv__random_work(struct uv__work* w) {
 }
 
 
-static void uv__random_done(struct uv__work* w, int status) {
+static void uv__random_done(uv__work* w, int status) {
   uv_random_t* req;
 
   req = container_of(w, uv_random_t, work_req);
@@ -103,7 +103,7 @@ int uv_random(uv_loop_t* loop,
   if (flags != 0)
     return UV_EINVAL;
 
-  if (cb == NULL)
+  if (cb == nullptr)
     return uv__random(buf, buflen);
 
   uv__req_init(loop, req, UV_RANDOM);

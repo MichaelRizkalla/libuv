@@ -95,7 +95,7 @@ static void uv__chld(uv_signal_t* handle, int signum) {
     QUEUE_INIT(&process->queue);
     uv__handle_stop(process);
 
-    if (process->exit_cb == NULL)
+    if (process->exit_cb == nullptr)
       continue;
 
     exit_status = 0;
@@ -188,7 +188,7 @@ static int uv__process_init_stdio(uv_stdio_container_t* container, int fds[2]) {
     return 0;
 
   case UV_CREATE_PIPE:
-    assert(container->data.stream != NULL);
+    assert(container->data.stream != nullptr);
     if (container->data.stream->type != UV_NAMED_PIPE)
       return UV_EINVAL;
     else
@@ -338,7 +338,7 @@ static void uv__process_child_init(const uv_process_options_t* options,
       uv__close(use_fd);
   }
 
-  if (options->cwd != NULL && chdir(options->cwd)) {
+  if (options->cwd != nullptr && chdir(options->cwd)) {
     uv__write_int(error_fd, UV__ERR(errno));
     _exit(127);
   }
@@ -351,7 +351,7 @@ static void uv__process_child_init(const uv_process_options_t* options,
      * aren't root, so don't bother checking the return value, this
      * is just done as an optimistic privilege dropping function.
      */
-    SAVE_ERRNO(setgroups(0, NULL));
+    SAVE_ERRNO(setgroups(0, nullptr));
   }
 
   if ((options->flags & UV_PROCESS_SETGID) && setgid(options->gid)) {
@@ -364,7 +364,7 @@ static void uv__process_child_init(const uv_process_options_t* options,
     _exit(127);
   }
 
-  if (options->env != NULL) {
+  if (options->env != nullptr) {
     environ = options->env;
   }
 
@@ -391,7 +391,7 @@ static void uv__process_child_init(const uv_process_options_t* options,
 
   /* Reset signal mask. */
   sigemptyset(&set);
-  err = pthread_sigmask(SIG_SETMASK, &set, NULL);
+  err = pthread_sigmask(SIG_SETMASK, &set, nullptr);
 
   if (err != 0) {
     uv__write_int(error_fd, UV__ERR(err));
@@ -423,7 +423,7 @@ int uv_spawn(uv_loop_t* loop,
   int i;
   int status;
 
-  assert(options->file != NULL);
+  assert(options->file != nullptr);
   assert(!(options->flags & ~(UV_PROCESS_DETACHED |
                               UV_PROCESS_SETGID |
                               UV_PROCESS_SETUID |
@@ -444,7 +444,7 @@ int uv_spawn(uv_loop_t* loop,
   if (stdio_count > (int) ARRAY_SIZE(pipes_storage))
     pipes = static_cast<int(*)[2]>(uv__malloc(stdio_count * sizeof(*pipes)));
 
-  if (pipes == NULL)
+  if (pipes == nullptr)
     goto error;
 
   for (i = 0; i < stdio_count; i++) {
@@ -554,7 +554,7 @@ int uv_spawn(uv_loop_t* loop,
   return exec_errorno;
 
 error:
-  if (pipes != NULL) {
+  if (pipes != nullptr) {
     for (i = 0; i < stdio_count; i++) {
       if (i < options->stdio_count)
         if (options->stdio[i].flags & (UV_INHERIT_FD | UV_INHERIT_STREAM))

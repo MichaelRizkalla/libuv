@@ -85,7 +85,7 @@ TEST_IMPL(pipe_set_non_blocking) {
     nwritten += n;
   }
 
-  uv_close((uv_handle_t*) &pipe_handle, NULL);
+  uv_close((uv_handle_t*) &pipe_handle, nullptr);
   ASSERT(0 == uv_run(uv_default_loop(), UV_RUN_DEFAULT));
 
   ASSERT(0 == uv_thread_join(&thread));

@@ -144,7 +144,7 @@ TEST_IMPL(thread_rwlock_trylock) {
   ASSERT(0 == uv_rwlock_init(&rwlock));
 
   uv_mutex_lock(&mutex);
-  ASSERT(0 == uv_thread_create(&thread, thread_rwlock_trylock_peer, NULL));
+  ASSERT(0 == uv_thread_create(&thread, thread_rwlock_trylock_peer, nullptr));
 
   /* Hold write lock. */
   ASSERT(0 == uv_rwlock_trywrlock(&rwlock));

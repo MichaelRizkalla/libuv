@@ -104,7 +104,7 @@ static void exit_cb(uv_process_t* process,
   exit_cb_called++;
   ASSERT_EQ(exit_status, 0);
   ASSERT_EQ(term_signal, 0);
-  uv_close((uv_handle_t*)process, NULL);
+  uv_close((uv_handle_t*)process, nullptr);
 }
 
 
@@ -204,7 +204,7 @@ static void on_read(uv_stream_t* handle,
     ASSERT_MEM_EQ("hello\n", buf->base, nread);
 
     outbuf = uv_buf_init("world\n", 6);
-    r = uv_write(&write_req, (uv_stream_t*)pipe, &outbuf, 1, NULL);
+    r = uv_write(&write_req, (uv_stream_t*)pipe, &outbuf, 1, nullptr);
     ASSERT_EQ(r, 0);
 
     /* Create a bunch of connections to get both servers to accept. */
@@ -214,7 +214,7 @@ static void on_read(uv_stream_t* handle,
     ASSERT_EQ(0, uv_pipe_pending_count(pipe));
     ASSERT_EQ(pending, UV_UNKNOWN_HANDLE);
     remote_conn_accepted = 1;
-    uv_close((uv_handle_t*)&channel, NULL);
+    uv_close((uv_handle_t*)&channel, nullptr);
   }
 
   free(buf->base);
@@ -278,10 +278,10 @@ static void on_read_listen_after_bound_twice(uv_stream_t* handle,
     r = uv_listen((uv_stream_t*)&tcp_server2, BACKLOG, on_connection);
     ASSERT_EQ(r, UV_EADDRINUSE);
 
-    uv_close((uv_handle_t*)&tcp_server, NULL);
-    uv_close((uv_handle_t*)&tcp_server2, NULL);
+    uv_close((uv_handle_t*)&tcp_server, nullptr);
+    uv_close((uv_handle_t*)&tcp_server2, nullptr);
     ASSERT_EQ(0, uv_pipe_pending_count(pipe));
-    uv_close((uv_handle_t*)&channel, NULL);
+    uv_close((uv_handle_t*)&channel, nullptr);
   }
 
   free(buf->base);
@@ -309,7 +309,7 @@ void spawn_helper(uv_pipe_t* channel,
   exepath[exepath_size] = '\0';
   args[0] = exepath;
   args[1] = (char*)helper;
-  args[2] = NULL;
+  args[2] = nullptr;
 
   memset(&options, 0, sizeof(options));
   options.file = exepath;
@@ -353,8 +353,8 @@ static void on_tcp_read(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf) {
 
   tcp_read_cb_called++;
 
-  uv_close((uv_handle_t*)tcp, NULL);
-  uv_close((uv_handle_t*)&channel, NULL);
+  uv_close((uv_handle_t*)tcp, nullptr);
+  uv_close((uv_handle_t*)&channel, nullptr);
 }
 
 
@@ -525,7 +525,7 @@ TEST_IMPL(listen_with_simultaneous_accepts) {
   r = uv_tcp_simultaneous_accepts(&server, 1);
   ASSERT_EQ(r, 0);
 
-  r = uv_listen((uv_stream_t*)&server, SOMAXCONN, NULL);
+  r = uv_listen((uv_stream_t*)&server, SOMAXCONN, nullptr);
   ASSERT_EQ(r, 0);
   ASSERT_EQ(server.reqs_pending, 32);
 
@@ -550,7 +550,7 @@ TEST_IMPL(listen_no_simultaneous_accepts) {
   r = uv_tcp_simultaneous_accepts(&server, 0);
   ASSERT_EQ(r, 0);
 
-  r = uv_listen((uv_stream_t*)&server, SOMAXCONN, NULL);
+  r = uv_listen((uv_stream_t*)&server, SOMAXCONN, nullptr);
   ASSERT_EQ(r, 0);
   ASSERT_EQ(server.reqs_pending, 1);
 
@@ -685,7 +685,7 @@ static void ipc_on_connection(uv_stream_t* server, int status) {
 
     buf = uv_buf_init("accepted_connection\n", 20);
     r = uv_write2(&conn_notify_req, (uv_stream_t*)&channel, &buf, 1,
-      NULL, conn_notify_write_cb);
+      nullptr, conn_notify_write_cb);
     ASSERT_EQ(r, 0);
 
     connection_accepted = 1;
@@ -713,7 +713,7 @@ static void ipc_on_connection_tcp_conn(uv_stream_t* server, int status) {
   /* Send the accepted connection to the other process */
   buf = uv_buf_init("hello\n", 6);
   r = uv_write2(&conn_notify_req, (uv_stream_t*)&channel, &buf, 1,
-    (uv_stream_t*)conn, NULL);
+    (uv_stream_t*)conn, nullptr);
   ASSERT_EQ(r, 0);
 
   r = uv_read_start((uv_stream_t*) conn,
@@ -758,7 +758,7 @@ int ipc_helper(int listen_after_write) {
 
   buf = uv_buf_init("hello\n", 6);
   r = uv_write2(&write_req, (uv_stream_t*)&channel, &buf, 1,
-      (uv_stream_t*)&tcp_server, NULL);
+      (uv_stream_t*)&tcp_server, nullptr);
   ASSERT_EQ(r, 0);
 
   if (listen_after_write) {
@@ -869,7 +869,7 @@ static void send_handle_and_close() {
                 closed_handle_write_cb);
   ASSERT_EQ(r, 0);
 
-  uv_close((uv_handle_t*)&tcp_server, NULL);
+  uv_close((uv_handle_t*)&tcp_server, nullptr);
 }
 
 int ipc_helper_closed_handle(void) {
@@ -933,10 +933,10 @@ int ipc_helper_bind_twice(void) {
   ASSERT_EQ(r, 0);
 
   r = uv_write2(&write_req, (uv_stream_t*)&channel, &buf, 1,
-                (uv_stream_t*)&tcp_server, NULL);
+                (uv_stream_t*)&tcp_server, nullptr);
   ASSERT_EQ(r, 0);
   r = uv_write2(&write_req2, (uv_stream_t*)&channel, &buf, 1,
-                (uv_stream_t*)&tcp_server2, NULL);
+                (uv_stream_t*)&tcp_server2, nullptr);
   ASSERT_EQ(r, 0);
 
   r = uv_run(uv_default_loop(), UV_RUN_DEFAULT);

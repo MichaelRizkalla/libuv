@@ -88,7 +88,7 @@ int uv__set_process_title(const char* title) {
                                   "Versions/A/CoreFoundation",
                                   RTLD_LAZY | RTLD_LOCAL);
 
-  if (application_services_handle == NULL || core_foundation_handle == NULL)
+  if (application_services_handle == nullptr || core_foundation_handle == nullptr)
     goto out;
 
   *(void **)(&pCFStringCreateWithCString) =
@@ -100,53 +100,53 @@ int uv__set_process_title(const char* title) {
   *(void **)(&pCFBundleGetFunctionPointerForName) =
       dlsym(core_foundation_handle, "CFBundleGetFunctionPointerForName");
 
-  if (pCFStringCreateWithCString == NULL ||
-      pCFBundleGetBundleWithIdentifier == NULL ||
-      pCFBundleGetDataPointerForName == NULL ||
-      pCFBundleGetFunctionPointerForName == NULL) {
+  if (pCFStringCreateWithCString == nullptr ||
+      pCFBundleGetBundleWithIdentifier == nullptr ||
+      pCFBundleGetDataPointerForName == nullptr ||
+      pCFBundleGetFunctionPointerForName == nullptr) {
     goto out;
   }
 
-#define S(s) pCFStringCreateWithCString(NULL, (s), kCFStringEncodingUTF8)
+#define S(s) pCFStringCreateWithCString(nullptr, (s), kCFStringEncodingUTF8)
 
   launch_services_bundle =
       pCFBundleGetBundleWithIdentifier(S("com.apple.LaunchServices"));
 
-  if (launch_services_bundle == NULL)
+  if (launch_services_bundle == nullptr)
     goto out;
 
   *(void **)(&pLSGetCurrentApplicationASN) =
       pCFBundleGetFunctionPointerForName(launch_services_bundle,
                                          S("_LSGetCurrentApplicationASN"));
 
-  if (pLSGetCurrentApplicationASN == NULL)
+  if (pLSGetCurrentApplicationASN == nullptr)
     goto out;
 
   *(void **)(&pLSSetApplicationInformationItem) =
       pCFBundleGetFunctionPointerForName(launch_services_bundle,
                                          S("_LSSetApplicationInformationItem"));
 
-  if (pLSSetApplicationInformationItem == NULL)
+  if (pLSSetApplicationInformationItem == nullptr)
     goto out;
 
   display_name_key = pCFBundleGetDataPointerForName(launch_services_bundle,
                                                     S("_kLSDisplayNameKey"));
 
-  if (display_name_key == NULL || *display_name_key == NULL)
+  if (display_name_key == nullptr || *display_name_key == nullptr)
     goto out;
 
   *(void **)(&pCFBundleGetInfoDictionary) = dlsym(core_foundation_handle,
                                      "CFBundleGetInfoDictionary");
   *(void **)(&pCFBundleGetMainBundle) = dlsym(core_foundation_handle,
                                  "CFBundleGetMainBundle");
-  if (pCFBundleGetInfoDictionary == NULL || pCFBundleGetMainBundle == NULL)
+  if (pCFBundleGetInfoDictionary == nullptr || pCFBundleGetMainBundle == nullptr)
     goto out;
 
   *(void **)(&pLSApplicationCheckIn) = pCFBundleGetFunctionPointerForName(
       launch_services_bundle,
       S("_LSApplicationCheckIn"));
 
-  if (pLSApplicationCheckIn == NULL)
+  if (pLSApplicationCheckIn == nullptr)
     goto out;
 
   *(void **)(&pLSSetApplicationLaunchServicesServerConnectionStatus) =
@@ -154,10 +154,10 @@ int uv__set_process_title(const char* title) {
           launch_services_bundle,
           S("_LSSetApplicationLaunchServicesServerConnectionStatus"));
 
-  if (pLSSetApplicationLaunchServicesServerConnectionStatus == NULL)
+  if (pLSSetApplicationLaunchServicesServerConnectionStatus == nullptr)
     goto out;
 
-  pLSSetApplicationLaunchServicesServerConnectionStatus(0, NULL);
+  pLSSetApplicationLaunchServicesServerConnectionStatus(0, nullptr);
 
   /* Check into process manager?! */
   pLSApplicationCheckIn(-2,
@@ -166,7 +166,7 @@ int uv__set_process_title(const char* title) {
   asn = pLSGetCurrentApplicationASN();
 
   err = UV_EBUSY;
-  if (asn == NULL)
+  if (asn == nullptr)
     goto out;
 
   err = UV_EINVAL;
@@ -174,7 +174,7 @@ int uv__set_process_title(const char* title) {
                                        asn,
                                        *display_name_key,
                                        S(title),
-                                       NULL) != noErr) {
+                                       nullptr) != noErr) {
     goto out;
   }
 
@@ -182,10 +182,10 @@ int uv__set_process_title(const char* title) {
   err = 0;
 
 out:
-  if (core_foundation_handle != NULL)
+  if (core_foundation_handle != nullptr)
     dlclose(core_foundation_handle);
 
-  if (application_services_handle != NULL)
+  if (application_services_handle != nullptr)
     dlclose(application_services_handle);
 
   return err;

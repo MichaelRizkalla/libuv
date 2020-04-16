@@ -45,8 +45,8 @@ static void uv_get_process_title_edge_cases(void) {
   char buffer[512];
   int r;
 
-  /* Test a NULL buffer */
-  r = uv_get_process_title(NULL, 100);
+  /* Test a nullptr buffer */
+  r = uv_get_process_title(nullptr, 100);
   ASSERT(r == UV_EINVAL);
 
   /* Test size of zero */
@@ -79,7 +79,7 @@ TEST_IMPL(process_title) {
 static void exit_cb(uv_process_t* process, int64_t status, int signo) {
   ASSERT(status == 0);
   ASSERT(signo == 0);
-  uv_close((uv_handle_t*) process, NULL);
+  uv_close((uv_handle_t*) process, nullptr);
 }
 
 
@@ -110,7 +110,7 @@ TEST_IMPL(process_title_big_argv) {
   args[1] = const_cast<char*>("process_title_big_argv_helper");
   args[2] = jumbo;
   args[3] = jumbo;
-  args[4] = NULL;
+  args[4] = nullptr;
 
   memset(&options, 0, sizeof(options));
   options.file = exepath;

@@ -76,7 +76,7 @@ TEST_IMPL(eintr_handling) {
   ASSERT(0 == pipe(pipe_fds));
   ASSERT(0 == uv_thread_create(&thread, thread_main, &ctx));
 
-  nread = uv_fs_read(loop, &read_req, pipe_fds[0], &iov, 1, -1, NULL);
+  nread = uv_fs_read(loop, &read_req, pipe_fds[0], &iov, 1, -1, nullptr);
 
   ASSERT(nread == sizeof(test_buf));
   ASSERT(0 == strcmp(buf, test_buf));
@@ -85,7 +85,7 @@ TEST_IMPL(eintr_handling) {
 
   ASSERT(0 == close(pipe_fds[0]));
   ASSERT(0 == close(pipe_fds[1]));
-  uv_close((uv_handle_t*) &signal, NULL);
+  uv_close((uv_handle_t*) &signal, nullptr);
 
   MAKE_VALGRIND_HAPPY();
   return 0;

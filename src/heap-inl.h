@@ -16,18 +16,18 @@
 #ifndef UV_SRC_HEAP_H_
 #define UV_SRC_HEAP_H_
 
-#include <stddef.h>  /* NULL */
+#include <stddef.h>  /* nullptr */
 
 #if defined(__GNUC__)
-# define HEAP_EXPORT(declaration) __attribute__((unused)) static declaration
+# define HEAP_EXPORT __attribute__((unused)) static
 #else
-# define HEAP_EXPORT(declaration) static declaration
+# define HEAP_EXPORT static
 #endif
 
 struct heap_node {
-  struct heap_node* left;
-  struct heap_node* right;
-  struct heap_node* parent;
+  heap_node* left;
+  heap_node* right;
+  heap_node* parent;
 };
 
 /* A binary min heap.  The usual properties hold: the root is the lowest
@@ -38,42 +38,42 @@ struct heap_node {
  * of a minor reduction in performance.  Compile with -DNDEBUG to disable.
  */
 struct heap {
-  struct heap_node* min;
+  heap_node* min;
   unsigned int nelts;
 };
 
 /* Return non-zero if a < b. */
-typedef int (*heap_compare_fn)(const struct heap_node* a,
-                               const struct heap_node* b);
+typedef int (*heap_compare_fn)(const heap_node* a,
+                               const heap_node* b);
 
 /* Public functions. */
-HEAP_EXPORT(void heap_init(struct heap* heap));
-HEAP_EXPORT(struct heap_node* heap_min(const struct heap* heap));
-HEAP_EXPORT(void heap_insert(struct heap* heap,
-                             struct heap_node* newnode,
-                             heap_compare_fn less_than));
-HEAP_EXPORT(void heap_remove(struct heap* heap,
-                             struct heap_node* node,
-                             heap_compare_fn less_than));
-HEAP_EXPORT(void heap_dequeue(struct heap* heap, heap_compare_fn less_than));
+HEAP_EXPORT void heap_init(heap* heap);
+HEAP_EXPORT heap_node* heap_min(const heap* heap);
+HEAP_EXPORT void heap_insert(heap* heap,
+                             heap_node* newnode,
+                             heap_compare_fn less_than);
+HEAP_EXPORT void heap_remove(heap* heap,
+                             heap_node* node,
+                             heap_compare_fn less_than);
+HEAP_EXPORT void heap_dequeue(heap* heap, heap_compare_fn less_than);
 
 /* Implementation follows. */
 
-HEAP_EXPORT(void heap_init(struct heap* heap)) {
-  heap->min = NULL;
+HEAP_EXPORT void heap_init(heap* heap) {
+  heap->min = nullptr;
   heap->nelts = 0;
 }
 
-HEAP_EXPORT(struct heap_node* heap_min(const struct heap* heap)) {
+HEAP_EXPORT heap_node* heap_min(const heap* heap) {
   return heap->min;
 }
 
 /* Swap parent with child. Child moves closer to the root, parent moves away. */
-static void heap_node_swap(struct heap* heap,
-                           struct heap_node* parent,
-                           struct heap_node* child) {
-  struct heap_node* sibling;
-  struct heap_node t;
+static void heap_node_swap(heap* heap,
+                           heap_node* parent,
+                           heap_node* child) {
+  heap_node* sibling;
+  heap_node t;
 
   t = *parent;
   *parent = *child;
@@ -87,15 +87,15 @@ static void heap_node_swap(struct heap* heap,
     child->right = parent;
     sibling = child->left;
   }
-  if (sibling != NULL)
+  if (sibling != nullptr)
     sibling->parent = child;
 
-  if (parent->left != NULL)
+  if (parent->left != nullptr)
     parent->left->parent = parent;
-  if (parent->right != NULL)
+  if (parent->right != nullptr)
     parent->right->parent = parent;
 
-  if (child->parent == NULL)
+  if (child->parent == nullptr)
     heap->min = child;
   else if (child->parent->left == parent)
     child->parent->left = child;
@@ -103,18 +103,18 @@ static void heap_node_swap(struct heap* heap,
     child->parent->right = child;
 }
 
-HEAP_EXPORT(void heap_insert(struct heap* heap,
-                             struct heap_node* newnode,
-                             heap_compare_fn less_than)) {
-  struct heap_node** parent;
-  struct heap_node** child;
+HEAP_EXPORT void heap_insert(heap* heap,
+                             heap_node* newnode,
+                             heap_compare_fn less_than) {
+  heap_node** parent;
+  heap_node** child;
   unsigned int path;
   unsigned int n;
   unsigned int k;
 
-  newnode->left = NULL;
-  newnode->right = NULL;
-  newnode->parent = NULL;
+  newnode->left = nullptr;
+  newnode->right = nullptr;
+  newnode->parent = nullptr;
 
   /* Calculate the path from the root to the insertion point.  This is a min
    * heap so we always insert at the left-most free node of the bottom row.
@@ -143,16 +143,16 @@ HEAP_EXPORT(void heap_insert(struct heap* heap,
   /* Walk up the tree and check at each node if the heap property holds.
    * It's a min heap so parent < child must be true.
    */
-  while (newnode->parent != NULL && less_than(newnode, newnode->parent))
+  while (newnode->parent != nullptr && less_than(newnode, newnode->parent))
     heap_node_swap(heap, newnode->parent, newnode);
 }
 
-HEAP_EXPORT(void heap_remove(struct heap* heap,
-                             struct heap_node* node,
-                             heap_compare_fn less_than)) {
-  struct heap_node* smallest;
-  struct heap_node** max;
-  struct heap_node* child;
+HEAP_EXPORT void heap_remove(heap* heap,
+                             heap_node* node,
+                             heap_compare_fn less_than) {
+  heap_node* smallest;
+  heap_node** max;
+  heap_node* child;
   unsigned int path;
   unsigned int k;
   unsigned int n;
@@ -182,12 +182,12 @@ HEAP_EXPORT(void heap_remove(struct heap* heap,
 
   /* Unlink the max node. */
   child = *max;
-  *max = NULL;
+  *max = nullptr;
 
   if (child == node) {
     /* We're removing either the max or the last node in the tree. */
     if (child == heap->min) {
-      heap->min = NULL;
+      heap->min = nullptr;
     }
     return;
   }
@@ -197,15 +197,15 @@ HEAP_EXPORT(void heap_remove(struct heap* heap,
   child->right = node->right;
   child->parent = node->parent;
 
-  if (child->left != NULL) {
+  if (child->left != nullptr) {
     child->left->parent = child;
   }
 
-  if (child->right != NULL) {
+  if (child->right != nullptr) {
     child->right->parent = child;
   }
 
-  if (node->parent == NULL) {
+  if (node->parent == nullptr) {
     heap->min = child;
   } else if (node->parent->left == node) {
     node->parent->left = child;
@@ -219,9 +219,9 @@ HEAP_EXPORT(void heap_remove(struct heap* heap,
    */
   for (;;) {
     smallest = child;
-    if (child->left != NULL && less_than(child->left, smallest))
+    if (child->left != nullptr && less_than(child->left, smallest))
       smallest = child->left;
-    if (child->right != NULL && less_than(child->right, smallest))
+    if (child->right != nullptr && less_than(child->right, smallest))
       smallest = child->right;
     if (smallest == child)
       break;
@@ -232,11 +232,11 @@ HEAP_EXPORT(void heap_remove(struct heap* heap,
    * this is required, because `max` node is not guaranteed to be the
    * actual maximum in tree
    */
-  while (child->parent != NULL && less_than(child, child->parent))
+  while (child->parent != nullptr && less_than(child, child->parent))
     heap_node_swap(heap, child->parent, child);
 }
 
-HEAP_EXPORT(void heap_dequeue(struct heap* heap, heap_compare_fn less_than)) {
+HEAP_EXPORT void heap_dequeue(struct heap* heap, heap_compare_fn less_than) {
   heap_remove(heap, heap->min, less_than);
 }
 

@@ -86,10 +86,10 @@
 struct uv__io_s;
 struct uv_loop_s;
 
-typedef void (*uv__io_cb)(struct uv_loop_s* loop,
-                          struct uv__io_s* w,
+typedef void (*uv__io_cb)(uv_loop_s* loop,
+                          uv__io_s* w,
                           unsigned int events);
-typedef struct uv__io_s uv__io_t;
+typedef uv__io_s uv__io_t;
 
 struct uv__io_s {
   uv__io_cb cb;
@@ -151,13 +151,13 @@ struct _uv_barrier {
   unsigned out;
 };
 
-typedef struct {
-  struct _uv_barrier* b;
+struct uv_barrier_t{
+  _uv_barrier* b;
 # if defined(PTHREAD_BARRIER_SERIAL_THREAD)
   /* TODO(bnoordhuis) Remove padding in v2. */
   char pad[sizeof(pthread_barrier_t) - sizeof(struct _uv_barrier*)];
 # endif
-} uv_barrier_t;
+};
 #else
 typedef pthread_barrier_t uv_barrier_t;
 #endif
@@ -166,7 +166,7 @@ typedef pthread_barrier_t uv_barrier_t;
 typedef gid_t uv_gid_t;
 typedef uid_t uv_uid_t;
 
-typedef struct dirent uv__dirent_t;
+typedef dirent uv__dirent_t;
 
 #define UV_DIR_PRIVATE_FIELDS \
   DIR* dir;
@@ -213,10 +213,10 @@ typedef struct dirent uv__dirent_t;
 /* Platform-specific definitions for uv_dlopen support. */
 #define UV_DYNAMIC /* empty */
 
-typedef struct {
+struct uv_lib_t {
   void* handle;
   char* errmsg;
-} uv_lib_t;
+};
 
 #define UV_LOOP_PRIVATE_FIELDS                                                \
   unsigned long flags;                                                        \
@@ -239,10 +239,11 @@ typedef struct {
   void (*async_unused)(void);  /* TODO(bnoordhuis) Remove in libuv v2. */     \
   uv__io_t async_io_watcher;                                                  \
   int async_wfd;                                                              \
-  struct {                                                                    \
+  struct _timer_heap {                                                         \
     void* min;                                                                \
     unsigned int nelts;                                                       \
-  } timer_heap;                                                               \
+  };                                                                          \
+  _timer_heap timer_heap;                                                      \
   uint64_t timer_counter;                                                     \
   uint64_t time;                                                              \
   int signal_pipefd[2];                                                       \
@@ -272,7 +273,7 @@ typedef struct {
 
 #define UV_UDP_SEND_PRIVATE_FIELDS                                            \
   void* queue[2];                                                             \
-  struct sockaddr_storage addr;                                               \
+  sockaddr_storage addr;                                               \
   unsigned int nbufs;                                                         \
   uv_buf_t* bufs;                                                             \
   ssize_t status;                                                             \
@@ -335,18 +336,18 @@ typedef struct {
   uint64_t start_id;
 
 #define UV_GETADDRINFO_PRIVATE_FIELDS                                         \
-  struct uv__work work_req;                                                   \
+  uv__work work_req;                                                          \
   uv_getaddrinfo_cb cb;                                                       \
-  struct addrinfo* hints;                                                     \
+  addrinfo* hints;                                                            \
   char* hostname;                                                             \
   char* service;                                                              \
-  struct addrinfo* addrinfo;                                                  \
+  addrinfo* addrinfo;                                                         \
   int retcode;
 
 #define UV_GETNAMEINFO_PRIVATE_FIELDS                                         \
-  struct uv__work work_req;                                                   \
+  uv__work work_req;                                                          \
   uv_getnameinfo_cb getnameinfo_cb;                                           \
-  struct sockaddr_storage storage;                                            \
+  sockaddr_storage storage;                                                   \
   int flags;                                                                  \
   char host[NI_MAXHOST];                                                      \
   char service[NI_MAXSERV];                                                   \
@@ -372,20 +373,21 @@ typedef struct {
   uv_buf_t bufsml[4];                                                         \
 
 #define UV_WORK_PRIVATE_FIELDS                                                \
-  struct uv__work work_req;
+  uv__work work_req;
 
 #define UV_TTY_PRIVATE_FIELDS                                                 \
-  struct termios orig_termios;                                                \
+  termios orig_termios;                                                       \
   int mode;
 
 #define UV_SIGNAL_PRIVATE_FIELDS                                              \
   /* RB_ENTRY(uv_signal_s) tree_entry; */                                     \
-  struct {                                                                    \
-    struct uv_signal_s* rbe_left;                                             \
-    struct uv_signal_s* rbe_right;                                            \
-    struct uv_signal_s* rbe_parent;                                           \
+  struct _tree_entry {                                                         \
+    uv_signal_s* rbe_left;                                                    \
+    uv_signal_s* rbe_right;                                                   \
+    uv_signal_s* rbe_parent;                                                  \
     int rbe_color;                                                            \
-  } tree_entry;                                                               \
+  };                                                                          \
+  _tree_entry tree_entry;                                                      \
   /* Use two counters here so we don have to fiddle with atomics. */          \
   unsigned int caught_signals;                                                \
   unsigned int dispatched_signals;

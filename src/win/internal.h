@@ -40,7 +40,7 @@
 
 #ifdef _DEBUG
 
-extern UV_THREAD_LOCAL int uv__crt_assert_enabled;
+extern "C" UV_THREAD_LOCAL int uv__crt_assert_enabled;
 
 #define UV_BEGIN_DISABLE_CRT_ASSERT()                           \
   {                                                             \
@@ -61,16 +61,16 @@ extern UV_THREAD_LOCAL int uv__crt_assert_enabled;
  * TCP
  */
 
-typedef enum {
+enum uv__ipc_socket_xfer_type_t {
   UV__IPC_SOCKET_XFER_NONE = 0,
   UV__IPC_SOCKET_XFER_TCP_CONNECTION,
   UV__IPC_SOCKET_XFER_TCP_SERVER
-} uv__ipc_socket_xfer_type_t;
+};
 
-typedef struct {
+struct uv__ipc_socket_xfer_info_t {
   WSAPROTOCOL_INFOW socket_info;
   uint32_t delayed_error;
-} uv__ipc_socket_xfer_info_t;
+};
 
 int uv_tcp_listen(uv_tcp_t* handle, int backlog, uv_connection_cb cb);
 int uv_tcp_accept(uv_tcp_t* server, uv_tcp_t* client);
@@ -150,7 +150,7 @@ void uv_pipe_endgame(uv_loop_t* loop, uv_pipe_t* handle);
 /*
  * TTY
  */
-void uv_console_init(void);
+void uv_console_init();
 
 int uv_tty_read_start(uv_tty_t* handle, uv_alloc_cb alloc_cb,
     uv_read_cb read_cb);
@@ -200,7 +200,7 @@ void uv_prepare_invoke(uv_loop_t* loop);
 void uv_check_invoke(uv_loop_t* loop);
 void uv_idle_invoke(uv_loop_t* loop);
 
-void uv__once_init(void);
+void uv__once_init();
 
 
 /*
@@ -216,7 +216,7 @@ void uv_process_async_wakeup_req(uv_loop_t* loop, uv_async_t* handle,
 /*
  * Signal watcher
  */
-void uv_signals_init(void);
+void uv_signals_init();
 int uv__signal_dispatch(int signum);
 
 void uv_signal_close(uv_loop_t* loop, uv_signal_t* handle);
@@ -243,7 +243,7 @@ int uv_translate_sys_error(int sys_errno);
 /*
  * FS
  */
-void uv_fs_init(void);
+void uv_fs_init();
 
 
 /*
@@ -264,7 +264,7 @@ void uv__fs_poll_endgame(uv_loop_t* loop, uv_fs_poll_t* handle);
 /*
  * Utilities.
  */
-void uv__util_init(void);
+void uv__util_init();
 
 uint64_t uv__hrtime(double scale);
 __declspec(noreturn) void uv_fatal_error(const int errorno, const char* syscall);
@@ -272,11 +272,11 @@ int uv__getpwuid_r(uv_passwd_t* pwd);
 int uv__convert_utf16_to_utf8(const WCHAR* utf16, int utf16len, char** utf8);
 int uv__convert_utf8_to_utf16(const char* utf8, int utf8len, WCHAR** utf16);
 
-typedef int (WINAPI *uv__peersockfunc)(SOCKET, struct sockaddr*, int*);
+typedef int (WINAPI *uv__peersockfunc)(SOCKET, sockaddr*, int*);
 
 int uv__getsockpeername(const uv_handle_t* handle,
                         uv__peersockfunc func,
-                        struct sockaddr* name,
+                        sockaddr* name,
                         int* namelen,
                         int delayed_error);
 
@@ -299,13 +299,13 @@ HANDLE uv__stdio_handle(BYTE* buffer, int fd);
 /*
  * Winapi and ntapi utility functions
  */
-void uv_winapi_init(void);
+void uv_winapi_init();
 
 
 /*
  * Winsock utility functions
  */
-void uv_winsock_init(void);
+void uv_winsock_init();
 
 int uv_ntstatus_to_winsock_error(NTSTATUS status);
 
@@ -324,21 +324,21 @@ int WSAAPI uv_msafd_poll(SOCKET socket, AFD_POLL_INFO* info_in,
     AFD_POLL_INFO* info_out, OVERLAPPED* overlapped);
 
 /* Whether there are any non-IFS LSPs stacked on TCP */
-extern int uv_tcp_non_ifs_lsp_ipv4;
-extern int uv_tcp_non_ifs_lsp_ipv6;
+extern "C" int uv_tcp_non_ifs_lsp_ipv4;
+extern "C" int uv_tcp_non_ifs_lsp_ipv6;
 
 /* Ip address used to bind to any port at any interface */
-extern struct sockaddr_in uv_addr_ip4_any_;
-extern struct sockaddr_in6 uv_addr_ip6_any_;
+extern "C" struct sockaddr_in uv_addr_ip4_any_;
+extern "C" struct sockaddr_in6 uv_addr_ip6_any_;
 
 /*
  * Wake all loops with fake message
  */
-void uv__wake_all_loops(void);
+void uv__wake_all_loops();
 
 /*
  * Init system wake-up detection
  */
-void uv__init_detect_system_wakeup(void);
+void uv__init_detect_system_wakeup();
 
 #endif /* UV_WIN_INTERNAL_H_ */

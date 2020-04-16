@@ -37,8 +37,8 @@ static void thread_cb(void* dummy) {
 
 static void check_cb(uv_check_t* handle) {
   ASSERT(check_cb_called == 0);
-  uv_close((uv_handle_t*) &async_handle, NULL);
-  uv_close((uv_handle_t*) &check_handle, NULL);
+  uv_close((uv_handle_t*) &async_handle, nullptr);
+  uv_close((uv_handle_t*) &check_handle, nullptr);
   check_cb_called++;
 }
 
@@ -52,10 +52,10 @@ TEST_IMPL(async_null_cb) {
    */
   memset(&async_handle, 0xff, sizeof(async_handle));
 
-  ASSERT(0 == uv_async_init(uv_default_loop(), &async_handle, NULL));
+  ASSERT(0 == uv_async_init(uv_default_loop(), &async_handle, nullptr));
   ASSERT(0 == uv_check_init(uv_default_loop(), &check_handle));
   ASSERT(0 == uv_check_start(&check_handle, check_cb));
-  ASSERT(0 == uv_thread_create(&thread, thread_cb, NULL));
+  ASSERT(0 == uv_thread_create(&thread, thread_cb, nullptr));
   ASSERT(0 == uv_run(uv_default_loop(), UV_RUN_DEFAULT));
   ASSERT(0 == uv_thread_join(&thread));
   ASSERT(1 == check_cb_called);

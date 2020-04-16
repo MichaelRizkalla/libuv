@@ -42,7 +42,7 @@ const char* fmt(double d) {
   static char* p;
   uint64_t v;
 
-  if (p == NULL)
+  if (p == nullptr)
     p = buf;
 
   p += 31;
@@ -175,7 +175,7 @@ int run_test(const char* test,
   int i;
 
   status = 255;
-  main_proc = NULL;
+  main_proc = nullptr;
   process_count = 0;
 
 #ifndef _WIN32
@@ -243,7 +243,7 @@ int run_test(const char* test,
     break;
   }
 
-  if (main_proc == NULL) {
+  if (main_proc == nullptr) {
     snprintf(errmsg,
              sizeof errmsg,
              "No test with that name: %s",
@@ -257,7 +257,7 @@ int run_test(const char* test,
     const char* var;
 
     var = getenv("UV_TEST_TIMEOUT_MULTIPLIER");
-    if (var == NULL)
+    if (var == nullptr)
       break;
 
     timeout_multiplier = atoi(var);

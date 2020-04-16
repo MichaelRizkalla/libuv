@@ -121,7 +121,7 @@ int uv__platform_loop_init(uv_loop_t* loop) {
 
   ep = epoll_create1(0);
   loop->ep = ep;
-  if (ep == NULL)
+  if (ep == nullptr)
     return UV__ERR(errno);
 
   return 0;
@@ -129,9 +129,9 @@ int uv__platform_loop_init(uv_loop_t* loop) {
 
 
 void uv__platform_loop_delete(uv_loop_t* loop) {
-  if (loop->ep != NULL) {
+  if (loop->ep != nullptr) {
     epoll_queue_close(loop->ep);
-    loop->ep = NULL;
+    loop->ep = nullptr;
   }
 }
 
@@ -258,7 +258,7 @@ int uv_exepath(char* buffer, size_t* size) {
   size_t abspath_size;
   int pid;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   pid = getpid();
@@ -275,7 +275,7 @@ int uv_exepath(char* buffer, size_t* size) {
    */
 
   /* Case i) and ii) absolute or relative paths */
-  if (strchr(args, '/') != NULL) {
+  if (strchr(args, '/') != nullptr) {
     if (realpath(args, abspath) != abspath)
       return UV__ERR(errno);
 
@@ -292,19 +292,19 @@ int uv_exepath(char* buffer, size_t* size) {
   } else {
     /* Case iii). Search PATH environment variable */
     char trypath[PATH_MAX];
-    char* clonedpath = NULL;
-    char* token = NULL;
+    char* clonedpath = nullptr;
+    char* token = nullptr;
     char* path = getenv("PATH");
 
-    if (path == NULL)
+    if (path == nullptr)
       return UV_EINVAL;
 
     clonedpath = uv__strdup(path);
-    if (clonedpath == NULL)
+    if (clonedpath == nullptr)
       return UV_ENOMEM;
 
     token = strtok(clonedpath, ":");
-    while (token != NULL) {
+    while (token != nullptr) {
       snprintf(trypath, sizeof(trypath) - 1, "%s/%s", token, args);
       if (realpath(trypath, abspath) == abspath) {
         /* Check the match is executable */
@@ -322,7 +322,7 @@ int uv_exepath(char* buffer, size_t* size) {
           return 0;
         }
       }
-      token = strtok(NULL, ":");
+      token = strtok(nullptr, ":");
     }
     uv__free(clonedpath);
 
@@ -382,7 +382,7 @@ int uv_uptime(double* uptime) {
 
   u.ut_type = BOOT_TIME;
   v = getutxid(&u);
-  if (v == NULL)
+  if (v == nullptr)
     return -1;
   *uptime = difftime64(time64(&t), v->ut_tv.tv_sec);
   return 0;
@@ -528,7 +528,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   int count_v6;
 
   *count = 0;
-  *addresses = NULL;
+  *addresses = nullptr;
 
   /* get the ipv6 addresses first */
   uv_interface_address_t* addresses_v6;
@@ -654,19 +654,19 @@ void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
   uintptr_t i;
   uintptr_t nfds;
 
-  assert(loop->watchers != NULL);
+  assert(loop->watchers != nullptr);
   assert(fd >= 0);
 
   events = (struct epoll_event*) loop->watchers[loop->nwatchers];
   nfds = (uintptr_t) loop->watchers[loop->nwatchers + 1];
-  if (events != NULL)
+  if (events != nullptr)
     /* Invalidate events with same file descriptor */
     for (i = 0; i < nfds; i++)
       if ((int) events[i].fd == fd)
         events[i].fd = -1;
 
   /* Remove the file descriptor from the epoll. */
-  if (loop->ep != NULL)
+  if (loop->ep != nullptr)
     epoll_ctl(loop->ep, EPOLL_CTL_DEL, fd, &dummy);
 }
 
@@ -722,7 +722,7 @@ int uv_fs_event_start(uv_fs_event_t* handle, uv_fs_event_cb cb,
   memcpy(reg_struct.__rfis_utok, &handle, sizeof(handle));
 
   path = uv__strdup(filename);
-  if (path == NULL)
+  if (path == nullptr)
     return UV_ENOMEM;
 
   rc = __w_pioctl(path, _IOCC_REGFILEINT, sizeof(reg_struct), &reg_struct);
@@ -911,7 +911,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     }
 
 
-    assert(loop->watchers != NULL);
+    assert(loop->watchers != nullptr);
     loop->watchers[loop->nwatchers] = (void*) events;
     loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
     for (i = 0; i < nfds; i++) {
@@ -933,7 +933,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
 
       w = loop->watchers[fd];
 
-      if (w == NULL) {
+      if (w == nullptr) {
         /* File descriptor that we've stopped watching, disarm it.
          *
          * Ignore all errors because we may be racing with another thread
@@ -958,8 +958,8 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
         nevents++;
       }
     }
-    loop->watchers[loop->nwatchers] = NULL;
-    loop->watchers[loop->nwatchers + 1] = NULL;
+    loop->watchers[loop->nwatchers] = nullptr;
+    loop->watchers[loop->nwatchers + 1] = nullptr;
 
     if (nevents != 0) {
       if (nfds == ARRAY_SIZE(events) && --count != 0) {
@@ -996,7 +996,7 @@ int uv__io_fork(uv_loop_t* loop) {
     Nullify the msg queue but don't close it because
     it is still being used by the parent.
   */
-  loop->ep = NULL;
+  loop->ep = nullptr;
 
   uv__platform_loop_delete(loop);
   return uv__platform_loop_init(loop);

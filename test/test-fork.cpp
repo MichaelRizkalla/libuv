@@ -35,7 +35,7 @@ static int socket_cb_called;
 
 static void timer_cb(uv_timer_t* timer) {
   timer_cb_called++;
-  uv_close((uv_handle_t*) timer, NULL);
+  uv_close((uv_handle_t*) timer, nullptr);
 }
 
 
@@ -54,7 +54,7 @@ static void socket_cb(uv_poll_t* poll, int status, int events) {
     cnt = read(socket_cb_read_fd, socket_cb_read_buf, socket_cb_read_size);
     ASSERT(cnt == socket_cb_read_size);
   }
-  uv_close((uv_handle_t*) poll, NULL);
+  uv_close((uv_handle_t*) poll, nullptr);
 }
 
 
@@ -186,7 +186,7 @@ TEST_IMPL(fork_socketpair_started) {
   if (child_pid != 0) {
     /* parent */
     ASSERT(0 == uv_poll_stop(&poll_handle));
-    uv_close((uv_handle_t*)&poll_handle, NULL);
+    uv_close((uv_handle_t*)&poll_handle, nullptr);
     ASSERT(0 == uv_run(uv_default_loop(), UV_RUN_DEFAULT));
     ASSERT(0 == socket_cb_called);
     ASSERT(1 == write(sync_pipe[1], "1", 1)); /* alert child */
@@ -222,7 +222,7 @@ static int fork_signal_cb_called;
 void fork_signal_to_child_cb(uv_signal_t* handle, int signum)
 {
   fork_signal_cb_called = signum;
-  uv_close((uv_handle_t*)handle, NULL);
+  uv_close((uv_handle_t*)handle, nullptr);
 }
 
 
@@ -352,11 +352,11 @@ static void create_file(const char* name) {
   uv_file file;
   uv_fs_t req;
 
-  r = uv_fs_open(NULL, &req, name, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR, NULL);
+  r = uv_fs_open(nullptr, &req, name, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR, nullptr);
   ASSERT(r >= 0);
   file = r;
   uv_fs_req_cleanup(&req);
-  r = uv_fs_close(NULL, &req, file, NULL);
+  r = uv_fs_close(nullptr, &req, file, nullptr);
   ASSERT(r == 0);
   uv_fs_req_cleanup(&req);
 }
@@ -368,17 +368,17 @@ static void touch_file(const char* name) {
   uv_fs_t req;
   uv_buf_t buf;
 
-  r = uv_fs_open(NULL, &req, name, O_RDWR, 0, NULL);
+  r = uv_fs_open(nullptr, &req, name, O_RDWR, 0, nullptr);
   ASSERT(r >= 0);
   file = r;
   uv_fs_req_cleanup(&req);
 
   buf = uv_buf_init(const_cast<char*>("foo"), 4);
-  r = uv_fs_write(NULL, &req, file, &buf, 1, -1, NULL);
+  r = uv_fs_write(nullptr, &req, file, &buf, 1, -1, nullptr);
   ASSERT(r >= 0);
   uv_fs_req_cleanup(&req);
 
-  r = uv_fs_close(NULL, &req, file, NULL);
+  r = uv_fs_close(nullptr, &req, file, nullptr);
   ASSERT(r == 0);
   uv_fs_req_cleanup(&req);
 }
@@ -387,7 +387,7 @@ static void touch_file(const char* name) {
 static int timer_cb_touch_called;
 
 static void timer_cb_touch(uv_timer_t* timer) {
-  uv_close((uv_handle_t*)timer, NULL);
+  uv_close((uv_handle_t*)timer, nullptr);
   touch_file("watch_file");
   timer_cb_touch_called++;
 }
@@ -405,9 +405,9 @@ static void fs_event_cb_file_current_dir(uv_fs_event_t* handle,
 #if defined(__APPLE__) || defined(__linux__)
   ASSERT(strcmp(filename, "watch_file") == 0);
 #else
-  ASSERT(filename == NULL || strcmp(filename, "watch_file") == 0);
+  ASSERT(filename == nullptr || strcmp(filename, "watch_file") == 0);
 #endif
-  uv_close((uv_handle_t*)handle, NULL);
+  uv_close((uv_handle_t*)handle, nullptr);
 }
 
 

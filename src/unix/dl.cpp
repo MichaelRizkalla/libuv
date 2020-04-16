@@ -32,7 +32,7 @@ static int uv__dlerror(uv_lib_t* lib);
 
 int uv_dlopen(const char* filename, uv_lib_t* lib) {
   dlerror(); /* Reset error status. */
-  lib->errmsg = NULL;
+  lib->errmsg = nullptr;
   lib->handle = dlopen(filename, RTLD_LAZY);
   return lib->handle ? 0 : uv__dlerror(lib);
 }
@@ -40,12 +40,12 @@ int uv_dlopen(const char* filename, uv_lib_t* lib) {
 
 void uv_dlclose(uv_lib_t* lib) {
   uv__free(lib->errmsg);
-  lib->errmsg = NULL;
+  lib->errmsg = nullptr;
 
   if (lib->handle) {
     /* Ignore errors. No good way to signal them without leaking memory. */
     dlclose(lib->handle);
-    lib->handle = NULL;
+    lib->handle = nullptr;
   }
 }
 
@@ -74,7 +74,7 @@ static int uv__dlerror(uv_lib_t* lib) {
     return -1;
   }
   else {
-    lib->errmsg = NULL;
+    lib->errmsg = nullptr;
     return 0;
   }
 }

@@ -39,11 +39,11 @@ static void check_cb(uv_check_t* handle) {
 
 
 static void timer_cb(uv_timer_t* handle) {
-  uv_close((uv_handle_t*) &check_handle, NULL);
-  uv_close((uv_handle_t*) &timer_handle, NULL);
-  uv_close((uv_handle_t*) &server_handle, NULL);
-  uv_close((uv_handle_t*) &client_handle, NULL);
-  uv_close((uv_handle_t*) &peer_handle, NULL);
+  uv_close((uv_handle_t*) &check_handle, nullptr);
+  uv_close((uv_handle_t*) &timer_handle, nullptr);
+  uv_close((uv_handle_t*) &server_handle, nullptr);
+  uv_close((uv_handle_t*) &client_handle, nullptr);
+  uv_close((uv_handle_t*) &peer_handle, nullptr);
 }
 
 

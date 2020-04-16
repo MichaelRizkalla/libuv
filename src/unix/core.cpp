@@ -21,7 +21,7 @@
 #include "uv.h"
 #include "internal.h"
 
-#include <stddef.h> /* NULL */
+#include <stddef.h> /* nullptr */
 #include <stdio.h> /* printf */
 #include <stdlib.h>
 #include <string.h> /* strerror */
@@ -75,7 +75,7 @@ extern char** environ;
 #  define uv__accept4 accept4
 # endif
 # if defined(__NetBSD__)
-#  define uv__accept4(a, b, c, d) paccept((a), (b), (c), NULL, (d))
+#  define uv__accept4(a, b, c, d) paccept((a), (b), (c), nullptr, (d))
 # endif
 #endif
 
@@ -185,7 +185,7 @@ int uv__socket_sockopt(uv_handle_t* handle, int optname, int* value) {
   int fd;
   socklen_t len;
 
-  if (handle == NULL || value == NULL)
+  if (handle == nullptr || value == nullptr)
     return UV_EINVAL;
 
   if (handle->type == UV_TCP || handle->type == UV_NAMED_PIPE)
@@ -305,7 +305,7 @@ static void uv__run_closing_handles(uv_loop_t* loop) {
   uv_handle_t* q;
 
   p = loop->closing_handles;
-  loop->closing_handles = NULL;
+  loop->closing_handles = nullptr;
 
   while (p) {
     q = p->next_closing;
@@ -348,7 +348,7 @@ int uv_backend_timeout(const uv_loop_t* loop) {
 static int uv__loop_alive(const uv_loop_t* loop) {
   return uv__has_active_handles(loop) ||
          uv__has_active_reqs(loop) ||
-         loop->closing_handles != NULL;
+         loop->closing_handles != nullptr;
 }
 
 
@@ -463,10 +463,10 @@ FILE* uv__open_file(const char* path) {
 
   fd = uv__open_cloexec(path, O_RDONLY);
   if (fd < 0)
-    return NULL;
+    return nullptr;
 
    fp = fdopen(fd, "r");
-   if (fp == NULL)
+   if (fp == nullptr)
      uv__close(fd);
 
    return fp;
@@ -482,9 +482,9 @@ int uv__accept(int sockfd) {
 
   do
 #ifdef uv__accept4
-    peerfd = uv__accept4(sockfd, NULL, NULL, SOCK_NONBLOCK|SOCK_CLOEXEC);
+    peerfd = uv__accept4(sockfd, nullptr, nullptr, SOCK_NONBLOCK|SOCK_CLOEXEC);
 #else
-    peerfd = accept(sockfd, NULL, NULL);
+    peerfd = accept(sockfd, nullptr, nullptr);
 #endif
   while (peerfd == -1 && errno == EINTR);
 
@@ -681,7 +681,7 @@ ssize_t uv__recvmsg(int fd, struct msghdr* msg, int flags) {
     return UV__ERR(errno);
   if (msg->msg_controllen == 0)
     return rc;
-  for (cmsg = CMSG_FIRSTHDR(msg); cmsg != NULL; cmsg = CMSG_NXTHDR(msg, cmsg))
+  for (cmsg = CMSG_FIRSTHDR(msg); cmsg != nullptr; cmsg = CMSG_NXTHDR(msg, cmsg))
     if (cmsg->cmsg_type == SCM_RIGHTS)
       for (pfd = (int*) CMSG_DATA(cmsg),
            end = (int*) ((char*) cmsg + cmsg->cmsg_len);
@@ -695,11 +695,11 @@ ssize_t uv__recvmsg(int fd, struct msghdr* msg, int flags) {
 int uv_cwd(char* buffer, size_t* size) {
   char scratch[1 + UV__PATH_MAX];
 
-  if (buffer == NULL || size == NULL)
+  if (buffer == nullptr || size == nullptr)
     return UV_EINVAL;
 
   /* Try to read directly into the user's buffer first... */
-  if (getcwd(buffer, *size) != NULL)
+  if (getcwd(buffer, *size) != nullptr)
     goto fixup;
 
   if (errno != ERANGE)
@@ -708,7 +708,7 @@ int uv_cwd(char* buffer, size_t* size) {
   /* ...or into scratch space if the user's buffer is too small
    * so we can report how much space to provide on the next try.
    */
-  if (getcwd(scratch, sizeof(scratch)) == NULL)
+  if (getcwd(scratch, sizeof(scratch)) == nullptr)
     return UV__ERR(errno);
 
   buffer = scratch;
@@ -824,22 +824,22 @@ static void maybe_resize(uv_loop_t* loop, unsigned int len) {
     return;
 
   /* Preserve fake watcher list and count at the end of the watchers */
-  if (loop->watchers != NULL) {
+  if (loop->watchers != nullptr) {
     fake_watcher_list = loop->watchers[loop->nwatchers];
     fake_watcher_count = loop->watchers[loop->nwatchers + 1];
   } else {
-    fake_watcher_list = NULL;
-    fake_watcher_count = NULL;
+    fake_watcher_list = nullptr;
+    fake_watcher_count = nullptr;
   }
 
   nwatchers = next_power_of_two(len + 2) - 2;
   auto **watchers = create_ptrstruct_free<uv__io_t*>(loop->watchers,
                           (nwatchers + 2) * sizeof(loop->watchers[0]));
 
-  if (watchers == NULL)
+  if (watchers == nullptr)
     abort();
   for (i = loop->nwatchers; i < nwatchers; i++)
-    watchers[i] = NULL;
+    watchers[i] = nullptr;
   watchers[nwatchers] = reinterpret_cast<uv__io_s*>(fake_watcher_list);
   watchers[nwatchers + 1] = reinterpret_cast<uv__io_s*>(fake_watcher_count);
 
@@ -849,7 +849,7 @@ static void maybe_resize(uv_loop_t* loop, unsigned int len) {
 
 
 void uv__io_init(uv__io_t* w, uv__io_cb cb, int fd) {
-  assert(cb != NULL);
+  assert(cb != nullptr);
   assert(fd >= -1);
   QUEUE_INIT(&w->pending_queue);
   QUEUE_INIT(&w->watcher_queue);
@@ -886,7 +886,7 @@ void uv__io_start(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
   if (QUEUE_EMPTY(&w->watcher_queue))
     QUEUE_INSERT_TAIL(&loop->watcher_queue, &w->watcher_queue);
 
-  if (loop->watchers[w->fd] == NULL) {
+  if (loop->watchers[w->fd] == nullptr) {
     loop->watchers[w->fd] = w;
     loop->nfds++;
   }
@@ -907,15 +907,13 @@ void uv__io_stop(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
     return;
 
   w->pevents &= ~events;
-
   if (w->pevents == 0) {
     QUEUE_REMOVE(&w->watcher_queue);
     QUEUE_INIT(&w->watcher_queue);
-
-    if (loop->watchers[w->fd] != NULL) {
+    if (loop->watchers[w->fd] != nullptr) {
       assert(loop->watchers[w->fd] == w);
       assert(loop->nfds > 0);
-      loop->watchers[w->fd] = NULL;
+      loop->watchers[w->fd] = nullptr;
       loop->nfds--;
       w->events = 0;
     }
@@ -949,7 +947,7 @@ int uv__io_active(const uv__io_t* w, unsigned int events) {
 
 
 int uv__fd_exists(uv_loop_t* loop, int fd) {
-  return (unsigned) fd < loop->nwatchers && loop->watchers[fd] != NULL;
+  return (unsigned) fd < loop->nwatchers && loop->watchers[fd] != nullptr;
 }
 
 
@@ -1082,13 +1080,13 @@ int uv_os_tmpdir(char* buffer, size_t* size) {
   const char* buf;
   size_t len;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
 #define CHECK_ENV_VAR(name)                                                   \
   do {                                                                        \
     buf = getenv(name);                                                       \
-    if (buf != NULL)                                                          \
+    if (buf != nullptr)                                                          \
       goto return_buffer;                                                     \
   }                                                                           \
   while (0)
@@ -1144,11 +1142,11 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
   int (*getpwuid_r)(uid_t, struct passwd*, char*, size_t, struct passwd**);
 
   getpwuid_r = dlsym(RTLD_DEFAULT, "getpwuid_r");
-  if (getpwuid_r == NULL)
+  if (getpwuid_r == nullptr)
     return UV_ENOSYS;
 #endif
 
-  if (pwd == NULL)
+  if (pwd == nullptr)
     return UV_EINVAL;
 
   initsize = sysconf(_SC_GETPW_R_SIZE_MAX);
@@ -1159,13 +1157,13 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
     bufsize = (size_t) initsize;
 
   uid = geteuid();
-  buf = NULL;
+  buf = nullptr;
 
   for (;;) {
     uv__free(buf);
     buf = create_ptrstruct<char>(bufsize);
 
-    if (buf == NULL)
+    if (buf == nullptr)
       return UV_ENOMEM;
 
     r = getpwuid_r(uid, &pw, buf, bufsize, &result);
@@ -1181,7 +1179,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
     return -r;
   }
 
-  if (result == NULL) {
+  if (result == nullptr) {
     uv__free(buf);
     return UV_ENOENT;
   }
@@ -1192,7 +1190,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
   shell_size = strlen(pw.pw_shell) + 1;
   pwd->username = create_ptrstruct<char>(name_size + homedir_size + shell_size);
 
-  if (pwd->username == NULL) {
+  if (pwd->username == nullptr) {
     uv__free(buf);
     return UV_ENOMEM;
   }
@@ -1219,7 +1217,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
 
 
 void uv_os_free_passwd(uv_passwd_t* pwd) {
-  if (pwd == NULL)
+  if (pwd == nullptr)
     return;
 
   /*
@@ -1228,9 +1226,9 @@ void uv_os_free_passwd(uv_passwd_t* pwd) {
     that is the field that needs to be freed.
   */
   uv__free(pwd->username);
-  pwd->username = NULL;
-  pwd->shell = NULL;
-  pwd->homedir = NULL;
+  pwd->username = nullptr;
+  pwd->shell = nullptr;
+  pwd->homedir = nullptr;
 }
 
 
@@ -1252,26 +1250,26 @@ int uv_os_environ(uv_env_item_t** envitems, int* count) {
   *envitems = nullptr;
   *count = 0;
 
-  for (i = 0; environ[i] != NULL; i++);
+  for (i = 0; environ[i] != nullptr; i++);
 
   *envitems = create_ptrstruct<uv_env_item_t>(i, sizeof(uv_env_item_t));
 
-  if (envitems == NULL)
+  if (envitems == nullptr)
     return UV_ENOMEM;
 
   for (j = 0, cnt = 0; j < i; j++) {
     char* buf;
     char* ptr;
 
-    if (environ[j] == NULL)
+    if (environ[j] == nullptr)
       break;
 
     buf = uv__strdup(environ[j]);
-    if (buf == NULL)
+    if (buf == nullptr)
       goto fail;
 
     ptr = strchr(buf, '=');
-    if (ptr == NULL) {
+    if (ptr == nullptr) {
       uv__free(buf);
       continue;
     }
@@ -1295,7 +1293,7 @@ fail:
   }
   uv__free(*envitems);
 
-  *envitems = NULL;
+  *envitems = nullptr;
   *count = 0;
   return UV_ENOMEM;
 }
@@ -1305,12 +1303,12 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
   char* var;
   size_t len;
 
-  if (name == NULL || buffer == NULL || size == NULL || *size == 0)
+  if (name == nullptr || buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   var = getenv(name);
 
-  if (var == NULL)
+  if (var == nullptr)
     return UV_ENOENT;
 
   len = strlen(var);
@@ -1328,7 +1326,7 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
 
 
 int uv_os_setenv(const char* name, const char* value) {
-  if (name == NULL || value == NULL)
+  if (name == nullptr || value == nullptr)
     return UV_EINVAL;
 
   if (setenv(name, value, 1) != 0)
@@ -1339,7 +1337,7 @@ int uv_os_setenv(const char* name, const char* value) {
 
 
 int uv_os_unsetenv(const char* name) {
-  if (name == NULL)
+  if (name == nullptr)
     return UV_EINVAL;
 
   if (unsetenv(name) != 0)
@@ -1359,7 +1357,7 @@ int uv_os_gethostname(char* buffer, size_t* size) {
   char buf[UV_MAXHOSTNAMESIZE];
   size_t len;
 
-  if (buffer == NULL || size == NULL || *size == 0)
+  if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
   if (gethostname(buf, sizeof(buf)) != 0)
@@ -1400,7 +1398,7 @@ uv_pid_t uv_os_getppid(void) {
 int uv_os_getpriority(uv_pid_t pid, int* priority) {
   int r;
 
-  if (priority == NULL)
+  if (priority == nullptr)
     return UV_EINVAL;
 
   errno = 0;
@@ -1429,7 +1427,7 @@ int uv_os_uname(uv_utsname_t* buffer) {
   struct utsname buf;
   int r;
 
-  if (buffer == NULL)
+  if (buffer == nullptr)
     return UV_EINVAL;
 
   if (uname(&buf) == -1) {
@@ -1505,10 +1503,10 @@ int uv__getsockpeername(const uv_handle_t* handle,
 int uv_gettimeofday(uv_timeval64_t* tv) {
   struct timeval time;
 
-  if (tv == NULL)
+  if (tv == nullptr)
     return UV_EINVAL;
 
-  if (gettimeofday(&time, NULL) != 0)
+  if (gettimeofday(&time, nullptr) != 0)
     return UV__ERR(errno);
 
   tv->tv_sec = (int64_t) time.tv_sec;

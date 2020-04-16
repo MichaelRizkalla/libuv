@@ -63,8 +63,8 @@ static void uv__getnameinfo_work(struct uv__work* w) {
                             -1,
                             req->host,
                             sizeof(req->host),
-                            NULL,
-                            NULL);
+                            nullptr,
+                            nullptr);
   if (ret == 0) {
     req->retcode = uv_translate_sys_error(GetLastError());
     return;
@@ -76,8 +76,8 @@ static void uv__getnameinfo_work(struct uv__work* w) {
                             -1,
                             req->service,
                             sizeof(req->service),
-                            NULL,
-                            NULL);
+                            nullptr,
+                            nullptr);
   if (ret == 0) {
     req->retcode = uv_translate_sys_error(GetLastError());
   }
@@ -94,7 +94,7 @@ static void uv__getnameinfo_done(struct uv__work* w, int status) {
 
   req = container_of(w, uv_getnameinfo_t, work_req);
   uv__req_unregister(req->loop, req);
-  host = service = NULL;
+  host = service = nullptr;
 
   if (status == UV_ECANCELED) {
     assert(req->retcode == 0);
@@ -119,7 +119,7 @@ int uv_getnameinfo(uv_loop_t* loop,
                    uv_getnameinfo_cb getnameinfo_cb,
                    const struct sockaddr* addr,
                    int flags) {
-  if (req == NULL || addr == NULL)
+  if (req == nullptr || addr == nullptr)
     return UV_EINVAL;
 
   if (addr->sa_family == AF_INET) {

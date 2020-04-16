@@ -33,11 +33,14 @@ typedef intptr_t ssize_t;
 #include <winsock2.h>
 
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
-typedef struct pollfd {
+struct pollfd {
   SOCKET fd;
   short  events;
   short  revents;
-} WSAPOLLFD, *PWSAPOLLFD, *LPWSAPOLLFD;
+};
+typedef pollfd WSAPOLLFD;
+typedef pollfd *PWSAPOLLFD;
+typedef pollfd *LPWSAPOLLFD;
 #endif
 
 #ifndef LOCALE_INVARIANT
@@ -138,7 +141,7 @@ typedef struct pollfd {
 
   typedef BOOL (PASCAL *LPFN_CONNECTEX)
                       (SOCKET s,
-                       const struct sockaddr* name,
+                       const sockaddr* name,
                        int namelen,
                        PVOID lpSendBuffer,
                        DWORD dwSendDataLength,
@@ -189,7 +192,7 @@ typedef int (WSAAPI* LPFN_WSARECVFROM)
              DWORD buffer_count,
              LPDWORD bytes,
              LPDWORD flags,
-             struct sockaddr* addr,
+             sockaddr* addr,
              LPINT addr_len,
              LPWSAOVERLAPPED overlapped,
              LPWSAOVERLAPPED_COMPLETION_ROUTINE completion_routine);
@@ -203,18 +206,22 @@ typedef int (WSAAPI* LPFN_WSARECVFROM)
   typedef PVOID CONDITION_VARIABLE, *PCONDITION_VARIABLE;
 #endif
 
-typedef struct _AFD_POLL_HANDLE_INFO {
+struct _AFD_POLL_HANDLE_INFO {
   HANDLE Handle;
   ULONG Events;
   NTSTATUS Status;
-} AFD_POLL_HANDLE_INFO, *PAFD_POLL_HANDLE_INFO;
+};
+typedef _AFD_POLL_HANDLE_INFO AFD_POLL_HANDLE_INFO;
+typedef _AFD_POLL_HANDLE_INFO *PAFD_POLL_HANDLE_INFO;
 
-typedef struct _AFD_POLL_INFO {
+struct _AFD_POLL_INFO {
   LARGE_INTEGER Timeout;
   ULONG NumberOfHandles;
   ULONG Exclusive;
   AFD_POLL_HANDLE_INFO Handles[1];
-} AFD_POLL_INFO, *PAFD_POLL_INFO;
+};
+typedef _AFD_POLL_INFO AFD_POLL_INFO;
+typedef _AFD_POLL_INFO *PAFD_POLL_INFO;
 
 #define UV_MSAFD_PROVIDER_COUNT 3
 
@@ -246,60 +253,66 @@ typedef CRITICAL_SECTION uv_mutex_t;
  * uv_cond_timedwait() to be HANDLEs, but we use CRITICAL_SECTIONs.
  */
 
-typedef union {
+union uv_cond_t {
   CONDITION_VARIABLE cond_var;
-  struct {
+  struct _unused_ {
     unsigned int waiters_count;
     CRITICAL_SECTION waiters_count_lock;
     HANDLE signal_event;
     HANDLE broadcast_event;
-  } unused_; /* TODO: retained for ABI compatibility; remove me in v2.x. */
-} uv_cond_t;
+  }; /* TODO: retained for ABI compatibility; remove me in v2.x. */
+  _unused_ unused_;
+};
 
-typedef union {
-  struct {
+union uv_rwlock_t {
+  struct _state_ {
     unsigned int num_readers_;
     CRITICAL_SECTION num_readers_lock_;
     HANDLE write_semaphore_;
-  } state_;
+  };
+  _state_ state_;
   /* TODO: remove me in v2.x. */
-  struct {
+  struct _unused1_{
     SRWLOCK unused_;
-  } unused1_;
+  };
+  _unused1_ unused1_;
   /* TODO: remove me in v2.x. */
-  struct {
+  struct _unused2_{
     uv_mutex_t unused1_;
     uv_mutex_t unused2_;
-  } unused2_;
-} uv_rwlock_t;
+  };
+  _unused2_ unused2_;
+};
 
-typedef struct {
+struct uv_barrier_t {
   unsigned int n;
   unsigned int count;
   uv_mutex_t mutex;
   uv_sem_t turnstile1;
   uv_sem_t turnstile2;
-} uv_barrier_t;
+};
 
-typedef struct {
+struct uv_key_t {
   DWORD tls_index;
-} uv_key_t;
+};
 
-#define UV_ONCE_INIT { 0, NULL }
+#define UV_ONCE_INIT { 0, nullptr }
 
-typedef struct uv_once_s {
+struct uv_once_s {
   unsigned char ran;
   HANDLE event;
-} uv_once_t;
+};
+typedef uv_once_s uv_once_t;
 
 /* Platform-specific definitions for uv_spawn support. */
 typedef unsigned char uv_uid_t;
 typedef unsigned char uv_gid_t;
 
-typedef struct uv__dirent_s {
+struct uv__dirent_s {
   int d_type;
   char d_name[1];
-} uv__dirent_t;
+};
+typedef uv__dirent_s uv__dirent_t;
 
 #define UV_DIR_PRIVATE_FIELDS \
   HANDLE dir_handle;          \
@@ -317,10 +330,10 @@ typedef struct uv__dirent_s {
 
 /* Platform-specific definitions for uv_dlopen support. */
 #define UV_DYNAMIC FAR WINAPI
-typedef struct {
+struct uv_lib_t {
   HMODULE handle;
   char* errmsg;
-} uv_lib_t;
+};
 
 #define UV_LOOP_PRIVATE_FIELDS                                                \
     /* The loop's I/O completion port */                                      \
@@ -328,7 +341,7 @@ typedef struct {
   /* The current time according to the event loop. in msecs. */               \
   uint64_t time;                                                              \
   /* Tail of a single-linked circular queue of pending reqs. If the queue */  \
-  /* is empty, tail_ is NULL. If there is only one item, */                   \
+  /* is empty, tail_ is nullptr. If there is only one item, */                   \
   /* tail_->next_req == tail_ */                                              \
   uv_req_t* pending_reqs_tail;                                                \
   /* Head of a single-linked list of closed handles */                        \
@@ -371,14 +384,16 @@ typedef struct {
   UV_SIGNAL_REQ,
 
 #define UV_REQ_PRIVATE_FIELDS                                                 \
-  union {                                                                     \
+  union _u {                                                                  \
     /* Used by I/O operations */                                              \
-    struct {                                                                  \
+    struct _io{                                                               \
       OVERLAPPED overlapped;                                                  \
       size_t queued_bytes;                                                    \
-    } io;                                                                     \
-  } u;                                                                        \
-  struct uv_req_s* next_req;
+    };                                                                        \
+    _io io;                                                                   \
+  };                                                                          \
+  _u u;                                                                       \
+  uv_req_s* next_req;
 
 #define UV_WRITE_PRIVATE_FIELDS \
   int coalesced;                \
@@ -396,26 +411,29 @@ typedef struct {
   /* empty */
 
 #define UV_PRIVATE_REQ_TYPES                                                  \
-  typedef struct uv_pipe_accept_s {                                           \
+  struct uv_pipe_accept_s {                                                   \
     UV_REQ_FIELDS                                                             \
     HANDLE pipeHandle;                                                        \
     struct uv_pipe_accept_s* next_pending;                                    \
-  } uv_pipe_accept_t;                                                         \
+  };                                                                          \
+  typedef uv_pipe_accept_s uv_pipe_accept_t;                                  \
                                                                               \
-  typedef struct uv_tcp_accept_s {                                            \
+  struct uv_tcp_accept_s {                                                    \
     UV_REQ_FIELDS                                                             \
     SOCKET accept_socket;                                                     \
-    char accept_buffer[sizeof(struct sockaddr_storage) * 2 + 32];             \
+    char accept_buffer[sizeof(sockaddr_storage) * 2 + 32];                    \
     HANDLE event_handle;                                                      \
     HANDLE wait_handle;                                                       \
-    struct uv_tcp_accept_s* next_pending;                                     \
-  } uv_tcp_accept_t;                                                          \
+    uv_tcp_accept_s* next_pending;                                            \
+  };                                                                          \
+  typedef uv_tcp_accept_s uv_tcp_accept_t;                                    \
                                                                               \
-  typedef struct uv_read_s {                                                  \
+  struct uv_read_s {                                                          \
     UV_REQ_FIELDS                                                             \
     HANDLE event_handle;                                                      \
     HANDLE wait_handle;                                                       \
-  } uv_read_t;
+  };                                                                          \
+  typedef uv_read_s uv_read_t;
 
 #define uv_stream_connection_fields                                           \
   unsigned int write_reqs_pending;                                            \
@@ -428,10 +446,13 @@ typedef struct {
   unsigned int reqs_pending;                                                  \
   int activecnt;                                                              \
   uv_read_t read_req;                                                         \
-  union {                                                                     \
-    struct { uv_stream_connection_fields } conn;                              \
-    struct { uv_stream_server_fields     } serv;                              \
-  } stream;
+  union _stream{                                                              \
+    struct _conn { uv_stream_connection_fields };                             \
+    _conn conn;                                                               \
+    struct _serv { uv_stream_server_fields     };                             \
+    _serv serv;                                                               \
+  };                                                                          \
+  _stream stream;
 
 #define uv_tcp_server_fields                                                  \
   uv_tcp_accept_t* accept_reqs;                                               \
@@ -446,10 +467,11 @@ typedef struct {
 #define UV_TCP_PRIVATE_FIELDS                                                 \
   SOCKET socket;                                                              \
   int delayed_error;                                                          \
-  union {                                                                     \
+  union _tcp {                                                                \
     struct { uv_tcp_server_fields } serv;                                     \
     struct { uv_tcp_connection_fields } conn;                                 \
-  } tcp;
+  };                                                                          \
+  _tcp tcp;
 
 #define UV_UDP_PRIVATE_FIELDS                                                 \
   SOCKET socket;                                                              \
@@ -457,7 +479,7 @@ typedef struct {
   int activecnt;                                                              \
   uv_req_t recv_req;                                                          \
   uv_buf_t recv_buffer;                                                       \
-  struct sockaddr_storage recv_from;                                          \
+  sockaddr_storage recv_from;                                                 \
   int recv_from_len;                                                          \
   uv_udp_recv_cb recv_cb;                                                     \
   uv_alloc_cb alloc_cb;                                                       \
@@ -473,10 +495,11 @@ typedef struct {
   uv_timer_t* eof_timer;                                                      \
   uv_write_t dummy; /* TODO: retained for ABI compat; remove this in v2.x. */ \
   DWORD ipc_remote_pid;                                                       \
-  union {                                                                     \
+  union _ipc_data_frame {                                                     \
     uint32_t payload_remaining;                                               \
     uint64_t dummy; /* TODO: retained for ABI compat; remove this in v2.x. */ \
-  } ipc_data_frame;                                                           \
+  };                                                                          \
+  _ipc_data_frame ipc_data_frame;                                             \
   void* ipc_xfer_queue[2];                                                    \
   int ipc_xfer_queue_length;                                                  \
   uv_write_t* non_overlapped_writes_tail;                                     \
@@ -486,17 +509,18 @@ typedef struct {
 #define UV_PIPE_PRIVATE_FIELDS                                                \
   HANDLE handle;                                                              \
   WCHAR* name;                                                                \
-  union {                                                                     \
+  union _pipe {                                                               \
     struct { uv_pipe_server_fields } serv;                                    \
     struct { uv_pipe_connection_fields } conn;                                \
-  } pipe;
+  };                                                                          \
+  _pipe pipe;
 
 /* TODO: put the parser states in an union - TTY handles are always half-duplex
  * so read-state can safely overlap write-state. */
 #define UV_TTY_PRIVATE_FIELDS                                                 \
   HANDLE handle;                                                              \
-  union {                                                                     \
-    struct {                                                                  \
+  union _tty {                                                                \
+    struct _rd {                                                              \
       /* Used for readable TTY handles */                                     \
       /* TODO: remove me in v2.x. */                                          \
       HANDLE unused_;                                                         \
@@ -508,8 +532,9 @@ typedef struct {
       unsigned char last_key_len;                                             \
       WCHAR last_utf16_high_surrogate;                                        \
       INPUT_RECORD last_input_record;                                         \
-    } rd;                                                                     \
-    struct {                                                                  \
+    };                                                                        \
+    _rd rd;                                                                   \
+    struct _wr {                                                              \
       /* Used for writable TTY handles */                                     \
       /* utf8-to-utf16 conversion state */                                    \
       unsigned int utf8_codepoint;                                            \
@@ -522,8 +547,10 @@ typedef struct {
       unsigned short ansi_csi_argv[4];                                        \
       COORD saved_position;                                                   \
       WORD saved_attributes;                                                  \
-    } wr;                                                                     \
-  } tty;
+    };                                                                        \
+    _wr wr;                                                                   \
+  };                                                                          \
+  _tty tty;
 
 #define UV_POLL_PRIVATE_FIELDS                                                \
   SOCKET socket;                                                              \
@@ -549,7 +576,7 @@ typedef struct {
   uv_timer_cb timer_cb;
 
 #define UV_ASYNC_PRIVATE_FIELDS                                               \
-  struct uv_req_s async_req;                                                  \
+  uv_req_s async_req;                                                         \
   uv_async_cb async_cb;                                                       \
   /* char to avoid alignment issues */                                        \
   char volatile async_sent;
@@ -574,7 +601,7 @@ typedef struct {
   unsigned int flags;
 
 #define UV_GETADDRINFO_PRIVATE_FIELDS                                         \
-  struct uv__work work_req;                                                   \
+  uv__work work_req;                                                          \
   uv_getaddrinfo_cb getaddrinfo_cb;                                           \
   void* alloc;                                                                \
   WCHAR* node;                                                                \
@@ -582,14 +609,14 @@ typedef struct {
   /* The addrinfoW field is used to store a pointer to the hints, and    */   \
   /* later on to store the result of GetAddrInfoW. The final result will */   \
   /* be converted to struct addrinfo* and stored in the addrinfo field.  */   \
-  struct addrinfoW* addrinfow;                                                \
-  struct addrinfo* addrinfo;                                                  \
+  addrinfoW* addrinfow;                                                       \
+  addrinfo* addrinfo;                                                         \
   int retcode;
 
 #define UV_GETNAMEINFO_PRIVATE_FIELDS                                         \
-  struct uv__work work_req;                                                   \
+  uv__work work_req;                                                          \
   uv_getnameinfo_cb getnameinfo_cb;                                           \
-  struct sockaddr_storage storage;                                            \
+  sockaddr_storage storage;                                                   \
   int flags;                                                                  \
   char host[NI_MAXHOST];                                                      \
   char service[NI_MAXSERV];                                                   \
@@ -598,7 +625,9 @@ typedef struct {
 #define UV_PROCESS_PRIVATE_FIELDS                                             \
   struct uv_process_exit_s {                                                  \
     UV_REQ_FIELDS                                                             \
-  } exit_req;                                                                 \
+  };                                                                          \
+  typedef uv_process_exit_s _exit_req;                                        \
+  _exit_req exit_req;                                                         \
   BYTE* child_stdio_buffer;                                                   \
   int exit_signal;                                                            \
   HANDLE wait_handle;                                                         \
@@ -606,16 +635,17 @@ typedef struct {
   volatile char exit_cb_pending;
 
 #define UV_FS_PRIVATE_FIELDS                                                  \
-  struct uv__work work_req;                                                   \
+  uv__work work_req;                                                          \
   int flags;                                                                  \
   DWORD sys_errno_;                                                           \
-  union {                                                                     \
+  union _file {                                                               \
     /* TODO: remove me in 0.9. */                                             \
     WCHAR* pathw;                                                             \
     int fd;                                                                   \
-  } file;                                                                     \
-  union {                                                                     \
-    struct {                                                                  \
+  };                                                                          \
+  _file file;                                                                 \
+  union _fs {                                                                 \
+    struct _info {                                                            \
       int mode;                                                               \
       WCHAR* new_pathw;                                                       \
       int file_flags;                                                         \
@@ -624,20 +654,25 @@ typedef struct {
       uv_buf_t* bufs;                                                         \
       int64_t offset;                                                         \
       uv_buf_t bufsml[4];                                                     \
-    } info;                                                                   \
-    struct {                                                                  \
+    };                                                                        \
+    _info info;                                                               \
+    struct _time {                                                            \
       double atime;                                                           \
       double mtime;                                                           \
-    } time;                                                                   \
-  } fs;
+    };                                                                        \
+    _time time;                                                               \
+  };                                                                          \
+  _fs fs;
 
 #define UV_WORK_PRIVATE_FIELDS                                                \
-  struct uv__work work_req;
+  uv__work work_req;
 
 #define UV_FS_EVENT_PRIVATE_FIELDS                                            \
   struct uv_fs_event_req_s {                                                  \
     UV_REQ_FIELDS                                                             \
-  } req;                                                                      \
+  };                                                                          \
+  typedef uv_fs_event_req_s _req;                                             \
+  _req req;                                                                   \
   HANDLE dir_handle;                                                          \
   int req_pending;                                                            \
   uv_fs_event_cb cb;                                                          \
@@ -648,7 +683,7 @@ typedef struct {
 
 #define UV_SIGNAL_PRIVATE_FIELDS                                              \
   RB_ENTRY(uv_signal_s) tree_entry;                                           \
-  struct uv_req_s signal_req;                                                 \
+  uv_req_s signal_req;                                                        \
   unsigned long pending_signum;
 
 #ifndef F_OK

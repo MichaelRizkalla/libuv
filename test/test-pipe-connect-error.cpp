@@ -37,7 +37,7 @@ static int connect_cb_called = 0;
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 
@@ -79,9 +79,8 @@ TEST_IMPL(pipe_connect_to_file) {
   const char* path = "test/fixtures/empty_file";
   uv_pipe_t client;
   uv_connect_t req;
-  int r;
 
-  r = uv_pipe_init(uv_default_loop(), &client, 0);
+  int r = uv_pipe_init(uv_default_loop(), &client, 0);
   ASSERT(r == 0);
   uv_pipe_connect(&req, &client, path, connect_cb_file);
 

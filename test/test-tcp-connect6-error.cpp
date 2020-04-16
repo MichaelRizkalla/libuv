@@ -30,13 +30,13 @@ static int close_cb_called = 0;
 
 
 static void connect_cb(uv_connect_t* handle, int status) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   connect_cb_called++;
 }
 
 
 static void close_cb(uv_handle_t* handle) {
-  ASSERT(handle != NULL);
+  ASSERT(handle != nullptr);
   close_cb_called++;
 }
 

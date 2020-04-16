@@ -62,7 +62,7 @@ static void worker(void* arg) {
   int is_slow_work;
 
   uv_sem_post((uv_sem_t*) arg);
-  arg = NULL;
+  arg = nullptr;
 
   uv_mutex_lock(&mutex);
   for (;;) {
@@ -124,7 +124,7 @@ static void worker(void* arg) {
     w->work(w);
 
     uv_mutex_lock(&w->loop->wq_mutex);
-    w->work = NULL;  /* Signal uv_cancel() that the work req is done
+    w->work = nullptr;  /* Signal uv_cancel() that the work req is done
                         executing. */
     QUEUE_INSERT_TAIL(&w->loop->wq, &w->wq);
     uv_async_send(&w->loop->wq_async);
@@ -181,7 +181,7 @@ UV_DESTRUCTOR(static void cleanup(void)) {
   uv_mutex_destroy(&mutex);
   uv_cond_destroy(&cond);
 
-  threads = NULL;
+  threads = nullptr;
   nthreads = 0;
 }
 #endif
@@ -194,7 +194,7 @@ static void init_threads(void) {
 
   nthreads = ARRAY_SIZE(default_threads);
   val = getenv("UV_THREADPOOL_SIZE");
-  if (val != NULL)
+  if (val != nullptr)
     nthreads = atoi(val);
   if (nthreads == 0)
     nthreads = 1;
@@ -204,7 +204,7 @@ static void init_threads(void) {
   threads = default_threads;
   if (nthreads > ARRAY_SIZE(default_threads)) {
     threads = create_ptrstruct<uv_thread_t>(nthreads * sizeof(threads[0]));
-    if (threads == NULL) {
+    if (threads == nullptr) {
       nthreads = ARRAY_SIZE(default_threads);
       threads = default_threads;
     }
@@ -248,7 +248,7 @@ static void init_once(void) {
    * Note that this discards the global mutex and condition as well
    * as the work queue.
    */
-  if (pthread_atfork(NULL, NULL, &reset_once))
+  if (pthread_atfork(nullptr, nullptr, &reset_once))
     abort();
 #endif
   init_threads();
@@ -274,7 +274,7 @@ static int uv__work_cancel(uv_loop_t* loop, uv_req_t* req, struct uv__work* w) {
   uv_mutex_lock(&mutex);
   uv_mutex_lock(&w->loop->wq_mutex);
 
-  cancelled = !QUEUE_EMPTY(&w->wq) && w->work != NULL;
+  cancelled = !QUEUE_EMPTY(&w->wq) && w->work != nullptr;
   if (cancelled)
     QUEUE_REMOVE(&w->wq);
 
@@ -330,7 +330,7 @@ static void uv__queue_done(struct uv__work* w, int err) {
   req = container_of(w, uv_work_t, work_req);
   uv__req_unregister(req->loop, req);
 
-  if (req->after_work_cb == NULL)
+  if (req->after_work_cb == nullptr)
     return;
 
   req->after_work_cb(req, err);
@@ -341,7 +341,7 @@ int uv_queue_work(uv_loop_t* loop,
                   uv_work_t* req,
                   uv_work_cb work_cb,
                   uv_after_work_cb after_work_cb) {
-  if (work_cb == NULL)
+  if (work_cb == nullptr)
     return UV_EINVAL;
 
   uv__req_init(loop, req, UV_WORK);

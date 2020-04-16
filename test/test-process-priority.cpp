@@ -33,8 +33,8 @@ TEST_IMPL(process_priority) {
     RETURN_SKIP("functionality not supported on zOS");
 #endif
 
-  /* Verify that passing a NULL pointer returns UV_EINVAL. */
-  r = uv_os_getpriority(0, NULL);
+  /* Verify that passing a nullptr pointer returns UV_EINVAL. */
+  r = uv_os_getpriority(0, nullptr);
   ASSERT(r == UV_EINVAL);
 
   /* Verify that all valid values work. */

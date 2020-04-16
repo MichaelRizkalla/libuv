@@ -38,7 +38,7 @@
 static int uv__ifaddr_exclude(struct ifaddrs *ent, int exclude_type) {
   if (!((ent->ifa_flags & IFF_UP) && (ent->ifa_flags & IFF_RUNNING)))
     return 1;
-  if (ent->ifa_addr == NULL)
+  if (ent->ifa_addr == nullptr)
     return 1;
 #if !defined(__CYGWIN__) && !defined(__MSYS__)
   /*
@@ -74,13 +74,13 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 #endif
 
   *count = 0;
-  *addresses = NULL;
+  *addresses = nullptr;
 
   if (getifaddrs(&addrs) != 0)
     return UV__ERR(errno);
 
   /* Count the number of interfaces */
-  for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
+  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
     (*count)++;
@@ -94,14 +94,14 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   /* Make sure the memory is initiallized to zero using calloc() */
   *addresses = uv__calloc(*count, sizeof(**addresses));
 
-  if (*addresses == NULL) {
+  if (*addresses == nullptr) {
     freeifaddrs(addrs);
     return UV_ENOMEM;
   }
 
   address = *addresses;
 
-  for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
+  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
 
@@ -126,7 +126,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
 #if !(defined(__CYGWIN__) || defined(__MSYS__))
   /* Fill in physical addresses for each interface */
-  for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
+  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFPHYS))
       continue;
 

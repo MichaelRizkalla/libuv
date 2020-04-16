@@ -79,8 +79,8 @@ static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf) {
     fprintf(stderr, "read_cb error: %s\n", uv_err_name(nread));
     ASSERT(nread == UV_ECONNRESET || nread == UV_EOF);
 
-    uv_close((uv_handle_t*)&tcp_server, NULL);
-    uv_close((uv_handle_t*)&tcp_peer, NULL);
+    uv_close((uv_handle_t*)&tcp_server, nullptr);
+    uv_close((uv_handle_t*)&tcp_peer, nullptr);
   }
 
   read_cb_called++;
@@ -92,7 +92,7 @@ static void connect_cb(uv_connect_t* req, int status) {
   ASSERT(status == 0);
 
   /* Close the client. */
-  uv_close((uv_handle_t*)&tcp_client, NULL);
+  uv_close((uv_handle_t*)&tcp_client, nullptr);
 }
 
 
@@ -110,7 +110,7 @@ TEST_IMPL(tcp_write_to_half_open_connection) {
   ASSERT(0 == uv_ip4_addr("127.0.0.1", TEST_PORT, &addr));
 
   loop = uv_default_loop();
-  ASSERT(loop != NULL);
+  ASSERT(loop != nullptr);
 
   r = uv_tcp_init(loop, &tcp_server);
   ASSERT(r == 0);
