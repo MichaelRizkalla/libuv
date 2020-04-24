@@ -27,7 +27,7 @@
 #include "req-inl.h"
 
 #ifndef GetNameInfo
-int WSAAPI GetNameInfoW(
+auto WSAAPI GetNameInfoW(
   const SOCKADDR *pSockaddr,
   socklen_t SockaddrLength,
   PWCHAR pNodeBuffer,
@@ -35,34 +35,32 @@ int WSAAPI GetNameInfoW(
   PWCHAR pServiceBuffer,
   DWORD ServiceBufferSize,
   INT Flags
-);
+) -> int;
 #endif
 
-static void uv__getnameinfo_work(struct uv__work* w) {
-  uv_getnameinfo_t* req;
+static void uv__getnameinfo_work(uv__work* w) {
   WCHAR host[NI_MAXHOST];
   WCHAR service[NI_MAXSERV];
-  int ret;
 
-  req = container_of(w, uv_getnameinfo_t, work_req);
-  if (GetNameInfoW((struct sockaddr*)&req->storage,
-                   sizeof(req->storage),
+  auto *req = container_of(w, uv_getnameinfo_t, work_req);
+  if (GetNameInfoW(reinterpret_cast<sockaddr*>(&req->storage),
+                   sizeof(decltype(req->storage)),
                    host,
                    ARRAY_SIZE(host),
                    service,
                    ARRAY_SIZE(service),
                    req->flags)) {
-    ret = WSAGetLastError();
+    auto ret = WSAGetLastError();
     req->retcode = uv__getaddrinfo_translate_error(ret);
     return;
   }
 
-  ret = WideCharToMultiByte(CP_UTF8,
+  auto ret = WideCharToMultiByte(CP_UTF8,
                             0,
                             host,
                             -1,
                             req->host,
-                            sizeof(req->host),
+                            sizeof(decltype(req->host)),
                             nullptr,
                             nullptr);
   if (ret == 0) {
@@ -75,7 +73,7 @@ static void uv__getnameinfo_work(struct uv__work* w) {
                             service,
                             -1,
                             req->service,
-                            sizeof(req->service),
+                            sizeof(decltype(req->service)),
                             nullptr,
                             nullptr);
   if (ret == 0) {
@@ -87,14 +85,12 @@ static void uv__getnameinfo_work(struct uv__work* w) {
 /*
 * Called from uv_run when complete.
 */
-static void uv__getnameinfo_done(struct uv__work* w, int status) {
-  uv_getnameinfo_t* req;
-  char* host;
-  char* service;
+static void uv__getnameinfo_done(uv__work* w, int status) {
 
-  req = container_of(w, uv_getnameinfo_t, work_req);
+  auto *req = container_of(w, uv_getnameinfo_t, work_req);
   uv__req_unregister(req->loop, req);
-  host = service = nullptr;
+  char *host = nullptr;
+  char *service = nullptr;
 
   if (status == UV_ECANCELED) {
     assert(req->retcode == 0);
@@ -117,7 +113,7 @@ static void uv__getnameinfo_done(struct uv__work* w, int status) {
 int uv_getnameinfo(uv_loop_t* loop,
                    uv_getnameinfo_t* req,
                    uv_getnameinfo_cb getnameinfo_cb,
-                   const struct sockaddr* addr,
+                   const sockaddr* addr,
                    int flags) {
   if (req == nullptr || addr == nullptr)
     return UV_EINVAL;
@@ -125,11 +121,11 @@ int uv_getnameinfo(uv_loop_t* loop,
   if (addr->sa_family == AF_INET) {
     memcpy(&req->storage,
            addr,
-           sizeof(struct sockaddr_in));
+           sizeof(sockaddr_in));
   } else if (addr->sa_family == AF_INET6) {
     memcpy(&req->storage,
            addr,
-           sizeof(struct sockaddr_in6));
+           sizeof(sockaddr_in6));
   } else {
     return UV_EINVAL;
   }

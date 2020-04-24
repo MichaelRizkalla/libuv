@@ -44,7 +44,7 @@ extern "C" UV_THREAD_LOCAL int uv__crt_assert_enabled;
 
 #define UV_BEGIN_DISABLE_CRT_ASSERT()                           \
   {                                                             \
-    int uv__saved_crt_assert_enabled = uv__crt_assert_enabled;  \
+    auto uv__saved_crt_assert_enabled = uv__crt_assert_enabled; \
     uv__crt_assert_enabled = FALSE;
 
 
@@ -72,14 +72,14 @@ struct uv__ipc_socket_xfer_info_t {
   uint32_t delayed_error;
 };
 
-int uv_tcp_listen(uv_tcp_t* handle, int backlog, uv_connection_cb cb);
-int uv_tcp_accept(uv_tcp_t* server, uv_tcp_t* client);
-int uv_tcp_read_start(uv_tcp_t* handle, uv_alloc_cb alloc_cb,
-    uv_read_cb read_cb);
-int uv_tcp_write(uv_loop_t* loop, uv_write_t* req, uv_tcp_t* handle,
-    const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb);
-int uv__tcp_try_write(uv_tcp_t* handle, const uv_buf_t bufs[],
-    unsigned int nbufs);
+auto uv_tcp_listen(uv_tcp_t* handle, int backlog, uv_connection_cb cb) -> int;
+auto uv_tcp_accept(uv_tcp_t* server, uv_tcp_t* client) -> int;
+auto uv_tcp_read_start(uv_tcp_t* handle, uv_alloc_cb alloc_cb,
+    uv_read_cb read_cb) -> int;
+auto uv_tcp_write(uv_loop_t* loop, uv_write_t* req, uv_tcp_t* handle,
+    const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) -> int;
+auto uv__tcp_try_write(uv_tcp_t* handle, const uv_buf_t bufs[],
+    unsigned int nbufs) -> int;
 
 void uv_process_tcp_read_req(uv_loop_t* loop, uv_tcp_t* handle, uv_req_t* req);
 void uv_process_tcp_write_req(uv_loop_t* loop, uv_tcp_t* handle,
@@ -92,13 +92,13 @@ void uv_process_tcp_connect_req(uv_loop_t* loop, uv_tcp_t* handle,
 void uv_tcp_close(uv_loop_t* loop, uv_tcp_t* tcp);
 void uv_tcp_endgame(uv_loop_t* loop, uv_tcp_t* handle);
 
-int uv__tcp_xfer_export(uv_tcp_t* handle,
+auto uv__tcp_xfer_export(uv_tcp_t* handle,
                         int pid,
                         uv__ipc_socket_xfer_type_t* xfer_type,
-                        uv__ipc_socket_xfer_info_t* xfer_info);
-int uv__tcp_xfer_import(uv_tcp_t* tcp,
+                        uv__ipc_socket_xfer_info_t* xfer_info) -> int;
+auto uv__tcp_xfer_import(uv_tcp_t* tcp,
                         uv__ipc_socket_xfer_type_t xfer_type,
-                        uv__ipc_socket_xfer_info_t* xfer_info);
+                        uv__ipc_socket_xfer_info_t* xfer_info) -> int;
 
 
 /*
@@ -115,21 +115,21 @@ void uv_udp_endgame(uv_loop_t* loop, uv_udp_t* handle);
 /*
  * Pipes
  */
-int uv_stdio_pipe_server(uv_loop_t* loop, uv_pipe_t* handle, DWORD access,
-    char* name, size_t nameSize);
+auto uv_stdio_pipe_server(uv_loop_t* loop, uv_pipe_t* handle, DWORD access,
+    char* name, size_t nameSize) -> int;
 
-int uv_pipe_listen(uv_pipe_t* handle, int backlog, uv_connection_cb cb);
-int uv_pipe_accept(uv_pipe_t* server, uv_stream_t* client);
-int uv_pipe_read_start(uv_pipe_t* handle, uv_alloc_cb alloc_cb,
-    uv_read_cb read_cb);
+auto uv_pipe_listen(uv_pipe_t* handle, int backlog, uv_connection_cb cb) -> int;
+auto uv_pipe_accept(uv_pipe_t* server, uv_stream_t* client) -> int;
+auto uv_pipe_read_start(uv_pipe_t* handle, uv_alloc_cb alloc_cb,
+    uv_read_cb read_cb) -> int;
 void uv__pipe_read_stop(uv_pipe_t* handle);
-int uv__pipe_write(uv_loop_t* loop,
+auto uv__pipe_write(uv_loop_t* loop,
                    uv_write_t* req,
                    uv_pipe_t* handle,
                    const uv_buf_t bufs[],
                    size_t nbufs,
                    uv_stream_t* send_handle,
-                   uv_write_cb cb);
+                   uv_write_cb cb) -> int;
 
 void uv_process_pipe_read_req(uv_loop_t* loop, uv_pipe_t* handle,
     uv_req_t* req);
@@ -152,13 +152,13 @@ void uv_pipe_endgame(uv_loop_t* loop, uv_pipe_t* handle);
  */
 void uv_console_init();
 
-int uv_tty_read_start(uv_tty_t* handle, uv_alloc_cb alloc_cb,
-    uv_read_cb read_cb);
-int uv_tty_read_stop(uv_tty_t* handle);
-int uv_tty_write(uv_loop_t* loop, uv_write_t* req, uv_tty_t* handle,
-    const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb);
-int uv__tty_try_write(uv_tty_t* handle, const uv_buf_t bufs[],
-    unsigned int nbufs);
+auto uv_tty_read_start(uv_tty_t* handle, uv_alloc_cb alloc_cb,
+    uv_read_cb read_cb) -> int;
+auto uv_tty_read_stop(uv_tty_t* handle) -> int;
+auto uv_tty_write(uv_loop_t* loop, uv_write_t* req, uv_tty_t* handle,
+    const uv_buf_t bufs[], unsigned int nbufs, uv_write_cb cb) -> int;
+auto uv__tty_try_write(uv_tty_t* handle, const uv_buf_t bufs[],
+    unsigned int nbufs) -> int;
 void uv_tty_close(uv_tty_t* handle);
 
 void uv_process_tty_read_req(uv_loop_t* loop, uv_tty_t* handle,
@@ -187,7 +187,7 @@ void uv_tty_endgame(uv_loop_t* loop, uv_tty_t* handle);
 void uv_process_poll_req(uv_loop_t* loop, uv_poll_t* handle,
     uv_req_t* req);
 
-int uv_poll_close(uv_loop_t* loop, uv_poll_t* handle);
+auto uv_poll_close(uv_loop_t* loop, uv_poll_t* handle) -> int;
 void uv_poll_endgame(uv_loop_t* loop, uv_poll_t* handle);
 
 
@@ -217,7 +217,7 @@ void uv_process_async_wakeup_req(uv_loop_t* loop, uv_async_t* handle,
  * Signal watcher
  */
 void uv_signals_init();
-int uv__signal_dispatch(int signum);
+auto uv__signal_dispatch(int signum) -> int;
 
 void uv_signal_close(uv_loop_t* loop, uv_signal_t* handle);
 void uv_signal_endgame(uv_loop_t* loop, uv_signal_t* handle);
@@ -237,7 +237,7 @@ void uv_process_endgame(uv_loop_t* loop, uv_process_t* handle);
 /*
  * Error
  */
-int uv_translate_sys_error(int sys_errno);
+auto uv_translate_sys_error(int sys_errno) -> int;
 
 
 /*
@@ -266,34 +266,34 @@ void uv__fs_poll_endgame(uv_loop_t* loop, uv_fs_poll_t* handle);
  */
 void uv__util_init();
 
-uint64_t uv__hrtime(double scale);
+auto uv__hrtime(double scale) -> uint64_t;
 __declspec(noreturn) void uv_fatal_error(const int errorno, const char* syscall);
-int uv__getpwuid_r(uv_passwd_t* pwd);
-int uv__convert_utf16_to_utf8(const WCHAR* utf16, int utf16len, char** utf8);
-int uv__convert_utf8_to_utf16(const char* utf8, int utf8len, WCHAR** utf16);
+auto uv__getpwuid_r(uv_passwd_t* pwd) -> int;
+auto uv__convert_utf16_to_utf8(const WCHAR* utf16, int utf16len, char** utf8) -> int;
+auto uv__convert_utf8_to_utf16(const char* utf8, int utf8len, WCHAR** utf16) -> int;
 
 typedef int (WINAPI *uv__peersockfunc)(SOCKET, sockaddr*, int*);
 
-int uv__getsockpeername(const uv_handle_t* handle,
+auto uv__getsockpeername(const uv_handle_t* handle,
                         uv__peersockfunc func,
                         sockaddr* name,
                         int* namelen,
-                        int delayed_error);
+                        int delayed_error) -> int;
 
-int uv__random_rtlgenrandom(void* buf, size_t buflen);
+auto uv__random_rtlgenrandom(void* buf, size_t buflen) -> int;
 
 
 /*
  * Process stdio handles.
  */
-int uv__stdio_create(uv_loop_t* loop,
+auto uv__stdio_create(uv_loop_t* loop,
                      const uv_process_options_t* options,
-                     BYTE** buffer_ptr);
+                     BYTE** buffer_ptr) -> int;
 void uv__stdio_destroy(BYTE* buffer);
 void uv__stdio_noinherit(BYTE* buffer);
-int uv__stdio_verify(BYTE* buffer, WORD size);
-WORD uv__stdio_size(BYTE* buffer);
-HANDLE uv__stdio_handle(BYTE* buffer, int fd);
+auto uv__stdio_verify(BYTE* buffer, WORD size) -> int;
+auto uv__stdio_size(BYTE* buffer) -> WORD;
+auto uv__stdio_handle(BYTE* buffer, int fd) -> HANDLE;
 
 
 /*
@@ -307,21 +307,21 @@ void uv_winapi_init();
  */
 void uv_winsock_init();
 
-int uv_ntstatus_to_winsock_error(NTSTATUS status);
+auto uv_ntstatus_to_winsock_error(NTSTATUS status) -> int;
 
-BOOL uv_get_acceptex_function(SOCKET socket, LPFN_ACCEPTEX* target);
-BOOL uv_get_connectex_function(SOCKET socket, LPFN_CONNECTEX* target);
+auto uv_get_acceptex_function(SOCKET socket, LPFN_ACCEPTEX* target) -> BOOL;
+auto uv_get_connectex_function(SOCKET socket, LPFN_CONNECTEX* target) -> BOOL;
 
-int WSAAPI uv_wsarecv_workaround(SOCKET socket, WSABUF* buffers,
+auto WSAAPI uv_wsarecv_workaround(SOCKET socket, WSABUF* buffers,
     DWORD buffer_count, DWORD* bytes, DWORD* flags, WSAOVERLAPPED *overlapped,
-    LPWSAOVERLAPPED_COMPLETION_ROUTINE completion_routine);
-int WSAAPI uv_wsarecvfrom_workaround(SOCKET socket, WSABUF* buffers,
+    LPWSAOVERLAPPED_COMPLETION_ROUTINE completion_routine) -> int;
+auto WSAAPI uv_wsarecvfrom_workaround(SOCKET socket, WSABUF* buffers,
     DWORD buffer_count, DWORD* bytes, DWORD* flags, struct sockaddr* addr,
     int* addr_len, WSAOVERLAPPED *overlapped,
-    LPWSAOVERLAPPED_COMPLETION_ROUTINE completion_routine);
+    LPWSAOVERLAPPED_COMPLETION_ROUTINE completion_routine) -> int;
 
-int WSAAPI uv_msafd_poll(SOCKET socket, AFD_POLL_INFO* info_in,
-    AFD_POLL_INFO* info_out, OVERLAPPED* overlapped);
+auto WSAAPI uv_msafd_poll(SOCKET socket, AFD_POLL_INFO* info_in,
+    AFD_POLL_INFO* info_out, OVERLAPPED* overlapped) -> int;
 
 /* Whether there are any non-IFS LSPs stacked on TCP */
 extern "C" int uv_tcp_non_ifs_lsp_ipv4;

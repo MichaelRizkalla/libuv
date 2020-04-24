@@ -32,7 +32,6 @@
 
 const unsigned int uv_directory_watcher_buffer_size = 4096;
 
-
 static void uv_fs_event_queue_readdirchanges(uv_loop_t* loop,
     uv_fs_event_t* handle) {
   assert(handle->dir_handle != INVALID_HANDLE_VALUE);
@@ -57,7 +56,7 @@ static void uv_fs_event_queue_readdirchanges(uv_loop_t* loop,
                              nullptr)) {
     /* Make this req pending reporting an error. */
     SET_REQ_ERROR(&handle->req, GetLastError());
-    uv_insert_pending_req(loop, (uv_req_t*)&handle->req);
+    uv_insert_pending_req(loop, reinterpret_cast<uv_req_t*>(&handle->req));
   }
 
   handle->req_pending = 1;
@@ -66,13 +65,12 @@ static void uv_fs_event_queue_readdirchanges(uv_loop_t* loop,
 static void uv_relative_path(const WCHAR* filename,
                              const WCHAR* dir,
                              WCHAR** relpath) {
-  size_t relpathlen;
-  size_t filenamelen = wcslen(filename);
-  size_t dirlen = wcslen(dir);
+  auto filenamelen = wcslen(filename);
+  auto dirlen = wcslen(dir);
   assert(!_wcsnicmp(filename, dir, dirlen));
   if (dirlen > 0 && dir[dirlen - 1] == '\\')
     dirlen--;
-  relpathlen = filenamelen - dirlen - 1;
+  auto relpathlen = filenamelen - dirlen - 1;
   *relpath = create_ptrstruct<WCHAR>((relpathlen + 1) * sizeof(WCHAR));
   if (!*relpath)
     uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
@@ -82,7 +80,6 @@ static void uv_relative_path(const WCHAR* filename,
 
 static int uv_split_path(const WCHAR* filename, WCHAR** dir,
     WCHAR** file) {
-  size_t len, i;
 
   if (filename == nullptr) {
     if (dir != nullptr)
@@ -91,8 +88,8 @@ static int uv_split_path(const WCHAR* filename, WCHAR** dir,
     return 0;
   }
 
-  len = wcslen(filename);
-  i = len;
+  auto len = wcslen(filename);
+  auto i = len;
   while (i > 0 && filename[--i] != '\\' && filename[i] != '/');
 
   if (i == 0) {
@@ -109,7 +106,7 @@ static int uv_split_path(const WCHAR* filename, WCHAR** dir,
       }
     }
 
-    *file = wcsdup(filename);
+    *file = _wcsdup(filename);
   } else {
     if (dir) {
       *dir = (WCHAR*)uv__malloc((i + 2) * sizeof(WCHAR));
@@ -131,9 +128,8 @@ static int uv_split_path(const WCHAR* filename, WCHAR** dir,
   return 0;
 }
 
-
 int uv_fs_event_init(uv_loop_t* loop, uv_fs_event_t* handle) {
-  uv__handle_init(loop, (uv_handle_t*) handle, UV_FS_EVENT);
+  uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(handle), UV_FS_EVENT);
   handle->dir_handle = INVALID_HANDLE_VALUE;
   handle->buffer = nullptr;
   handle->req_pending = 0;
@@ -147,175 +143,7 @@ int uv_fs_event_init(uv_loop_t* loop, uv_fs_event_t* handle) {
   return 0;
 }
 
-
-int uv_fs_event_start(uv_fs_event_t* handle,
-                      uv_fs_event_cb cb,
-                      const char* path,
-                      unsigned int flags) {
-  int name_size, is_path_dir, size;
-  DWORD attr, last_error;
-  WCHAR* dir = nullptr, *dir_to_watch, *pathw = nullptr;
-  WCHAR short_path_buffer[MAX_PATH];
-  WCHAR* short_path, *long_path;
-
-  if (uv__is_active(handle))
-    return UV_EINVAL;
-
-  handle->cb = cb;
-  handle->path = uv__strdup(path);
-  if (!handle->path) {
-    uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
-  }
-
-  uv__handle_start(handle);
-
-  /* Convert name to UTF16. */
-
-  name_size = MultiByteToWideChar(CP_UTF8, 0, path, -1, nullptr, 0) *
-              sizeof(WCHAR);
-  pathw = (WCHAR*)uv__malloc(name_size);
-  if (!pathw) {
-    uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
-  }
-
-  if (!MultiByteToWideChar(CP_UTF8,
-                           0,
-                           path,
-                           -1,
-                           pathw,
-                           name_size / sizeof(WCHAR))) {
-    return uv_translate_sys_error(GetLastError());
-  }
-
-  /* Determine whether path is a file or a directory. */
-  attr = GetFileAttributesW(pathw);
-  if (attr == INVALID_FILE_ATTRIBUTES) {
-    last_error = GetLastError();
-    goto error;
-  }
-
-  is_path_dir = (attr & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
-
-  if (is_path_dir) {
-     /* path is a directory, so that's the directory that we will watch. */
-
-    /* Convert to long path. */
-    size = GetLongPathNameW(pathw, nullptr, 0);
-
-    if (size) {
-      long_path = (WCHAR*)uv__malloc(size * sizeof(WCHAR));
-      if (!long_path) {
-        uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
-      }
-
-      size = GetLongPathNameW(pathw, long_path, size);
-      if (size) {
-        long_path[size] = '\0';
-      } else {
-        uv__free(long_path);
-        long_path = nullptr;
-      }
-
-      if (long_path) {
-        uv__free(pathw);
-        pathw = long_path;
-      }
-    }
-
-    dir_to_watch = pathw;
-  } else {
-    /*
-     * path is a file.  So we split path into dir & file parts, and
-     * watch the dir directory.
-     */
-
-    /* Convert to short path. */
-    if (GetShortPathNameW(pathw,
-                          short_path_buffer,
-                          ARRAY_SIZE(short_path_buffer))) {
-      short_path = short_path_buffer;
-    } else {
-      short_path = nullptr;
-    }
-
-    if (uv_split_path(pathw, &dir, &handle->filew) != 0) {
-      last_error = GetLastError();
-      goto error;
-    }
-
-    if (uv_split_path(short_path, nullptr, &handle->short_filew) != 0) {
-      last_error = GetLastError();
-      goto error;
-    }
-
-    dir_to_watch = dir;
-    uv__free(pathw);
-    pathw = nullptr;
-  }
-
-  handle->dir_handle = CreateFileW(dir_to_watch,
-                                   FILE_LIST_DIRECTORY,
-                                   FILE_SHARE_READ | FILE_SHARE_DELETE |
-                                     FILE_SHARE_WRITE,
-                                   nullptr,
-                                   OPEN_EXISTING,
-                                   FILE_FLAG_BACKUP_SEMANTICS |
-                                     FILE_FLAG_OVERLAPPED,
-                                   nullptr);
-
-  if (dir) {
-    uv__free(dir);
-    dir = nullptr;
-  }
-
-  if (handle->dir_handle == INVALID_HANDLE_VALUE) {
-    last_error = GetLastError();
-    goto error;
-  }
-
-  if (CreateIoCompletionPort(handle->dir_handle,
-                             handle->loop->iocp,
-                             (ULONG_PTR)handle,
-                             0) == nullptr) {
-    last_error = GetLastError();
-    goto error;
-  }
-
-  if (!handle->buffer) {
-    handle->buffer = (char*)uv__malloc(uv_directory_watcher_buffer_size);
-  }
-  if (!handle->buffer) {
-    uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
-  }
-
-  memset(&(handle->req.u.io.overlapped), 0,
-         sizeof(handle->req.u.io.overlapped));
-
-  if (!ReadDirectoryChangesW(handle->dir_handle,
-                             handle->buffer,
-                             uv_directory_watcher_buffer_size,
-                             (flags & UV_FS_EVENT_RECURSIVE) ? TRUE : FALSE,
-                             FILE_NOTIFY_CHANGE_FILE_NAME      |
-                               FILE_NOTIFY_CHANGE_DIR_NAME     |
-                               FILE_NOTIFY_CHANGE_ATTRIBUTES   |
-                               FILE_NOTIFY_CHANGE_SIZE         |
-                               FILE_NOTIFY_CHANGE_LAST_WRITE   |
-                               FILE_NOTIFY_CHANGE_LAST_ACCESS  |
-                               FILE_NOTIFY_CHANGE_CREATION     |
-                               FILE_NOTIFY_CHANGE_SECURITY,
-                             nullptr,
-                             &handle->req.u.io.overlapped,
-                             nullptr)) {
-    last_error = GetLastError();
-    goto error;
-  }
-
-  assert(is_path_dir ? pathw != nullptr : pathw == nullptr);
-  handle->dirw = pathw;
-  handle->req_pending = 1;
-  return 0;
-
-error:
+int uv_fs_event_start_error(uv_fs_event_t* handle, WCHAR* pathw, DWORD last_error){
   if (handle->path) {
     uv__free(handle->path);
     handle->path = nullptr;
@@ -347,8 +175,174 @@ error:
     uv__handle_stop(handle);
 
   return uv_translate_sys_error(last_error);
+
 }
 
+int uv_fs_event_start(uv_fs_event_t* handle,
+                      uv_fs_event_cb cb,
+                      const char* path,
+                      unsigned int flags) {
+  WCHAR short_path_buffer[MAX_PATH];
+
+  if (uv__is_active(handle))
+    return UV_EINVAL;
+
+  handle->cb = cb;
+  handle->path = uv__strdup(path);
+  if (!handle->path) {
+    uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
+  }
+
+  uv__handle_start(handle);
+
+  /* Convert name to UTF16. */
+
+  auto name_size = static_cast<int>(MultiByteToWideChar(CP_UTF8, 0, path, -1, nullptr, 0) *
+              sizeof(WCHAR));
+  auto pathw = (WCHAR*)uv__malloc(name_size);
+  if (!pathw) {
+    uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
+  }
+
+  if (!MultiByteToWideChar(CP_UTF8,
+                           0,
+                           path,
+                           -1,
+                           pathw,
+                           name_size / sizeof(WCHAR))) {
+    return uv_translate_sys_error(GetLastError());
+  }
+
+  /* Determine whether path is a file or a directory. */
+  auto attr = GetFileAttributesW(pathw);
+  if (attr == INVALID_FILE_ATTRIBUTES) {
+    auto last_error = GetLastError();
+    return uv_fs_event_start_error(handle, pathw, last_error);
+  }
+
+  auto is_path_dir = (attr & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
+
+  WCHAR* dir = nullptr, *dir_to_watch;
+  if (is_path_dir) {
+     /* path is a directory, so that's the directory that we will watch. */
+
+    /* Convert to long path. */
+    auto size = static_cast<int>(GetLongPathNameW(pathw, nullptr, 0));
+
+    if (size) {
+      auto long_path = (WCHAR*)uv__malloc(size * sizeof(WCHAR));
+      if (!long_path) {
+        uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
+      }
+
+      size = GetLongPathNameW(pathw, long_path, size);
+      if (size) {
+        long_path[size] = '\0';
+      } else {
+        uv__free(long_path);
+        long_path = nullptr;
+      }
+
+      if (long_path) {
+        uv__free(pathw);
+        pathw = long_path;
+      }
+    }
+
+    dir_to_watch = pathw;
+  } else {
+    /*
+     * path is a file.  So we split path into dir & file parts, and
+     * watch the dir directory.
+     */
+
+    /* Convert to short path. */
+    WCHAR *short_path;
+    if (GetShortPathNameW(pathw,
+                          short_path_buffer,
+                          ARRAY_SIZE(short_path_buffer))) {
+      short_path = short_path_buffer;
+    } else {
+      short_path = nullptr;
+    }
+
+    if (uv_split_path(pathw, &dir, &handle->filew) != 0) {
+      auto last_error = GetLastError();
+      return uv_fs_event_start_error(handle, pathw, last_error);
+    }
+
+    if (uv_split_path(short_path, nullptr, &handle->short_filew) != 0) {
+      auto last_error = GetLastError();
+      return uv_fs_event_start_error(handle, pathw, last_error);
+    }
+
+    dir_to_watch = dir;
+    uv__free(pathw);
+    pathw = nullptr;
+  }
+
+  handle->dir_handle = CreateFileW(dir_to_watch,
+                                   FILE_LIST_DIRECTORY,
+                                   FILE_SHARE_READ | FILE_SHARE_DELETE |
+                                     FILE_SHARE_WRITE,
+                                   nullptr,
+                                   OPEN_EXISTING,
+                                   FILE_FLAG_BACKUP_SEMANTICS |
+                                     FILE_FLAG_OVERLAPPED,
+                                   nullptr);
+
+  if (dir) {
+    uv__free(dir);
+    dir = nullptr;
+  }
+
+  if (handle->dir_handle == INVALID_HANDLE_VALUE) {
+    auto last_error = GetLastError();
+    return uv_fs_event_start_error(handle, pathw, last_error);
+  }
+
+  if (CreateIoCompletionPort(handle->dir_handle,
+                             handle->loop->iocp,
+                             reinterpret_cast<ULONG_PTR>(handle),
+                             0) == nullptr) {
+    auto last_error = GetLastError();
+    return uv_fs_event_start_error(handle, pathw, last_error);
+  }
+
+  if (!handle->buffer) {
+    handle->buffer = (char*)uv__malloc(uv_directory_watcher_buffer_size);
+  }
+  if (!handle->buffer) {
+    uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
+  }
+
+  memset(&(handle->req.u.io.overlapped), 0,
+         sizeof(handle->req.u.io.overlapped));
+
+  if (!ReadDirectoryChangesW(handle->dir_handle,
+                             handle->buffer,
+                             uv_directory_watcher_buffer_size,
+                             (flags & UV_FS_EVENT_RECURSIVE) ? true : false,
+                             FILE_NOTIFY_CHANGE_FILE_NAME      |
+                               FILE_NOTIFY_CHANGE_DIR_NAME     |
+                               FILE_NOTIFY_CHANGE_ATTRIBUTES   |
+                               FILE_NOTIFY_CHANGE_SIZE         |
+                               FILE_NOTIFY_CHANGE_LAST_WRITE   |
+                               FILE_NOTIFY_CHANGE_LAST_ACCESS  |
+                               FILE_NOTIFY_CHANGE_CREATION     |
+                               FILE_NOTIFY_CHANGE_SECURITY,
+                             nullptr,
+                             &handle->req.u.io.overlapped,
+                             nullptr)) {
+    auto last_error = GetLastError();
+    return uv_fs_event_start_error(handle, pathw, last_error);
+  }
+
+  assert(is_path_dir ? pathw != nullptr : pathw == nullptr);
+  handle->dirw = pathw;
+  handle->req_pending = 1;
+  return 0;
+}
 
 int uv_fs_event_stop(uv_fs_event_t* handle) {
   if (!uv__is_active(handle))
@@ -384,14 +378,12 @@ int uv_fs_event_stop(uv_fs_event_t* handle) {
   return 0;
 }
 
-
 static int file_info_cmp(WCHAR* str, WCHAR* file_name, size_t file_name_len) {
-  size_t str_len;
 
   if (str == nullptr)
     return -1;
 
-  str_len = wcslen(str);
+  auto str_len = wcslen(str);
 
   /*
     Since we only care about equality, return early if the strings
@@ -403,15 +395,8 @@ static int file_info_cmp(WCHAR* str, WCHAR* file_name, size_t file_name_len) {
   return _wcsnicmp(str, file_name, str_len);
 }
 
-
 void uv_process_fs_event_req(uv_loop_t* loop, uv_req_t* req,
     uv_fs_event_t* handle) {
-  FILE_NOTIFY_INFORMATION* file_info;
-  int err, sizew, size;
-  char* filename = nullptr;
-  WCHAR* filenamew = nullptr;
-  WCHAR* long_filenamew = nullptr;
-  DWORD offset = 0;
 
   assert(req->type == UV_FS_EVENT_REQ);
   assert(handle->req_pending);
@@ -423,17 +408,24 @@ void uv_process_fs_event_req(uv_loop_t* loop, uv_req_t* req,
    */
   if (!uv__is_active(handle)) {
     if (handle->flags & UV_HANDLE_CLOSING) {
-      uv_want_endgame(loop, (uv_handle_t*) handle);
+      uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
     }
     return;
   }
 
-  file_info = (FILE_NOTIFY_INFORMATION*)(handle->buffer + offset);
+  auto offset = DWORD{0};
+  auto file_info = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(handle->buffer + offset);
 
   if (REQ_SUCCESS(req)) {
     if (req->u.io.overlapped.InternalHigh > 0) {
       do {
-        file_info = (FILE_NOTIFY_INFORMATION*)((char*)file_info + offset);
+        char* filename = nullptr;
+        WCHAR* filenamew = nullptr;
+        WCHAR* long_filenamew = nullptr;
+        auto sizew = int{};
+        auto size = int{};
+
+        file_info = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(reinterpret_cast<char*>(file_info) + offset);
         assert(!filename);
         assert(!filenamew);
         assert(!long_filenamew);
@@ -460,8 +452,8 @@ void uv_process_fs_event_req(uv_loop_t* loop, uv_req_t* req,
             if (file_info->Action != FILE_ACTION_REMOVED &&
               file_info->Action != FILE_ACTION_RENAMED_OLD_NAME) {
               /* Construct a full path to the file. */
-              size = wcslen(handle->dirw) +
-                file_info->FileNameLength / sizeof(WCHAR) + 2;
+              size = static_cast<int>(wcslen(handle->dirw) +
+                file_info->FileNameLength / sizeof(WCHAR) + 2);
 
               filenamew = (WCHAR*)uv__malloc(size * sizeof(WCHAR));
               if (!filenamew) {
@@ -469,7 +461,7 @@ void uv_process_fs_event_req(uv_loop_t* loop, uv_req_t* req,
               }
 
               _snwprintf(filenamew, size, L"%s\\%.*s", handle->dirw,
-                file_info->FileNameLength / (DWORD)sizeof(WCHAR),
+                file_info->FileNameLength / static_cast<DWORD>(sizeof(WCHAR)),
                 file_info->FileName);
 
               filenamew[size - 1] = L'\0';
@@ -551,17 +543,16 @@ void uv_process_fs_event_req(uv_loop_t* loop, uv_req_t* req,
       handle->cb(handle, nullptr, UV_CHANGE, 0);
     }
   } else {
-    err = GET_REQ_ERROR(req);
+    auto err = GET_REQ_ERROR(req);
     handle->cb(handle, nullptr, 0, uv_translate_sys_error(err));
   }
 
   if (!(handle->flags & UV_HANDLE_CLOSING)) {
     uv_fs_event_queue_readdirchanges(loop, handle);
   } else {
-    uv_want_endgame(loop, (uv_handle_t*)handle);
+    uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
   }
 }
-
 
 void uv_fs_event_close(uv_loop_t* loop, uv_fs_event_t* handle) {
   uv_fs_event_stop(handle);
@@ -569,13 +560,13 @@ void uv_fs_event_close(uv_loop_t* loop, uv_fs_event_t* handle) {
   uv__handle_closing(handle);
 
   if (!handle->req_pending) {
-    uv_want_endgame(loop, (uv_handle_t*)handle);
+    uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
   }
 
 }
 
-
 void uv_fs_event_endgame(uv_loop_t* loop, uv_fs_event_t* handle) {
+  (void)loop;
   if ((handle->flags & UV_HANDLE_CLOSING) && !handle->req_pending) {
     assert(!(handle->flags & UV_HANDLE_CLOSED));
 

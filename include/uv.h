@@ -61,6 +61,7 @@ extern "C" {
 #endif
 
 #if defined(_WIN32)
+#define NOMINMAX
 # include "uv/win.h"
 #else
 # include "uv/unix.h"

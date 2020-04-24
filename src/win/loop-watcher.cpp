@@ -38,14 +38,14 @@ void uv_loop_watcher_endgame(uv_loop_t* loop, uv_handle_t* handle) {
 
 #define UV_LOOP_WATCHER_DEFINE(name, NAME)                                    \
   int uv_##name##_init(uv_loop_t* loop, uv_##name##_t* handle) {              \
-    uv__handle_init(loop, (uv_handle_t*) handle, UV_##NAME);                  \
+    uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(handle), UV_##NAME); \
                                                                               \
     return 0;                                                                 \
   }                                                                           \
                                                                               \
                                                                               \
   int uv_##name##_start(uv_##name##_t* handle, uv_##name##_cb cb) {           \
-    uv_loop_t* loop = handle->loop;                                           \
+    auto* loop = handle->loop;                                                \
     uv_##name##_t* old_head;                                                  \
                                                                               \
     assert(handle->type == UV_##NAME);                                        \
@@ -53,13 +53,13 @@ void uv_loop_watcher_endgame(uv_loop_t* loop, uv_handle_t* handle) {
     if (uv__is_active(handle))                                                \
       return 0;                                                               \
                                                                               \
-    if (cb == nullptr)                                                           \
+    if (cb == nullptr)                                                        \
       return UV_EINVAL;                                                       \
                                                                               \
     old_head = loop->name##_handles;                                          \
                                                                               \
     handle->name##_next = old_head;                                           \
-    handle->name##_prev = nullptr;                                               \
+    handle->name##_prev = nullptr;                                            \
                                                                               \
     if (old_head) {                                                           \
       old_head->name##_prev = handle;                                         \
@@ -75,7 +75,7 @@ void uv_loop_watcher_endgame(uv_loop_t* loop, uv_handle_t* handle) {
                                                                               \
                                                                               \
   int uv_##name##_stop(uv_##name##_t* handle) {                               \
-    uv_loop_t* loop = handle->loop;                                           \
+    auto* loop = handle->loop;                                                \
                                                                               \
     assert(handle->type == UV_##NAME);                                        \
                                                                               \
@@ -106,12 +106,11 @@ void uv_loop_watcher_endgame(uv_loop_t* loop, uv_handle_t* handle) {
                                                                               \
                                                                               \
   void uv_##name##_invoke(uv_loop_t* loop) {                                  \
-    uv_##name##_t* handle;                                                    \
                                                                               \
     (loop)->next_##name##_handle = (loop)->name##_handles;                    \
                                                                               \
-    while ((loop)->next_##name##_handle != nullptr) {                            \
-      handle = (loop)->next_##name##_handle;                                  \
+    while ((loop)->next_##name##_handle != nullptr) {                         \
+      auto handle = (loop)->next_##name##_handle;                             \
       (loop)->next_##name##_handle = handle->name##_next;                     \
                                                                               \
       handle->name##_cb(handle);                                              \

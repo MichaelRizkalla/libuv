@@ -142,14 +142,12 @@ INLINE static int uv_process_reqs(uv_loop_t* loop) {
   if (loop->pending_reqs_tail == nullptr)
     return 0;
 
-  uv_req_t *first, *next;
-
-  first = loop->pending_reqs_tail->next_req;
-  next = first;
+  auto *first = loop->pending_reqs_tail->next_req;
+  auto *next = first;
   loop->pending_reqs_tail = nullptr;
 
   while (next != nullptr) {
-    uv_req_t *req = next;
+    auto *req = next;
     next = req->next_req != first ? req->next_req : nullptr;
 
     switch (req->type) {
@@ -180,36 +178,34 @@ INLINE static int uv_process_reqs(uv_loop_t* loop) {
 
       case UV_UDP_RECV:
         printf("UV_UDP_RECV\n");
-        uv_process_udp_recv_req(loop, reinterpret_cast<uv_udp_t*>(req->data), req);
+        uv_process_udp_recv_req(loop, static_cast<uv_udp_t*>(req->data), req);
         break;
 
       case UV_UDP_SEND:
         printf("UV_UDP_SEND\n");
         uv_process_udp_send_req(loop,
-                                ((uv_udp_send_t*) req)->handle,
-                                (uv_udp_send_t*) req);
-                                /*(reinterpret_cast<uv_udp_send_t*>(req))->handle,
-                                reinterpret_cast<uv_udp_send_t*>(req));*/
+                                (reinterpret_cast<uv_udp_send_t*>(req))->handle,
+                                reinterpret_cast<uv_udp_send_t*>(req));
         break;
 
       case UV_WAKEUP:
-        uv_process_async_wakeup_req(loop, reinterpret_cast<uv_async_t*>(req->data), req);
+        uv_process_async_wakeup_req(loop, static_cast<uv_async_t*>(req->data), req);
         break;
 
       case UV_SIGNAL_REQ:
-        uv_process_signal_req(loop, reinterpret_cast<uv_signal_t*>(req->data), req);
+        uv_process_signal_req(loop, static_cast<uv_signal_t*>(req->data), req);
         break;
 
       case UV_POLL_REQ:
-        uv_process_poll_req(loop, reinterpret_cast<uv_poll_t*>(req->data), req);
+        uv_process_poll_req(loop, static_cast<uv_poll_t*>(req->data), req);
         break;
 
       case UV_PROCESS_EXIT:
-        uv_process_proc_exit(loop, reinterpret_cast<uv_process_t*>(req->data));
+        uv_process_proc_exit(loop, static_cast<uv_process_t*>(req->data));
         break;
 
       case UV_FS_EVENT_REQ:
-        uv_process_fs_event_req(loop, req, reinterpret_cast<uv_fs_event_t*>(req->data));
+        uv_process_fs_event_req(loop, req, static_cast<uv_fs_event_t*>(req->data));
         break;
 
       default:

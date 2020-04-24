@@ -29,7 +29,7 @@
 
 RB_HEAD(uv_signal_tree_s, uv_signal_s);
 
-static struct uv_signal_tree_s uv__signal_tree = RB_INITIALIZER(uv__signal_tree);
+static uv_signal_tree_s uv__signal_tree = RB_INITIALIZER(uv__signal_tree);
 static CRITICAL_SECTION uv__signal_lock;
 
 static BOOL WINAPI uv__signal_control_handler(DWORD type);
@@ -39,12 +39,11 @@ int uv__signal_start(uv_signal_t* handle,
                      int signum,
                      int oneshot);
 
-void uv_signals_init(void) {
+void uv_signals_init() {
   InitializeCriticalSection(&uv__signal_lock);
-  if (!SetConsoleCtrlHandler(uv__signal_control_handler, TRUE))
+  if (!SetConsoleCtrlHandler(uv__signal_control_handler, true))
     abort();
 }
-
 
 static int uv__signal_compare(uv_signal_t* w1, uv_signal_t* w2) {
   /* Compare signums first so all watchers with the same signnum end up
@@ -54,18 +53,16 @@ static int uv__signal_compare(uv_signal_t* w1, uv_signal_t* w2) {
 
   /* Sort by loop pointer, so we can easily look up the first item after
    * { .signum = x, .loop = nullptr }. */
-  if ((uintptr_t) w1->loop < (uintptr_t) w2->loop) return -1;
-  if ((uintptr_t) w1->loop > (uintptr_t) w2->loop) return 1;
+  if (reinterpret_cast<uintptr_t>(w1->loop) < reinterpret_cast<uintptr_t>(w2->loop)) return -1;
+  if (reinterpret_cast<uintptr_t>(w1->loop) > reinterpret_cast<uintptr_t>(w2->loop)) return 1;
 
-  if ((uintptr_t) w1 < (uintptr_t) w2) return -1;
-  if ((uintptr_t) w1 > (uintptr_t) w2) return 1;
+  if (reinterpret_cast<uintptr_t>(w1) < reinterpret_cast<uintptr_t>(w2)) return -1;
+  if (reinterpret_cast<uintptr_t>(w1) > reinterpret_cast<uintptr_t>(w2)) return 1;
 
   return 0;
 }
 
-
 RB_GENERATE_STATIC(uv_signal_tree_s, uv_signal_s, tree_entry, uv__signal_compare)
-
 
 /*
  * Dispatches signal {signum} to all active uv_signal_t watchers in all loops.
@@ -73,22 +70,21 @@ RB_GENERATE_STATIC(uv_signal_tree_s, uv_signal_s, tree_entry, uv__signal_compare
  * no active signal watchers observing this signal.
  */
 int uv__signal_dispatch(int signum) {
-  uv_signal_t lookup;
-  uv_signal_t* handle;
   int dispatched;
 
   dispatched = 0;
 
   EnterCriticalSection(&uv__signal_lock);
 
+  auto lookup = uv_signal_t{};
   lookup.signum = signum;
   lookup.loop = nullptr;
 
-  for (handle = RB_NFIND(uv_signal_tree_s, &uv__signal_tree, &lookup);
+  for (auto *handle = RB_NFIND(uv_signal_tree_s, &uv__signal_tree, &lookup);
        handle != nullptr && handle->signum == signum;
        handle = RB_NEXT(uv_signal_tree_s, &uv__signal_tree, handle)) {
     unsigned long previous = InterlockedExchange(
-            (volatile LONG*) &handle->pending_signum, signum);
+            reinterpret_cast<volatile LONG*>(&handle->pending_signum), signum);
 
     if (handle->flags & UV_SIGNAL_ONE_SHOT_DISPATCHED)
       continue;
@@ -107,7 +103,6 @@ int uv__signal_dispatch(int signum) {
   return dispatched;
 }
 
-
 static BOOL WINAPI uv__signal_control_handler(DWORD type) {
   switch (type) {
     case CTRL_C_EVENT:
@@ -123,9 +118,9 @@ static BOOL WINAPI uv__signal_control_handler(DWORD type) {
          * block the signal handler so the main loop has some time to pick up
          * the signal and do something for a few seconds. */
         Sleep(INFINITE);
-        return TRUE;
+        return true;
       }
-      return FALSE;
+      return false;
 
     case CTRL_LOGOFF_EVENT:
     case CTRL_SHUTDOWN_EVENT:
@@ -134,13 +129,12 @@ static BOOL WINAPI uv__signal_control_handler(DWORD type) {
 
     default:
       /* We don't handle these. */
-      return FALSE;
+      return false;
   }
 }
 
-
 int uv_signal_init(uv_loop_t* loop, uv_signal_t* handle) {
-  uv__handle_init(loop, (uv_handle_t*) handle, UV_SIGNAL);
+  uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(handle), UV_SIGNAL);
   handle->pending_signum = 0;
   handle->signum = 0;
   handle->signal_cb = nullptr;
@@ -151,9 +145,7 @@ int uv_signal_init(uv_loop_t* loop, uv_signal_t* handle) {
   return 0;
 }
 
-
 int uv_signal_stop(uv_signal_t* handle) {
-  uv_signal_t* removed_handle;
 
   /* If the watcher wasn't started, this is a no-op. */
   if (handle->signum == 0)
@@ -161,7 +153,7 @@ int uv_signal_stop(uv_signal_t* handle) {
 
   EnterCriticalSection(&uv__signal_lock);
 
-  removed_handle = RB_REMOVE(uv_signal_tree_s, &uv__signal_tree, handle);
+  auto *removed_handle = RB_REMOVE(uv_signal_tree_s, &uv__signal_tree, handle);
   assert(removed_handle == handle);
 
   LeaveCriticalSection(&uv__signal_lock);
@@ -172,18 +164,15 @@ int uv_signal_stop(uv_signal_t* handle) {
   return 0;
 }
 
-
 int uv_signal_start(uv_signal_t* handle, uv_signal_cb signal_cb, int signum) {
   return uv__signal_start(handle, signal_cb, signum, 0);
 }
-
 
 int uv_signal_start_oneshot(uv_signal_t* handle,
                             uv_signal_cb signal_cb,
                             int signum) {
   return uv__signal_start(handle, signal_cb, signum, 1);
 }
-
 
 int uv__signal_start(uv_signal_t* handle,
                             uv_signal_cb signal_cb,
@@ -204,7 +193,7 @@ int uv__signal_start(uv_signal_t* handle,
 
   /* If the signal handler was already active, stop it first. */
   if (handle->signum != 0) {
-    int r = uv_signal_stop(handle);
+    auto r = uv_signal_stop(handle);
     /* uv_signal_stop is infallible. */
     assert(r == 0);
   }
@@ -225,16 +214,14 @@ int uv__signal_start(uv_signal_t* handle,
   return 0;
 }
 
-
 void uv_process_signal_req(uv_loop_t* loop, uv_signal_t* handle,
     uv_req_t* req) {
-  long dispatched_signum;
 
   assert(handle->type == UV_SIGNAL);
   assert(req->type == UV_SIGNAL_REQ);
 
-  dispatched_signum = InterlockedExchange(
-          (volatile LONG*) &handle->pending_signum, 0);
+  auto dispatched_signum = InterlockedExchange(
+          reinterpret_cast<volatile LONG*>(&handle->pending_signum), 0);
   assert(dispatched_signum != 0);
 
   /* Check if the pending signal equals the signum that we are watching for.
@@ -249,20 +236,18 @@ void uv_process_signal_req(uv_loop_t* loop, uv_signal_t* handle,
   if (handle->flags & UV_HANDLE_CLOSING) {
     /* When it is closing, it must be stopped at this point. */
     assert(handle->signum == 0);
-    uv_want_endgame(loop, (uv_handle_t*) handle);
+    uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
   }
 }
-
 
 void uv_signal_close(uv_loop_t* loop, uv_signal_t* handle) {
   uv_signal_stop(handle);
   uv__handle_closing(handle);
 
   if (handle->pending_signum == 0) {
-    uv_want_endgame(loop, (uv_handle_t*) handle);
+    uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
   }
 }
-
 
 void uv_signal_endgame(uv_loop_t* loop, uv_signal_t* handle) {
   (void)loop;

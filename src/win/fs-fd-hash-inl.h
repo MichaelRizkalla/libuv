@@ -31,36 +31,35 @@ struct uv__fd_info_s {
 
 struct uv__fd_hash_entry_s {
   uv_file fd;
-  struct uv__fd_info_s info;
+  uv__fd_info_s info;
 };
 
 struct uv__fd_hash_entry_group_s {
-  struct uv__fd_hash_entry_s entries[UV__FD_HASH_GROUP_SIZE];
-  struct uv__fd_hash_entry_group_s* next;
+  uv__fd_hash_entry_s entries[UV__FD_HASH_GROUP_SIZE];
+  uv__fd_hash_entry_group_s* next;
 };
 
 struct uv__fd_hash_bucket_s {
   size_t size;
-  struct uv__fd_hash_entry_group_s* data;
+  uv__fd_hash_entry_group_s* data;
 };
 
 
 static uv_mutex_t uv__fd_hash_mutex;
 
-static struct uv__fd_hash_entry_group_s
+static uv__fd_hash_entry_group_s
   uv__fd_hash_entry_initial[UV__FD_HASH_SIZE * UV__FD_HASH_GROUP_SIZE];
-static struct uv__fd_hash_bucket_s uv__fd_hash[UV__FD_HASH_SIZE];
+static uv__fd_hash_bucket_s uv__fd_hash[UV__FD_HASH_SIZE];
 
 
 INLINE static void uv__fd_hash_init(void) {
-  int i, err;
 
-  err = uv_mutex_init(&uv__fd_hash_mutex);
+  auto err = uv_mutex_init(&uv__fd_hash_mutex);
   if (err) {
     uv_fatal_error(err, "uv_mutex_init");
   }
 
-  for (i = 0; i < ARRAY_SIZE(uv__fd_hash); ++i) {
+  for (auto i = 0; i < ARRAY_SIZE(uv__fd_hash); ++i) {
     uv__fd_hash[i].size = 0;
     uv__fd_hash[i].data =
         uv__fd_hash_entry_initial + i * UV__FD_HASH_GROUP_SIZE;
@@ -70,9 +69,9 @@ INLINE static void uv__fd_hash_init(void) {
 #define FIND_COMMON_VARIABLES                                                \
   unsigned i;                                                                \
   unsigned bucket = fd % ARRAY_SIZE(uv__fd_hash);                            \
-  struct uv__fd_hash_entry_s* entry_ptr = nullptr;                              \
-  struct uv__fd_hash_entry_group_s* group_ptr;                               \
-  struct uv__fd_hash_bucket_s* bucket_ptr = &uv__fd_hash[bucket];
+  uv__fd_hash_entry_s* entry_ptr = nullptr;                                  \
+  uv__fd_hash_entry_group_s* group_ptr;                                      \
+  uv__fd_hash_bucket_s* bucket_ptr = &uv__fd_hash[bucket];
 
 #define FIND_IN_GROUP_PTR(group_size)                                        \
   do {                                                                       \
@@ -92,12 +91,12 @@ INLINE static void uv__fd_hash_init(void) {
     group_ptr = bucket_ptr->data;                                            \
     FIND_IN_GROUP_PTR(first_group_size);                                     \
     for (group_ptr = group_ptr->next;                                        \
-         group_ptr != nullptr && entry_ptr == nullptr;                             \
+         group_ptr != nullptr && entry_ptr == nullptr;                       \
          group_ptr = group_ptr->next)                                        \
       FIND_IN_GROUP_PTR(UV__FD_HASH_GROUP_SIZE);                             \
   } while (0)
 
-INLINE static int uv__fd_hash_get(int fd, struct uv__fd_info_s* info) {
+INLINE static int uv__fd_hash_get(int fd, uv__fd_info_s* info) {
   FIND_COMMON_VARIABLES
 
   uv_mutex_lock(&uv__fd_hash_mutex);
@@ -123,7 +122,7 @@ INLINE static void uv__fd_hash_add(int fd, struct uv__fd_info_s* info) {
     i = bucket_ptr->size % UV__FD_HASH_GROUP_SIZE;
 
     if (bucket_ptr->size != 0 && i == 0) {
-      uv__fd_hash_entry_group_s* new_group_ptr =
+      auto *new_group_ptr =
         create_ptrstruct<uv__fd_hash_entry_group_s>(sizeof(uv__fd_hash_entry_group_s));
       if (new_group_ptr == nullptr) {
         uv_fatal_error(ERROR_OUTOFMEMORY, "uv__malloc");
@@ -142,7 +141,7 @@ INLINE static void uv__fd_hash_add(int fd, struct uv__fd_info_s* info) {
   uv_mutex_unlock(&uv__fd_hash_mutex);
 }
 
-INLINE static int uv__fd_hash_remove(int fd, struct uv__fd_info_s* info) {
+INLINE static int uv__fd_hash_remove(int fd, uv__fd_info_s* info) {
   FIND_COMMON_VARIABLES
 
   uv_mutex_lock(&uv__fd_hash_mutex);
@@ -161,7 +160,7 @@ INLINE static int uv__fd_hash_remove(int fd, struct uv__fd_info_s* info) {
 
     if (bucket_ptr->size != 0 &&
         bucket_ptr->size % UV__FD_HASH_GROUP_SIZE == 0) {
-      struct uv__fd_hash_entry_group_s* old_group_ptr = bucket_ptr->data;
+      auto *old_group_ptr = bucket_ptr->data;
       bucket_ptr->data = old_group_ptr->next;
       uv__free(old_group_ptr);
     }

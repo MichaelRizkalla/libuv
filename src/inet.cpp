@@ -194,7 +194,7 @@ static int inet_pton4(const char *src, unsigned char *dst) {
         return UV_EINVAL;
       if (nw > 255)
         return UV_EINVAL;
-      *tp = nw;
+      *tp = static_cast<unsigned char>(nw);
       if (!saw_digit) {
         if (++octets > 4)
           return UV_EINVAL;

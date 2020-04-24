@@ -169,7 +169,7 @@ INLINE static HANDLE uv__get_osfhandle(int fd)
    * invalid FDs in release builds (or if you let the assert continue). So this
    * wrapper function disables asserts when calling _get_osfhandle. */
 
-  HANDLE handle;
+  auto handle = HANDLE{};
   UV_BEGIN_DISABLE_CRT_ASSERT();
   handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
   UV_END_DISABLE_CRT_ASSERT();

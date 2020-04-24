@@ -24,7 +24,6 @@
 
 static int uv__dlerror(uv_lib_t* lib, const char* filename, DWORD errorno);
 
-
 int uv_dlopen(const char* filename, uv_lib_t* lib) {
   WCHAR filename_w[32768];
 
@@ -51,7 +50,7 @@ int uv_dlopen(const char* filename, uv_lib_t* lib) {
 
 void uv_dlclose(uv_lib_t* lib) {
   if (lib->errmsg) {
-    LocalFree((void*)lib->errmsg);
+    LocalFree(static_cast<void*>(lib->errmsg));
     lib->errmsg = nullptr;
   }
 
@@ -65,7 +64,7 @@ void uv_dlclose(uv_lib_t* lib) {
 
 int uv_dlsym(uv_lib_t* lib, const char* name, void** ptr) {
   /* Cast though integer to suppress pedantic warning about forbidden cast. */
-  *ptr = (void*)(uintptr_t) GetProcAddress(lib->handle, name);
+  *ptr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(GetProcAddress(lib->handle, name)));
   return uv__dlerror(lib, "", *ptr ? 0 : GetLastError());
 }
 
@@ -78,22 +77,19 @@ const char* uv_dlerror(const uv_lib_t* lib) {
 static void uv__format_fallback_error(uv_lib_t* lib, int errorno){
   static const CHAR fallback_error[] = "error: %1!d!";
   DWORD_PTR args[1];
-  args[0] = (DWORD_PTR) errorno;
+  args[0] = static_cast<DWORD_PTR>(errorno);
 
   FormatMessageA(FORMAT_MESSAGE_FROM_STRING |
                  FORMAT_MESSAGE_ARGUMENT_ARRAY |
                  FORMAT_MESSAGE_ALLOCATE_BUFFER,
                  fallback_error, 0, 0,
-                 (LPSTR) &lib->errmsg,
-                 0, (va_list*) args);
+                 reinterpret_cast<LPSTR>(&lib->errmsg),
+                 0, reinterpret_cast<va_list*>(args));
 }
 
 
 
 static int uv__dlerror(uv_lib_t* lib, const char* filename, DWORD errorno) {
-  DWORD_PTR arg;
-  DWORD res;
-  char* msg;
 
   if (lib->errmsg) {
     LocalFree(lib->errmsg);
@@ -103,29 +99,30 @@ static int uv__dlerror(uv_lib_t* lib, const char* filename, DWORD errorno) {
   if (errorno == 0)
     return 0;
 
-  res = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+  auto res = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                        FORMAT_MESSAGE_FROM_SYSTEM |
                        FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, errorno,
                        MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-                       (LPSTR) &lib->errmsg, 0, nullptr);
+                       reinterpret_cast<LPSTR>(&lib->errmsg), 0, nullptr);
 
   if (!res && (GetLastError() == ERROR_MUI_FILE_NOT_FOUND ||
                GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND)) {
     res = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                          FORMAT_MESSAGE_FROM_SYSTEM |
                          FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, errorno,
-                         0, (LPSTR) &lib->errmsg, 0, nullptr);
+                         0, reinterpret_cast<LPSTR>(&lib->errmsg), 0, nullptr);
   }
 
   if (res && errorno == ERROR_BAD_EXE_FORMAT && strstr(lib->errmsg, "%1")) {
-    msg = lib->errmsg;
+    auto msg = lib->errmsg;
     lib->errmsg = nullptr;
-    arg = (DWORD_PTR) filename;
+    auto arg = reinterpret_cast<DWORD_PTR>(filename);
     res = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
                          FORMAT_MESSAGE_ARGUMENT_ARRAY |
                          FORMAT_MESSAGE_FROM_STRING,
                          msg,
-                         0, 0, (LPSTR) &lib->errmsg, 0, (va_list*) &arg);
+                         0, 0, reinterpret_cast<LPSTR>(&lib->errmsg), 0, 
+                         reinterpret_cast<va_list*>(&arg));
     LocalFree(msg);
   }
 

@@ -27,7 +27,6 @@
 #include "handle-inl.h"
 #include "req-inl.h"
 
-
 void uv_async_endgame(uv_loop_t* loop, uv_async_t* handle) {
   (void)loop;
   if (handle->flags & UV_HANDLE_CLOSING &&
@@ -37,15 +36,13 @@ void uv_async_endgame(uv_loop_t* loop, uv_async_t* handle) {
   }
 }
 
-
 int uv_async_init(uv_loop_t* loop, uv_async_t* handle, uv_async_cb async_cb) {
-  uv_req_t* req;
 
-  uv__handle_init(loop, (uv_handle_t*) handle, UV_ASYNC);
+  uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(handle), UV_ASYNC);
   handle->async_sent = 0;
   handle->async_cb = async_cb;
 
-  req = &handle->async_req;
+  auto req = &handle->async_req;
   UV_REQ_INIT(req, UV_WAKEUP);
   req->data = handle;
 
@@ -54,18 +51,16 @@ int uv_async_init(uv_loop_t* loop, uv_async_t* handle, uv_async_cb async_cb) {
   return 0;
 }
 
-
 void uv_async_close(uv_loop_t* loop, uv_async_t* handle) {
-  if (!((uv_async_t*)handle)->async_sent) {
-    uv_want_endgame(loop, (uv_handle_t*) handle);
+  if (!reinterpret_cast<uv_async_t*>(handle)->async_sent) {
+    uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
   }
 
   uv__handle_closing(handle);
 }
 
-
 int uv_async_send(uv_async_t* handle) {
-  uv_loop_t* loop = handle->loop;
+  auto *loop = handle->loop;
 
   if (handle->type != UV_ASYNC) {
     /* Can't set errno because that's not thread-safe. */
@@ -83,7 +78,6 @@ int uv_async_send(uv_async_t* handle) {
   return 0;
 }
 
-
 void uv_process_async_wakeup_req(uv_loop_t* loop, uv_async_t* handle,
     uv_req_t* req) {
   assert(handle->type == UV_ASYNC);
@@ -92,7 +86,7 @@ void uv_process_async_wakeup_req(uv_loop_t* loop, uv_async_t* handle,
   handle->async_sent = 0;
 
   if (handle->flags & UV_HANDLE_CLOSING) {
-    uv_want_endgame(loop, (uv_handle_t*)handle);
+    uv_want_endgame(loop, reinterpret_cast<uv_handle_t*>(handle));
   } else if (handle->async_cb != nullptr) {
     handle->async_cb(handle);
   }

@@ -20,6 +20,7 @@
  */
 
 #include "uv-common.h"
+#include "utils/allocator.cpp"
 
 #if !defined(_WIN32)
 # include "unix/internal.h"
@@ -27,7 +28,6 @@
 
 #include <stdlib.h>
 
-#include "utils/allocator.cpp"
 
 #define MAX_THREADPOOL_SIZE 1024
 
@@ -49,6 +49,7 @@ static unsigned int slow_work_thread_threshold(void) {
 }
 
 static void uv__cancelled(struct uv__work* w) {
+  (void)w;
   abort();
 }
 
@@ -193,7 +194,7 @@ static void init_threads(void) {
   uv_sem_t sem;
 
   nthreads = ARRAY_SIZE(default_threads);
-  val = getenv("UV_THREADPOOL_SIZE");
+  val = std::getenv("UV_THREADPOOL_SIZE");
   if (val != nullptr)
     nthreads = atoi(val);
   if (nthreads == 0)
@@ -269,6 +270,7 @@ void uv__work_submit(uv_loop_t* loop,
 
 
 static int uv__work_cancel(uv_loop_t* loop, uv_req_t* req, struct uv__work* w) {
+  (void) req;
   int cancelled;
 
   uv_mutex_lock(&mutex);
