@@ -65,17 +65,15 @@
 
 
 int uv__platform_loop_init(uv_loop_t* loop) {
-  int err;
-  int fd;
 
   loop->fs_fd = -1;
   loop->backend_fd = -1;
 
-  fd = port_create();
+  auto fd = port_create();
   if (fd == -1)
     return UV__ERR(errno);
 
-  err = uv__cloexec(fd, 1);
+  auto err = uv__cloexec(fd, 1);
   if (err) {
     uv__close(fd);
     return err;
@@ -112,21 +110,18 @@ int uv__io_fork(uv_loop_t* loop) {
 
 
 void uv__platform_invalidate_fd(uv_loop_t* loop, int fd) {
-  struct port_event* events;
-  uintptr_t i;
-  uintptr_t nfds;
 
   assert(loop->watchers != nullptr);
   assert(fd >= 0);
 
-  events = (struct port_event*) loop->watchers[loop->nwatchers];
-  nfds = (uintptr_t) loop->watchers[loop->nwatchers + 1];
+  auto events = reinterpret_cast<port_event*>(loop->watchers[loop->nwatchers]);
+  auto nfds = static_cast<uintptr_t>(loop->watchers[loop->nwatchers + 1]);
   if (events == nullptr)
     return;
 
   /* Invalidate events with same file descriptor */
-  for (i = 0; i < nfds; i++)
-    if ((int) events[i].portev_object == fd)
+  for (auto i = 0ul; i < nfds; i++)
+    if (static_cast<int>(events[i].portev_object) == fd)
       events[i].portev_object = -1;
 }
 
@@ -145,35 +140,20 @@ int uv__io_check_fd(uv_loop_t* loop, int fd) {
 
 
 void uv__io_poll(uv_loop_t* loop, int timeout) {
-  struct port_event events[1024];
-  struct port_event* pe;
-  struct timespec spec;
-  QUEUE* q;
-  uv__io_t* w;
-  sigset_t* pset;
-  sigset_t set;
-  uint64_t base;
-  uint64_t diff;
-  unsigned int nfds;
-  unsigned int i;
-  int saved_errno;
-  int have_signals;
-  int nevents;
-  int count;
-  int err;
-  int fd;
 
+  port_event events[1024];
+  
   if (loop->nfds == 0) {
     assert(QUEUE_EMPTY(&loop->watcher_queue));
     return;
   }
 
   while (!QUEUE_EMPTY(&loop->watcher_queue)) {
-    q = QUEUE_HEAD(&loop->watcher_queue);
+    auto q = QUEUE_HEAD(&loop->watcher_queue);
     QUEUE_REMOVE(q);
     QUEUE_INIT(q);
 
-    w = QUEUE_DATA(q, uv__io_t, watcher_queue);
+    auto w = QUEUE_DATA(q, uv__io_t, watcher_queue);
     assert(w->pevents != 0);
 
     if (port_associate(loop->backend_fd,
@@ -188,7 +168,8 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     w->events = w->pevents;
   }
 
-  pset = nullptr;
+  sigset_t* pset = nullptr;
+  auto set = sigset_t{};
   if (loop->flags & UV_LOOP_BLOCK_SIGPROF) {
     pset = &set;
     sigemptyset(pset);
@@ -196,9 +177,10 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
   }
 
   assert(timeout >= -1);
-  base = loop->time;
-  count = 48; /* Benchmarks suggest this gives the best throughput. */
+  auto base = loop->time;
+  auto count = 48; /* Benchmarks suggest this gives the best throughput. */
 
+  auto spec = timespec{};
   for (;;) {
     if (timeout != -1) {
       spec.tv_sec = timeout / 1000;
@@ -208,13 +190,13 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     /* Work around a kernel bug where nfds is not updated. */
     events[0].portev_source = 0;
 
-    nfds = 1;
-    saved_errno = 0;
+    auto nfds = 1u;
+    auto saved_errno = 0;
 
     if (pset != nullptr)
       pthread_sigmask(SIG_BLOCK, pset, nullptr);
 
-    err = port_getn(loop->backend_fd,
+    auto err = port_getn(loop->backend_fd,
                     events,
                     ARRAY_SIZE(events),
                     &nfds,
@@ -248,7 +230,13 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       if (timeout == -1)
         continue;
 
-      goto update_timeout;
+      assert(timeout > 0);
+
+      auto diff = loop->time - base;
+      if (diff >= static_cast<uint64_t>(timeout))
+        return;
+
+      timeout -= diff;
     }
 
     if (nfds == 0) {
@@ -256,24 +244,24 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
       return;
     }
 
-    have_signals = 0;
-    nevents = 0;
+    auto have_signals = 0;
+    auto nevents = 0;
 
     assert(loop->watchers != nullptr);
-    loop->watchers[loop->nwatchers] = (void*) events;
-    loop->watchers[loop->nwatchers + 1] = (void*) (uintptr_t) nfds;
-    for (i = 0; i < nfds; i++) {
-      pe = events + i;
-      fd = pe->portev_object;
+    loop->watchers[loop->nwatchers] = static_cast<void*>(events);
+    loop->watchers[loop->nwatchers + 1] = static_cast<void*>(static_cast<uintptr_t>(nfds));
+    for (auto i = 0u; i < nfds; i++) {
+      auto pe = events + i;
+      auto fd = static_cast<int>(pe->portev_object);
 
       /* Skip invalidated events, see uv__platform_invalidate_fd */
       if (fd == -1)
         continue;
 
       assert(fd >= 0);
-      assert((unsigned) fd < loop->nwatchers);
+      assert(static_cast<unsigned>(fd) < loop->nwatchers);
 
-      w = loop->watchers[fd];
+      auto w = loop->watchers[fd];
 
       /* File descriptor that we've stopped watching, ignore. */
       if (w == nullptr)
@@ -326,11 +314,10 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
     if (timeout == -1)
       continue;
 
-update_timeout:
     assert(timeout > 0);
 
-    diff = loop->time - base;
-    if (diff >= (uint64_t) timeout)
+    auto diff = loop->time - base;
+    if (diff >= static_cast<uint64_t>(timeout))
       return;
 
     timeout -= diff;
@@ -349,15 +336,14 @@ uint64_t uv__hrtime(uv_clocktype_t type) {
  * we don't want to potentially create a race condition in the use of snprintf.
  */
 int uv_exepath(char* buffer, size_t* size) {
-  ssize_t res;
   char buf[128];
 
   if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
-  snprintf(buf, sizeof(buf), "/proc/%lu/path/a.out", (unsigned long) getpid());
+  snprintf(buf, sizeof(buf), "/proc/%lu/path/a.out", static_cast<unsigned long>(getpid()));
 
-  res = *size - 1;
+  auto res = static_cast<ssize_t>(*size - 1);
   if (res > 0)
     res = readlink(buf, buffer, res);
 
@@ -370,17 +356,17 @@ int uv_exepath(char* buffer, size_t* size) {
 }
 
 
-uint64_t uv_get_free_memory(void) {
-  return (uint64_t) sysconf(_SC_PAGESIZE) * sysconf(_SC_AVPHYS_PAGES);
+uint64_t uv_get_free_memory() {
+  return static_cast<uint64_t>(sysconf(_SC_PAGESIZE) * sysconf(_SC_AVPHYS_PAGES));
 }
 
 
-uint64_t uv_get_total_memory(void) {
-  return (uint64_t) sysconf(_SC_PAGESIZE) * sysconf(_SC_PHYS_PAGES);
+uint64_t uv_get_total_memory() {
+  return static_cast<uint64_t>(sysconf(_SC_PAGESIZE) * sysconf(_SC_PHYS_PAGES));
 }
 
 
-uint64_t uv_get_constrained_memory(void) {
+uint64_t uv_get_constrained_memory() {
   return 0;  /* Memory constraints are unknown. */
 }
 
@@ -398,7 +384,7 @@ static int uv__fs_event_rearm(uv_fs_event_t *handle) {
 
   if (port_associate(handle->loop->fs_fd,
                      PORT_SOURCE_FILE,
-                     (uintptr_t) &handle->fo,
+                     static_cast<uintptr_t>(&handle->fo),
                      FILE_ATTRIB | FILE_MODIFIED,
                      handle) == -1) {
     return UV__ERR(errno);
@@ -412,17 +398,14 @@ static int uv__fs_event_rearm(uv_fs_event_t *handle) {
 static void uv__fs_event_read(uv_loop_t* loop,
                               uv__io_t* w,
                               unsigned int revents) {
-  uv_fs_event_t *handle = nullptr;
-  timespec_t timeout;
-  port_event_t pe;
-  int events;
-  int r;
-
   (void) w;
   (void) revents;
 
   do {
-    uint_t n = 1;
+    auto n = uint_t{1};
+    auto timeout = timespec_t{};
+    auto pe = port_event_t{};
+    auto r = int{};
 
     /*
      * Note that our use of port_getn() here (and not port_get()) is deliberate:
@@ -441,10 +424,10 @@ static void uv__fs_event_read(uv_loop_t* loop,
     if ((r == -1 && errno == ETIME) || n == 0)
       break;
 
-    handle = (uv_fs_event_t*) pe.portev_user;
+    auto handle = (uv_fs_event_t*) pe.portev_user;
     assert((r == 0) && "unexpected port_get() error");
 
-    events = 0;
+    auto events = 0;
     if (pe.portev_events & (FILE_ATTRIB | FILE_MODIFIED))
       events |= UV_CHANGE;
     if (pe.portev_events & ~(FILE_ATTRIB | FILE_MODIFIED))
@@ -464,7 +447,7 @@ static void uv__fs_event_read(uv_loop_t* loop,
 
 
 int uv_fs_event_init(uv_loop_t* loop, uv_fs_event_t* handle) {
-  uv__handle_init(loop, (uv_handle_t*)handle, UV_FS_EVENT);
+  uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(handle), UV_FS_EVENT);
   return 0;
 }
 

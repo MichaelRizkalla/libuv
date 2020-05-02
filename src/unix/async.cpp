@@ -42,13 +42,12 @@ static int uv__async_start(uv_loop_t* loop);
 
 
 int uv_async_init(uv_loop_t* loop, uv_async_t* handle, uv_async_cb async_cb) {
-  int err;
 
-  err = uv__async_start(loop);
+  auto err = uv__async_start(loop);
   if (err)
     return err;
 
-  uv__handle_init(loop, (uv_handle_t*)handle, UV_ASYNC);
+  uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(handle), UV_ASYNC);
   handle->async_cb = async_cb;
   handle->pending = 0;
 
@@ -81,14 +80,13 @@ int uv_async_send(uv_async_t* handle) {
 
 /* Only call this from the event loop thread. */
 static int uv__async_spin(uv_async_t* handle) {
-  int rc;
 
   for (;;) {
     /* rc=0 -- handle is not pending.
      * rc=1 -- handle is pending, other thread is still working with it.
      * rc=2 -- handle is pending, other thread is done.
      */
-    rc = cmpxchgi(&handle->pending, 2, 0);
+    auto rc = cmpxchgi(&handle->pending, 2, 0);
 
     if (rc != 1)
       return rc;
@@ -107,16 +105,12 @@ void uv__async_close(uv_async_t* handle) {
 
 
 static void uv__async_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
-  char buf[1024];
-  ssize_t r;
-  QUEUE queue;
-  QUEUE* q;
-  uv_async_t* h;
 
+  char buf[1024];
   assert(w == &loop->async_io_watcher);
 
   for (;;) {
-    r = read(w->fd, buf, sizeof(buf));
+    auto r = read(w->fd, buf, sizeof(buf));
 
     if (r == sizeof(buf))
       continue;
@@ -133,10 +127,11 @@ static void uv__async_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
     abort();
   }
 
+  QUEUE queue;
   QUEUE_MOVE(&loop->async_handles, &queue);
   while (!QUEUE_EMPTY(&queue)) {
-    q = QUEUE_HEAD(&queue);
-    h = QUEUE_DATA(q, uv_async_t, queue);
+    auto q = QUEUE_HEAD(&queue);
+    auto h = QUEUE_DATA(q, uv_async_t, queue);
 
     QUEUE_REMOVE(q);
     QUEUE_INSERT_TAIL(&loop->async_handles, q);
@@ -153,24 +148,21 @@ static void uv__async_io(uv_loop_t* loop, uv__io_t* w, unsigned int events) {
 
 
 static void uv__async_send(uv_loop_t* loop) {
-  const void* buf;
-  ssize_t len;
-  int fd;
-  int r;
 
-  buf = "";
-  len = 1;
-  fd = loop->async_wfd;
+  auto buf = static_cast<const void*>("");
+  auto len = 1l;
+  auto fd = loop->async_wfd;
 
 #if defined(__linux__)
   if (fd == -1) {
     static const uint64_t val = 1;
     buf = &val;
-    len = sizeof(val);
+    len = sizeof(decltype(val));
     fd = loop->async_io_watcher.fd;  /* eventfd */
   }
 #endif
 
+  auto r = int{};
   do
     r = write(fd, buf, len);
   while (r == -1 && errno == EINTR);
@@ -188,20 +180,19 @@ static void uv__async_send(uv_loop_t* loop) {
 
 static int uv__async_start(uv_loop_t* loop) {
   int pipefd[2];
-  int err;
 
   if (loop->async_io_watcher.fd != -1)
     return 0;
 
 #ifdef __linux__
-  err = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
+  auto err = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
   if (err < 0)
     return UV__ERR(errno);
 
   pipefd[0] = err;
   pipefd[1] = -1;
 #else
-  err = uv__make_pipe(pipefd, UV__F_NONBLOCK);
+  auto err = uv__make_pipe(pipefd, UV__F_NONBLOCK);
   if (err < 0)
     return err;
 #endif

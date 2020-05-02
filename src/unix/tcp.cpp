@@ -29,17 +29,13 @@
 
 
 static int new_socket(uv_tcp_t* handle, int domain, unsigned long flags) {
-  struct sockaddr_storage saddr;
-  socklen_t slen;
-  int sockfd;
-  int err;
 
-  err = uv__socket(domain, SOCK_STREAM, 0);
+  auto err = uv__socket(domain, SOCK_STREAM, 0);
   if (err < 0)
     return err;
-  sockfd = err;
+  auto sockfd = err;
 
-  err = uv__stream_open((uv_stream_t*) handle, sockfd, flags);
+  err = uv__stream_open(reinterpret_cast<uv_stream_t*>(handle), sockfd, flags);
   if (err) {
     uv__close(sockfd);
     return err;
@@ -47,14 +43,15 @@ static int new_socket(uv_tcp_t* handle, int domain, unsigned long flags) {
 
   if (flags & UV_HANDLE_BOUND) {
     /* Bind this new socket to an arbitrary port */
-    slen = sizeof(saddr);
+    auto saddr = sockaddr_storage{};
+    auto slen = static_cast<socklen_t>(sizeof(saddr));
     memset(&saddr, 0, sizeof(saddr));
-    if (getsockname(uv__stream_fd(handle), (struct sockaddr*) &saddr, &slen)) {
+    if (getsockname(uv__stream_fd(handle), reinterpret_cast<sockaddr*>(&saddr), &slen)) {
       uv__close(sockfd);
       return UV__ERR(errno);
     }
 
-    if (bind(uv__stream_fd(handle), (struct sockaddr*) &saddr, slen)) {
+    if (bind(uv__stream_fd(handle), reinterpret_cast<sockaddr*>(&saddr), slen)) {
       uv__close(sockfd);
       return UV__ERR(errno);
     }
@@ -65,8 +62,6 @@ static int new_socket(uv_tcp_t* handle, int domain, unsigned long flags) {
 
 
 static int maybe_new_socket(uv_tcp_t* handle, int domain, unsigned long flags) {
-  struct sockaddr_storage saddr;
-  socklen_t slen;
 
   if (domain == AF_UNSPEC) {
     handle->flags |= flags;
@@ -84,22 +79,23 @@ static int maybe_new_socket(uv_tcp_t* handle, int domain, unsigned long flags) {
       }
 
       /* Query to see if tcp socket is bound. */
-      slen = sizeof(saddr);
+      auto saddr = sockaddr_storage{};
+      auto slen = static_cast<socklen_t>(sizeof(decltype(saddr)));
       memset(&saddr, 0, sizeof(saddr));
-      if (getsockname(uv__stream_fd(handle), (struct sockaddr*) &saddr, &slen))
+      if (getsockname(uv__stream_fd(handle), reinterpret_cast<sockaddr*>(&saddr), &slen))
         return UV__ERR(errno);
 
       if ((saddr.ss_family == AF_INET6 &&
-          ((struct sockaddr_in6*) &saddr)->sin6_port != 0) ||
+          (reinterpret_cast<sockaddr_in6*>(&saddr))->sin6_port != 0) ||
           (saddr.ss_family == AF_INET &&
-          ((struct sockaddr_in*) &saddr)->sin_port != 0)) {
+          (reinterpret_cast<sockaddr_in*>(&saddr))->sin_port != 0)) {
         /* Handle is already bound to a port. */
         handle->flags |= flags;
         return 0;
       }
 
       /* Bind to arbitrary port */
-      if (bind(uv__stream_fd(handle), (struct sockaddr*) &saddr, slen))
+      if (bind(uv__stream_fd(handle), reinterpret_cast<sockaddr*>(&saddr), slen))
         return UV__ERR(errno);
     }
 
@@ -112,24 +108,23 @@ static int maybe_new_socket(uv_tcp_t* handle, int domain, unsigned long flags) {
 
 
 int uv_tcp_init_ex(uv_loop_t* loop, uv_tcp_t* tcp, unsigned int flags) {
-  int domain;
 
   /* Use the lower 8 bits for the domain */
-  domain = flags & 0xFF;
+  auto domain = static_cast<int>(flags & 0xFF);
   if (domain != AF_INET && domain != AF_INET6 && domain != AF_UNSPEC)
     return UV_EINVAL;
 
   if (flags & ~0xFF)
     return UV_EINVAL;
 
-  uv__stream_init(loop, (uv_stream_t*)tcp, UV_TCP);
+  uv__stream_init(loop, reinterpret_cast<uv_stream_t*>(tcp), UV_TCP);
 
   /* If anything fails beyond this point we need to remove the handle from
    * the handle queue, since it was added by uv__handle_init in uv_stream_init.
    */
 
   if (domain != AF_UNSPEC) {
-    int err = maybe_new_socket(tcp, domain, 0);
+    auto err = maybe_new_socket(tcp, domain, 0);
     if (err) {
       QUEUE_REMOVE(&tcp->handle_queue);
       return err;
@@ -146,22 +141,20 @@ int uv_tcp_init(uv_loop_t* loop, uv_tcp_t* tcp) {
 
 
 int uv__tcp_bind(uv_tcp_t* tcp,
-                 const struct sockaddr* addr,
+                 const sockaddr* addr,
                  unsigned int addrlen,
                  unsigned int flags) {
-  int err;
-  int on;
 
   /* Cannot set IPv6-only mode on non-IPv6 socket. */
   if ((flags & UV_TCP_IPV6ONLY) && addr->sa_family != AF_INET6)
     return UV_EINVAL;
 
-  err = maybe_new_socket(tcp, addr->sa_family, 0);
+  auto err = maybe_new_socket(tcp, addr->sa_family, 0);
   if (err)
     return err;
 
-  on = 1;
-  if (setsockopt(tcp->io_watcher.fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)))
+  auto on = 1;
+  if (setsockopt(tcp->io_watcher.fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(decltype(on))))
     return UV__ERR(errno);
 
 #ifndef __OpenBSD__
@@ -172,7 +165,7 @@ int uv__tcp_bind(uv_tcp_t* tcp,
                    IPPROTO_IPV6,
                    IPV6_V6ONLY,
                    &on,
-                   sizeof on) == -1) {
+                   sizeof(decltype(on))) == -1) {
 #if defined(__MVS__)
       if (errno == EOPNOTSUPP)
         return UV_EINVAL;
@@ -203,18 +196,16 @@ int uv__tcp_bind(uv_tcp_t* tcp,
 
 int uv__tcp_connect(uv_connect_t* req,
                     uv_tcp_t* handle,
-                    const struct sockaddr* addr,
+                    const sockaddr* addr,
                     unsigned int addrlen,
                     uv_connect_cb cb) {
-  int err;
-  int r;
 
   assert(handle->type == UV_TCP);
 
   if (handle->connect_req != nullptr)
     return UV_EALREADY;  /* FIXME(bnoordhuis) UV_EINVAL or maybe UV_EBUSY. */
 
-  err = maybe_new_socket(handle,
+  auto err = maybe_new_socket(handle,
                          addr->sa_family,
                          UV_HANDLE_READABLE | UV_HANDLE_WRITABLE);
   if (err)
@@ -222,6 +213,7 @@ int uv__tcp_connect(uv_connect_t* req,
 
   handle->delayed_error = 0;
 
+  auto r = int{};
   do {
     errno = 0;
     r = connect(uv__stream_fd(handle), addr, addrlen);
@@ -251,7 +243,7 @@ int uv__tcp_connect(uv_connect_t* req,
 
   uv__req_init(handle->loop, req, UV_CONNECT);
   req->cb = cb;
-  req->handle = (uv_stream_t*) handle;
+  req->handle = reinterpret_cast<uv_stream_t*>(handle);
   QUEUE_INIT(&req->queue);
   handle->connect_req = req;
 
@@ -265,29 +257,28 @@ int uv__tcp_connect(uv_connect_t* req,
 
 
 int uv_tcp_open(uv_tcp_t* handle, uv_os_sock_t sock) {
-  int err;
 
   if (uv__fd_exists(handle->loop, sock))
     return UV_EEXIST;
 
-  err = uv__nonblock(sock, 1);
+  auto err = uv__nonblock(sock, 1);
   if (err)
     return err;
 
-  return uv__stream_open((uv_stream_t*)handle,
+  return uv__stream_open(reinterpret_cast<uv_stream_t*>(handle),
                          sock,
                          UV_HANDLE_READABLE | UV_HANDLE_WRITABLE);
 }
 
 
 int uv_tcp_getsockname(const uv_tcp_t* handle,
-                       struct sockaddr* name,
+                       sockaddr* name,
                        int* namelen) {
 
   if (handle->delayed_error)
     return handle->delayed_error;
 
-  return uv__getsockpeername((const uv_handle_t*) handle,
+  return uv__getsockpeername(reinterpret_cast<const uv_handle_t*>(handle),
                              getsockname,
                              name,
                              namelen);
@@ -295,13 +286,13 @@ int uv_tcp_getsockname(const uv_tcp_t* handle,
 
 
 int uv_tcp_getpeername(const uv_tcp_t* handle,
-                       struct sockaddr* name,
+                       sockaddr* name,
                        int* namelen) {
 
   if (handle->delayed_error)
     return handle->delayed_error;
 
-  return uv__getsockpeername((const uv_handle_t*) handle,
+  return uv__getsockpeername(reinterpret_cast<const uv_handle_t*>(handle),
                              getpeername,
                              name,
                              namelen);
@@ -309,26 +300,23 @@ int uv_tcp_getpeername(const uv_tcp_t* handle,
 
 
 int uv_tcp_close_reset(uv_tcp_t* handle, uv_close_cb close_cb) {
-  int fd;
-  struct linger l = { 1, 0 };
 
   /* Disallow setting SO_LINGER to zero due to some platform inconsistencies */
   if (handle->flags & UV_HANDLE_SHUTTING)
     return UV_EINVAL;
 
-  fd = uv__stream_fd(handle);
-  if (0 != setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)))
+  auto fd = uv__stream_fd(handle);
+  auto l = linger{ 1, 0 };
+  if (0 != setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(decltype(l))))
     return UV__ERR(errno);
 
-  uv_close((uv_handle_t*) handle, close_cb);
+  uv_close(reinterpret_cast<uv_handle_t*>(handle), close_cb);
   return 0;
 }
 
 
 int uv_tcp_listen(uv_tcp_t* tcp, int backlog, uv_connection_cb cb) {
   static int single_accept = -1;
-  unsigned long flags;
-  int err;
 
   if (tcp->delayed_error)
     return tcp->delayed_error;
@@ -341,7 +329,7 @@ int uv_tcp_listen(uv_tcp_t* tcp, int backlog, uv_connection_cb cb) {
   if (single_accept)
     tcp->flags |= UV_HANDLE_TCP_SINGLE_ACCEPT;
 
-  flags = 0;
+  auto flags = 0ul;
 #if defined(__MVS__)
   /* on zOS the listen call does not bind automatically
      if the socket is unbound. Hence the manual binding to
@@ -349,7 +337,7 @@ int uv_tcp_listen(uv_tcp_t* tcp, int backlog, uv_connection_cb cb) {
   */
   flags |= UV_HANDLE_BOUND;
 #endif
-  err = maybe_new_socket(tcp, AF_INET, flags);
+  auto err = maybe_new_socket(tcp, AF_INET, flags);
   if (err)
     return err;
 
@@ -368,7 +356,7 @@ int uv_tcp_listen(uv_tcp_t* tcp, int backlog, uv_connection_cb cb) {
 
 
 int uv__tcp_nodelay(int fd, int on) {
-  if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)))
+  if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(decltype(on))))
     return UV__ERR(errno);
   return 0;
 }
@@ -382,11 +370,11 @@ int uv__tcp_keepalive(int fd, int on, unsigned int delay) {
   if (on) {
     int intvl = 1;  /*  1 second; same as default on Win32 */
     int cnt = 10;  /* 10 retries; same as hardcoded on Win32 */
-    if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &delay, sizeof(delay)))
+    if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &delay, sizeof(decltype(delay))))
       return UV__ERR(errno);
-    if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl)))
+    if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(decltype(intvl))))
       return UV__ERR(errno);
-    if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &cnt, sizeof(cnt)))
+    if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &cnt, sizeof(decltype(cnt))))
       return UV__ERR(errno);
   }
 #endif
@@ -396,7 +384,7 @@ int uv__tcp_keepalive(int fd, int on, unsigned int delay) {
    */
   /* FIXME(bnoordhuis) That's possibly because sizeof(delay) should be 1. */
 #if defined(TCP_KEEPALIVE) && !defined(__sun)
-  if (on && setsockopt(fd, IPPROTO_TCP, TCP_KEEPALIVE, &delay, sizeof(delay)))
+  if (on && setsockopt(fd, IPPROTO_TCP, TCP_KEEPALIVE, &delay, sizeof(decltype(delay))))
     return UV__ERR(errno);
 #endif
 
@@ -405,10 +393,9 @@ int uv__tcp_keepalive(int fd, int on, unsigned int delay) {
 
 
 int uv_tcp_nodelay(uv_tcp_t* handle, int on) {
-  int err;
 
   if (uv__stream_fd(handle) != -1) {
-    err = uv__tcp_nodelay(uv__stream_fd(handle), on);
+    auto err = uv__tcp_nodelay(uv__stream_fd(handle), on);
     if (err)
       return err;
   }
@@ -423,10 +410,9 @@ int uv_tcp_nodelay(uv_tcp_t* handle, int on) {
 
 
 int uv_tcp_keepalive(uv_tcp_t* handle, int on, unsigned int delay) {
-  int err;
 
   if (uv__stream_fd(handle) != -1) {
-    err =uv__tcp_keepalive(uv__stream_fd(handle), on, delay);
+    auto err = uv__tcp_keepalive(uv__stream_fd(handle), on, delay);
     if (err)
       return err;
   }
@@ -454,5 +440,5 @@ int uv_tcp_simultaneous_accepts(uv_tcp_t* handle, int enable) {
 
 
 void uv__tcp_close(uv_tcp_t* handle) {
-  uv__stream_close((uv_stream_t*)handle);
+  uv__stream_close(reinterpret_cast<uv_stream_t*>(handle));
 }

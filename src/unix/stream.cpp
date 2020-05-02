@@ -41,7 +41,7 @@
 # include <sys/select.h>
 
 /* Forward declaration */
-typedef struct uv__stream_select_s uv__stream_select_t;
+typedef uv__stream_select_s uv__stream_select_t;
 
 struct uv__stream_select_s {
   uv_stream_t* stream;
@@ -85,9 +85,8 @@ static size_t uv__write_req_size(uv_write_t* req);
 void uv__stream_init(uv_loop_t* loop,
                      uv_stream_t* stream,
                      uv_handle_type type) {
-  int err;
 
-  uv__handle_init(loop, (uv_handle_t*)stream, type);
+  uv__handle_init(loop, reinterpret_cast<uv_handle_t*>(stream), type);
   stream->read_cb = nullptr;
   stream->alloc_cb = nullptr;
   stream->close_cb = nullptr;
@@ -102,7 +101,7 @@ void uv__stream_init(uv_loop_t* loop,
   stream->write_queue_size = 0;
 
   if (loop->emfile_fd == -1) {
-    err = uv__open_cloexec("/dev/null", O_RDONLY);
+    auto err = uv__open_cloexec("/dev/null", O_RDONLY);
     if (err < 0)
         /* In the rare case that "/dev/null" isn't mounted open "/"
          * instead.
@@ -123,10 +122,8 @@ void uv__stream_init(uv_loop_t* loop,
 static void uv__stream_osx_interrupt_select(uv_stream_t* stream) {
 #if defined(__APPLE__)
   /* Notify select() thread about state change */
-  uv__stream_select_t* s;
-  int r;
 
-  s = stream->select;
+  auto s = stream->select;
   if (s == nullptr)
     return;
 
@@ -134,6 +131,7 @@ static void uv__stream_osx_interrupt_select(uv_stream_t* stream) {
    * NOTE: fake_fd and int_fd are socketpair(), thus writing to one will
    * emit read event on other side
    */
+  auto r = int{};
   do
     r = write(s->fake_fd, "x", 1);
   while (r == -1 && errno == EINTR);
@@ -147,18 +145,12 @@ static void uv__stream_osx_interrupt_select(uv_stream_t* stream) {
 
 #if defined(__APPLE__)
 static void uv__stream_osx_select(void* arg) {
-  uv_stream_t* stream;
-  uv__stream_select_t* s;
   char buf[1024];
-  int events;
-  int fd;
-  int r;
-  int max_fd;
 
-  stream = arg;
-  s = stream->select;
-  fd = s->fd;
-
+  auto stream = static_cast<uv_stream_t*>(arg);
+  auto s = stream->select;
+  auto fd = s->fd;
+  auto max_fd = int{};
   if (fd > s->int_fd)
     max_fd = fd;
   else
@@ -180,7 +172,7 @@ static void uv__stream_osx_select(void* arg) {
     FD_SET(s->int_fd, s->sread);
 
     /* Wait indefinitely for fd events */
-    r = select(max_fd + 1, s->sread, s->swrite, nullptr, nullptr);
+    auto r = select(max_fd + 1, s->sread, s->swrite, nullptr, nullptr);
     if (r == -1) {
       if (errno == EINTR)
         continue;
@@ -214,7 +206,7 @@ static void uv__stream_osx_select(void* arg) {
       }
 
     /* Handle events */
-    events = 0;
+    auto events = 0;
     if (FD_ISSET(fd, s->sread))
       events |= POLLIN;
     if (FD_ISSET(fd, s->swrite))
@@ -235,15 +227,12 @@ static void uv__stream_osx_select(void* arg) {
 
 
 static void uv__stream_osx_select_cb(uv_async_t* handle) {
-  uv__stream_select_t* s;
-  uv_stream_t* stream;
-  int events;
 
-  s = container_of(handle, uv__stream_select_t, async);
-  stream = s->stream;
+  auto s = container_of(handle, uv__stream_select_t, async);
+  auto stream = s->stream;
 
   /* Get and reset stream's events */
-  events = s->events;
+  auto events = s->events;
   ACCESS_ONCE(int, s->events) = 0;
 
   assert(events != 0);
@@ -267,9 +256,8 @@ static void uv__stream_osx_select_cb(uv_async_t* handle) {
 
 
 static void uv__stream_osx_cb_close(uv_handle_t* async) {
-  uv__stream_select_t* s;
 
-  s = container_of(async, uv__stream_select_t, async);
+  auto s = container_of(async, uv__stream_select_t, async);
   uv__free(s);
 }
 
@@ -280,20 +268,19 @@ int uv__stream_try_select(uv_stream_t* stream, int* fd) {
    * select(2) in separate thread for those fds
    */
 
-  struct kevent filter[1];
-  struct kevent events[1];
-  struct timespec timeout;
+  kevent filter[1];
+  kevent events[1];
+  timespec timeout;
   uv__stream_select_t* s;
   int fds[2];
   int err;
   int ret;
-  int kq;
   int old_fd;
   int max_fd;
   size_t sread_sz;
   size_t swrite_sz;
 
-  kq = kqueue();
+  auto kq = kqueue();
   if (kq == -1) {
     perror("(libuv) kqueue()");
     return UV__ERR(errno);

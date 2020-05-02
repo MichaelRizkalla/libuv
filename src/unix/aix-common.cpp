@@ -60,11 +60,11 @@
 #include <sys/vnode.h>
 
 uint64_t uv__hrtime(uv_clocktype_t type) {
-  uint64_t G = 1000000000;
-  timebasestruct_t t;
+  auto G = 1000000000ull;
+  auto t = timebasestruct_t{};
   read_wall_time(&t, TIMEBASE_SZ);
   time_base_to_time(&t, TIMEBASE_SZ);
-  return (uint64_t) t.tb_high * G + t.tb_low;
+  return static_cast<uint64_t>(t.tb_high * G + t.tb_low);
 }
 
 
@@ -77,17 +77,15 @@ uint64_t uv__hrtime(uv_clocktype_t type) {
  * and use it in conjunction with PATH environment variable to craft one.
  */
 int uv_exepath(char* buffer, size_t* size) {
-  int res;
   char args[PATH_MAX];
   char abspath[PATH_MAX];
-  size_t abspath_size;
-  struct procsinfo pi;
 
   if (buffer == nullptr || size == nullptr || *size == 0)
     return UV_EINVAL;
 
+  auto pi = procsinfo{};
   pi.pi_pid = getpid();
-  res = getargs(&pi, sizeof(pi), args, sizeof(args));
+  auto res = getargs(&pi, sizeof(pi), args, sizeof(args));
   if (res < 0)
     return UV_EINVAL;
 
@@ -104,7 +102,7 @@ int uv_exepath(char* buffer, size_t* size) {
     if (realpath(args, abspath) != abspath)
       return UV__ERR(errno);
 
-    abspath_size = strlen(abspath);
+    auto abspath_size = strlen(abspath);
 
     *size -= 1;
     if (*size > abspath_size)
@@ -117,24 +115,22 @@ int uv_exepath(char* buffer, size_t* size) {
   } else {
     /* Case iii). Search PATH environment variable */
     char trypath[PATH_MAX];
-    char *clonedpath = nullptr;
-    char *token = nullptr;
     char *path = getenv("PATH");
 
     if (path == nullptr)
       return UV_EINVAL;
 
-    clonedpath = uv__strdup(path);
+    auto clonedpath = uv__strdup(path);
     if (clonedpath == nullptr)
       return UV_ENOMEM;
 
-    token = strtok(clonedpath, ":");
+    auto token = strtok(clonedpath, ":");
     while (token != nullptr) {
       snprintf(trypath, sizeof(trypath) - 1, "%s/%s", token, args);
       if (realpath(trypath, abspath) == abspath) {
         /* Check the match is executable */
         if (access(abspath, X_OK) == 0) {
-          abspath_size = strlen(abspath);
+          auto abspath_size = strlen(abspath);
 
           *size -= 1;
           if (*size > abspath_size)

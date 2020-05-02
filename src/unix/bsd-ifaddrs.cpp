@@ -35,7 +35,7 @@
 #define IFF_RUNNING IFF_LINK
 #endif
 
-static int uv__ifaddr_exclude(struct ifaddrs *ent, int exclude_type) {
+static int uv__ifaddr_exclude(ifaddrs *ent, int exclude_type) {
   if (!((ent->ifa_flags & IFF_UP) && (ent->ifa_flags & IFF_RUNNING)))
     return 1;
   if (ent->ifa_addr == nullptr)
@@ -66,21 +66,15 @@ static int uv__ifaddr_exclude(struct ifaddrs *ent, int exclude_type) {
 }
 
 int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
-  struct ifaddrs* addrs;
-  struct ifaddrs* ent;
-  uv_interface_address_t* address;
-#if !(defined(__CYGWIN__) || defined(__MSYS__))
-  int i;
-#endif
-
   *count = 0;
   *addresses = nullptr;
 
+  ifaddrs* addrs;
   if (getifaddrs(&addrs) != 0)
     return UV__ERR(errno);
 
   /* Count the number of interfaces */
-  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
+  for (auto ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
     (*count)++;
@@ -99,24 +93,24 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
     return UV_ENOMEM;
   }
 
-  address = *addresses;
+  auto address = *addresses;
 
-  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
+  for (auto ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
 
     address->name = uv__strdup(ent->ifa_name);
 
     if (ent->ifa_addr->sa_family == AF_INET6) {
-      address->address.address6 = *((struct sockaddr_in6*) ent->ifa_addr);
+      address->address.address6 = *reinterpret_cast<sockaddr_in6*>(ent->ifa_addr);
     } else {
-      address->address.address4 = *((struct sockaddr_in*) ent->ifa_addr);
+      address->address.address4 = *reinterpret_cast<sockaddr_in*>(ent->ifa_addr);
     }
 
     if (ent->ifa_netmask->sa_family == AF_INET6) {
-      address->netmask.netmask6 = *((struct sockaddr_in6*) ent->ifa_netmask);
+      address->netmask.netmask6 = *reinterpret_cast<sockaddr_in6*>(ent->ifa_netmask);
     } else {
-      address->netmask.netmask4 = *((struct sockaddr_in*) ent->ifa_netmask);
+      address->netmask.netmask4 = *reinterpret_cast<sockaddr_in*>(ent->ifa_netmask);
     }
 
     address->is_internal = !!(ent->ifa_flags & IFF_LOOPBACK);
@@ -126,16 +120,15 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
 #if !(defined(__CYGWIN__) || defined(__MSYS__))
   /* Fill in physical addresses for each interface */
-  for (ent = addrs; ent != nullptr; ent = ent->ifa_next) {
+  for (auto ent = addrs; ent != nullptr; ent = ent->ifa_next) {
     if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFPHYS))
       continue;
 
     address = *addresses;
 
-    for (i = 0; i < *count; i++) {
+    for (auto i = 0; i < *count; i++) {
       if (strcmp(address->name, ent->ifa_name) == 0) {
-        struct sockaddr_dl* sa_addr;
-        sa_addr = (struct sockaddr_dl*)(ent->ifa_addr);
+        auto sa_addr = reinterpret_cast<sockaddr_dl*>(ent->ifa_addr);
         memcpy(address->phys_addr, LLADDR(sa_addr), sizeof(address->phys_addr));
       }
       address++;
@@ -151,9 +144,8 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
 
 void uv_free_interface_addresses(uv_interface_address_t* addresses,
                                  int count) {
-  int i;
 
-  for (i = 0; i < count; i++) {
+  for (auto i = 0; i < count; i++) {
     uv__free(addresses[i].name);
   }
 

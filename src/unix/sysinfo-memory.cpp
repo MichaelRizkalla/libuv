@@ -25,18 +25,18 @@
 #include <stdint.h>
 #include <sys/sysinfo.h>
 
-uint64_t uv_get_free_memory(void) {
+uint64_t uv_get_free_memory() {
   struct sysinfo info;
 
   if (sysinfo(&info) == 0)
-    return (uint64_t) info.freeram * info.mem_unit;
+    return static_cast<uint64_t>(info.freeram * info.mem_unit);
   return 0;
 }
 
-uint64_t uv_get_total_memory(void) {
+uint64_t uv_get_total_memory() {
   struct sysinfo info;
 
   if (sysinfo(&info) == 0)
-    return (uint64_t) info.totalram * info.mem_unit;
+    return static_cast<uint64_t>(info.totalram * info.mem_unit);
   return 0;
 }

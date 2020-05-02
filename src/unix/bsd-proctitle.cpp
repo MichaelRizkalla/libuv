@@ -31,7 +31,7 @@ static uv_once_t process_title_mutex_once = UV_ONCE_INIT;
 static char* process_title;
 
 
-static void init_process_title_mutex_once(void) {
+static void init_process_title_mutex_once() {
   if (uv_mutex_init(&process_title_mutex))
     abort();
 }
@@ -44,9 +44,7 @@ char** uv_setup_args(int argc, char** argv) {
 
 
 int uv_set_process_title(const char* title) {
-  char* new_title;
-
-  new_title = uv__strdup(title);
+  auto new_title = uv__strdup(title);
   if (new_title == nullptr)
     return UV_ENOMEM;
 
@@ -64,7 +62,6 @@ int uv_set_process_title(const char* title) {
 
 
 int uv_get_process_title(char* buffer, size_t size) {
-  size_t len;
 
   if (buffer == nullptr || size == 0)
     return UV_EINVAL;
@@ -72,6 +69,7 @@ int uv_get_process_title(char* buffer, size_t size) {
   uv_once(&process_title_mutex_once, init_process_title_mutex_once);
   uv_mutex_lock(&process_title_mutex);
 
+  auto len = 0ull;
   if (process_title != nullptr) {
     len = strlen(process_title) + 1;
 

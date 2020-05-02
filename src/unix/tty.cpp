@@ -51,9 +51,8 @@
  * whether the fd is *really* a TTY or not.
  */
 static int isreallyatty(int file) {
-  int rc;
  
-  rc = !ioctl(file, TXISATTY + 0x81, nullptr);
+  auto rc = static_cast<int>(!ioctl(file, TXISATTY + 0x81, nullptr));
   if (!rc && errno != EBADF)
       errno = ENOTTY;
 
@@ -63,19 +62,19 @@ static int isreallyatty(int file) {
 #endif
 
 static int orig_termios_fd = -1;
-static struct termios orig_termios;
+static termios orig_termios;
 static uv_spinlock_t termios_spinlock = UV_SPINLOCK_INITIALIZER;
 
 static int uv__tty_is_slave(const int fd) {
-  int result;
+
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-  int dummy;
 
-  result = ioctl(fd, TIOCGPTN, &dummy) != 0;
+  auto dummy = int{};
+  auto result = ioctl(fd, TIOCGPTN, &dummy) != 0;
 #elif defined(__APPLE__)
-  char dummy[256];
 
-  result = ioctl(fd, TIOCPTYGNAME, &dummy) != 0;
+  char dummy[256];
+  auto result = ioctl(fd, TIOCPTYGNAME, &dummy) != 0;
 #elif defined(__NetBSD__)
   /*
    * NetBSD as an extension returns with ptsname(3) and ptsname_r(3) the slave
@@ -89,7 +88,6 @@ static int uv__tty_is_slave(const int fd) {
    *  - slave tty:  pts - major 5
    */
 
-  struct stat sb;
   /* Lookup device's major for the pts driver and cache it. */
   static devmajor_t pts = NODEVMAJOR;
 
@@ -100,6 +98,7 @@ static int uv__tty_is_slave(const int fd) {
   }
 
   /* Lookup stat structure behind the file descriptor. */
+  auto sb = stat{};
   if (fstat(fd, &sb) != 0)
     abort();
 
@@ -115,85 +114,13 @@ static int uv__tty_is_slave(const int fd) {
 #else
   /* Fallback to ptsname
    */
-  result = ptsname(fd) == nullptr;
+  auto result = ptsname(fd) == nullptr;
 #endif
   return result;
 }
 
-int uv_tty_init(uv_loop_t* loop, uv_tty_t* tty, int fd) {
-  uv_handle_type type;
-  int flags;
-  int newfd;
-  int r;
-  int saved_flags;
-  int mode;
-  char path[256];
-
-  /* File descriptors that refer to files cannot be monitored with epoll.
-   * That restriction also applies to character devices like /dev/random
-   * (but obviously not /dev/tty.)
-   */
-  type = uv_guess_handle(fd);
-  if (type == UV_FILE || type == UV_UNKNOWN_HANDLE)
-    return UV_EINVAL;
-
-  flags = 0;
-  newfd = -1;
-
-  /* Save the fd flags in case we need to restore them due to an error. */
-  do
-    saved_flags = fcntl(fd, F_GETFL);
-  while (saved_flags == -1 && errno == EINTR);
-
-  if (saved_flags == -1)
-    return UV__ERR(errno);
-  mode = saved_flags & O_ACCMODE;
-
-  /* Reopen the file descriptor when it refers to a tty. This lets us put the
-   * tty in non-blocking mode without affecting other processes that share it
-   * with us.
-   *
-   * Example: `node | cat` - if we put our fd 0 in non-blocking mode, it also
-   * affects fd 1 of `cat` because both file descriptors refer to the same
-   * struct file in the kernel. When we reopen our fd 0, it points to a
-   * different struct file, hence changing its properties doesn't affect
-   * other processes.
-   */
-  if (type == UV_TTY) {
-    /* Reopening a pty in master mode won't work either because the reopened
-     * pty will be in slave mode (*BSD) or reopening will allocate a new
-     * master/slave pair (Linux). Therefore check if the fd points to a
-     * slave device.
-     */
-    if (uv__tty_is_slave(fd) && ttyname_r(fd, path, sizeof(path)) == 0)
-      r = uv__open_cloexec(path, mode | O_NOCTTY);
-    else
-      r = -1;
-
-    if (r < 0) {
-      /* fallback to using blocking writes */
-      if (mode != O_RDONLY)
-        flags |= UV_HANDLE_BLOCKING_WRITES;
-      goto skip;
-    }
-
-    newfd = r;
-
-    r = uv__dup2_cloexec(newfd, fd);
-    if (r < 0 && r != UV_EINVAL) {
-      /* EINVAL means newfd == fd which could conceivably happen if another
-       * thread called close(fd) between our calls to isatty() and open().
-       * That's a rather unlikely event but let's handle it anyway.
-       */
-      uv__close(newfd);
-      return r;
-    }
-
-    fd = newfd;
-  }
-
-skip:
-  uv__stream_init(loop, (uv_stream_t*) tty, UV_TTY);
+int uv_tty_init_skip(uv_loop_t* loop, uv_tty_t* tty, int fd, int flags, int mode){
+  uv__stream_init(loop, reinterpret_cast<uv_stream_t*>(tty), UV_TTY);
 
   /* If anything fails beyond this point we need to remove the handle from
    * the handle queue, since it was added by uv__handle_init in uv_stream_init.
@@ -203,7 +130,7 @@ skip:
     uv__nonblock(fd, 1);
 
 #if defined(__APPLE__)
-  r = uv__stream_try_select((uv_stream_t*) tty, &fd);
+  auto r = uv__stream_try_select(reinterpret_cast<uv_stream_t*>(tty), &fd);
   if (r) {
     int rc = r;
     if (newfd != -1)
@@ -221,13 +148,84 @@ skip:
   if (mode != O_RDONLY)
     flags |= UV_HANDLE_WRITABLE;
 
-  uv__stream_open((uv_stream_t*) tty, fd, flags);
+  uv__stream_open(reinterpret_cast<uv_stream_t*>(tty), fd, flags);
   tty->mode = UV_TTY_MODE_NORMAL;
 
   return 0;
 }
 
-static void uv__tty_make_raw(struct termios* tio) {
+int uv_tty_init(uv_loop_t* loop, uv_tty_t* tty, int fd) {
+
+  /* File descriptors that refer to files cannot be monitored with epoll.
+   * That restriction also applies to character devices like /dev/random
+   * (but obviously not /dev/tty.)
+   */
+  auto type = uv_guess_handle(fd);
+  if (type == UV_FILE || type == UV_UNKNOWN_HANDLE)
+    return UV_EINVAL;
+
+  auto flags = 0;
+  auto newfd = -1;
+
+  /* Save the fd flags in case we need to restore them due to an error. */
+  auto saved_flags = int{};
+  do
+    saved_flags = fcntl(fd, F_GETFL);
+  while (saved_flags == -1 && errno == EINTR);
+
+  if (saved_flags == -1)
+    return UV__ERR(errno);
+  auto mode = saved_flags & O_ACCMODE;
+
+  /* Reopen the file descriptor when it refers to a tty. This lets us put the
+   * tty in non-blocking mode without affecting other processes that share it
+   * with us.
+   *
+   * Example: `node | cat` - if we put our fd 0 in non-blocking mode, it also
+   * affects fd 1 of `cat` because both file descriptors refer to the same
+   * struct file in the kernel. When we reopen our fd 0, it points to a
+   * different struct file, hence changing its properties doesn't affect
+   * other processes.
+   */
+  if (type == UV_TTY) {
+    /* Reopening a pty in master mode won't work either because the reopened
+     * pty will be in slave mode (*BSD) or reopening will allocate a new
+     * master/slave pair (Linux). Therefore check if the fd points to a
+     * slave device.
+     */
+
+    auto r = int{0};
+    char path[256];
+    if (uv__tty_is_slave(fd) && ttyname_r(fd, path, sizeof(path)) == 0)
+      r = uv__open_cloexec(path, mode | O_NOCTTY);
+    else
+      r = -1;
+
+    if (r < 0) {
+      /* fallback to using blocking writes */
+      if (mode != O_RDONLY)
+        flags |= UV_HANDLE_BLOCKING_WRITES;
+      return uv_tty_init_skip(loop, tty, fd, flags, mode);
+    }
+
+    newfd = r;
+
+    r = uv__dup2_cloexec(newfd, fd);
+    if (r < 0 && r != UV_EINVAL) {
+      /* EINVAL means newfd == fd which could conceivably happen if another
+       * thread called close(fd) between our calls to isatty() and open().
+       * That's a rather unlikely event but let's handle it anyway.
+       */
+      uv__close(newfd);
+      return r;
+    }
+
+    fd = newfd;
+  }
+  return uv_tty_init_skip(loop, tty, fd, flags, mode);
+}
+
+static void uv__tty_make_raw(termios* tio) {
   assert(tio != nullptr);
 
 #if defined __sun || defined __MVS__
@@ -247,13 +245,11 @@ static void uv__tty_make_raw(struct termios* tio) {
 }
 
 int uv_tty_set_mode(uv_tty_t* tty, uv_tty_mode_t mode) {
-  struct termios tmp;
-  int fd;
 
-  if (tty->mode == (int) mode)
+  if (tty->mode == static_cast<int>(mode))
     return 0;
 
-  fd = uv__stream_fd(tty);
+  auto fd = uv__stream_fd(tty);
   if (tty->mode == UV_TTY_MODE_NORMAL && mode != UV_TTY_MODE_NORMAL) {
     if (tcgetattr(fd, &tty->orig_termios))
       return UV__ERR(errno);
@@ -267,7 +263,7 @@ int uv_tty_set_mode(uv_tty_t* tty, uv_tty_mode_t mode) {
     uv_spinlock_unlock(&termios_spinlock);
   }
 
-  tmp = tty->orig_termios;
+  auto tmp = tty->orig_termios;
   switch (mode) {
     case UV_TTY_MODE_NORMAL:
       break;
@@ -294,9 +290,9 @@ int uv_tty_set_mode(uv_tty_t* tty, uv_tty_mode_t mode) {
 
 
 int uv_tty_get_winsize(uv_tty_t* tty, int* width, int* height) {
-  struct winsize ws;
-  int err;
 
+  auto err = int{};
+  auto ws = winsize{};
   do
     err = ioctl(uv__stream_fd(tty), TIOCGWINSZ, &ws);
   while (err == -1 && errno == EINTR);
@@ -312,10 +308,6 @@ int uv_tty_get_winsize(uv_tty_t* tty, int* width, int* height) {
 
 
 uv_handle_type uv_guess_handle(uv_file file) {
-  struct sockaddr sa;
-  struct stat s;
-  socklen_t len;
-  int type;
 
   if (file < 0)
     return UV_UNKNOWN_HANDLE;
@@ -323,6 +315,7 @@ uv_handle_type uv_guess_handle(uv_file file) {
   if (isatty(file))
     return UV_TTY;
 
+  struct stat s;
   if (fstat(file, &s))
     return UV_UNKNOWN_HANDLE;
 
@@ -338,11 +331,13 @@ uv_handle_type uv_guess_handle(uv_file file) {
   if (!S_ISSOCK(s.st_mode))
     return UV_UNKNOWN_HANDLE;
 
-  len = sizeof(type);
+  auto type = int{};
+  auto len = static_cast<socklen_t>(sizeof(decltype(type)));
   if (getsockopt(file, SOL_SOCKET, SO_TYPE, &type, &len))
     return UV_UNKNOWN_HANDLE;
 
-  len = sizeof(sa);
+  auto sa = sockaddr{};
+  len = static_cast<socklen_t>(sizeof(decltype(sa)));
   if (getsockname(file, &sa, &len))
     return UV_UNKNOWN_HANDLE;
 
@@ -374,15 +369,13 @@ uv_handle_type uv_guess_handle(uv_file file) {
  * inside a signal handler _unless_ execution was inside uv_tty_set_mode()'s
  * critical section when the signal was raised.
  */
-int uv_tty_reset_mode(void) {
-  int saved_errno;
-  int err;
+int uv_tty_reset_mode() {
 
-  saved_errno = errno;
+  auto saved_errno = errno;
   if (!uv_spinlock_trylock(&termios_spinlock))
     return UV_EBUSY;  /* In uv_tty_set_mode(). */
 
-  err = 0;
+  auto err = 0;
   if (orig_termios_fd != -1)
     if (tcsetattr(orig_termios_fd, TCSANOW, &orig_termios))
       err = UV__ERR(errno);
