@@ -1,4 +1,5 @@
-/* Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+/* 
+ * Copyright Joyent, Inc. and other Node contributors. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -24,12 +25,12 @@
  * Windows and Unix backends.
  */
 
-#ifndef UV_COMMON_H_
-#define UV_COMMON_H_
+#pragma once
 
 #include <assert.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <type_traits>
 
 #if defined(_MSC_VER) && _MSC_VER < 1600
 # include "uv/stdint-msvc2008.h"
@@ -123,205 +124,242 @@ enum {
   UV_HANDLE_POLL_SLOW                   = 0x01000000
 };
 
-int uv__loop_configure(uv_loop_t* loop, uv_loop_option option, va_list ap);
+auto uv__loop_configure(uv_loop_t* loop, uv_loop_option option, va_list ap) -> int;
 
-void uv__loop_close(uv_loop_t* loop);
+auto uv__loop_close(uv_loop_t* loop) -> void;
 
-int uv__tcp_bind(uv_tcp_t* tcp,
+auto uv__tcp_bind(uv_tcp_t* tcp,
                  const sockaddr* addr,
                  unsigned int addrlen,
-                 unsigned int flags);
+                 unsigned int flags) -> int;
 
-int uv__tcp_connect(uv_connect_t* req,
+auto uv__tcp_connect(uv_connect_t* req,
                    uv_tcp_t* handle,
                    const sockaddr* addr,
                    unsigned int addrlen,
-                   uv_connect_cb cb);
+                   uv_connect_cb cb) -> int;
 
-int uv__udp_bind(uv_udp_t* handle,
+auto uv__udp_bind(uv_udp_t* handle,
                  const sockaddr* addr,
                  unsigned int  addrlen,
-                 unsigned int flags);
+                 unsigned int flags) -> int;
 
-int uv__udp_connect(uv_udp_t* handle,
+auto uv__udp_connect(uv_udp_t* handle,
                     const sockaddr* addr,
-                    unsigned int addrlen);
+                    unsigned int addrlen) -> int;
 
-int uv__udp_disconnect(uv_udp_t* handle);
+auto uv__udp_disconnect(uv_udp_t* handle) -> int;
 
-int uv__udp_is_connected(uv_udp_t* handle);
+auto uv__udp_is_connected(uv_udp_t* handle) -> int;
 
-int uv__udp_send(uv_udp_send_t* req,
+auto uv__udp_send(uv_udp_send_t* req,
                  uv_udp_t* handle,
                  const uv_buf_t bufs[],
                  unsigned int nbufs,
                  const sockaddr* addr,
                  unsigned int addrlen,
-                 uv_udp_send_cb send_cb);
+                 uv_udp_send_cb send_cb) -> int;
 
-int uv__udp_try_send(uv_udp_t* handle,
+auto uv__udp_try_send(uv_udp_t* handle,
                      const uv_buf_t bufs[],
                      unsigned int nbufs,
                      const sockaddr* addr,
-                     unsigned int addrlen);
+                     unsigned int addrlen) -> int;
 
-int uv__udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloccb,
-                       uv_udp_recv_cb recv_cb);
+auto uv__udp_recv_start(uv_udp_t* handle, uv_alloc_cb alloccb,
+                       uv_udp_recv_cb recv_cb) -> int;
 
-int uv__udp_recv_stop(uv_udp_t* handle);
+auto uv__udp_recv_stop(uv_udp_t* handle) -> int;
 
-void uv__fs_poll_close(uv_fs_poll_t* handle);
+auto uv__fs_poll_close(uv_fs_poll_t* handle) -> void;
 
-int uv__getaddrinfo_translate_error(int sys_err);    /* EAI_* error. */
+auto uv__getaddrinfo_translate_error(int sys_err) -> int;    /* EAI_* error. */
 
-enum uv__work_kind : ssize_t {
+enum uv__work_kind {
   UV__WORK_CPU,
   UV__WORK_FAST_IO,
   UV__WORK_SLOW_IO
 };
 
-void uv__work_submit(uv_loop_t* loop,
+auto uv__work_submit(uv_loop_t* loop,
                      uv__work *w,
                      uv__work_kind kind,
                      void (*work)(uv__work *w),
-                     void (*done)(uv__work *w, int status));
+                     void (*done)(uv__work *w, int status)) -> void;
 
-void uv__work_done(uv_async_t* handle);
+auto uv__work_done(uv_async_t* handle) -> void;
 
-size_t uv__count_bufs(const uv_buf_t bufs[], unsigned int nbufs);
+auto uv__count_bufs(const uv_buf_t bufs[], unsigned int nbufs) -> size_t;
 
-int uv__socket_sockopt(uv_handle_t* handle, int optname, int* value);
+auto uv__socket_sockopt(uv_handle_t* handle, int optname, int* value) -> int;
 
-void uv__fs_scandir_cleanup(uv_fs_t* req);
-void uv__fs_readdir_cleanup(uv_fs_t* req);
-uv_dirent_type_t uv__fs_get_dirent_type(uv__dirent_t* dent);
+auto uv__fs_scandir_cleanup(uv_fs_t* req) -> void;
+auto uv__fs_readdir_cleanup(uv_fs_t* req) -> void;
+auto uv__fs_get_dirent_type(uv__dirent_t* dent) -> uv_dirent_type_t;
 
-int uv__next_timeout(const uv_loop_t* loop);
-void uv__run_timers(uv_loop_t* loop);
-void uv__timer_close(uv_timer_t* handle);
+auto uv__next_timeout(const uv_loop_t* loop) -> int;
+auto uv__run_timers(uv_loop_t* loop) -> void;
+auto uv__timer_close(uv_timer_t* handle) -> void;
 
-#define uv__has_active_reqs(loop)                                             \
-  ((loop)->active_reqs.count > 0)
+template <class _loop>
+auto uv__has_active_reqs(_loop loop) noexcept -> bool{
+  return ((loop)->active_reqs.count > 0);
+}
 
-#define uv__req_register(loop, req)                                           \
-  do {                                                                        \
-    (loop)->active_reqs.count++;                                              \
-  }                                                                           \
-  while (0)
+template <class _loop, class _req>
+auto uv__req_register(_loop loop, _req req) noexcept {
+  (void) req;
+  do {
+    (loop)->active_reqs.count++;
+  }
+  while (0);
+}
 
-#define uv__req_unregister(loop, req)                                         \
-  do {                                                                        \
-    assert(uv__has_active_reqs(loop));                                        \
-    (loop)->active_reqs.count--;                                              \
-  }                                                                           \
-  while (0)
+template <class _loop, class _req>
+auto uv__req_unregister(_loop loop, _req req) {
+  (void) req;
+  do {
+    assert(uv__has_active_reqs(loop));
+    (loop)->active_reqs.count--;
+  }
+  while (0);
+}
 
-#define uv__has_active_handles(loop)                                          \
-  ((loop)->active_handles > 0)
+template <class _loop>
+auto uv__has_active_handles(_loop loop) noexcept -> bool {
+  return (loop)->active_handles > 0;
+}
 
-#define uv__active_handle_add(h)                                              \
-  do {                                                                        \
-    (h)->loop->active_handles++;                                              \
-  }                                                                           \
-  while (0)
+template <class _h>
+auto uv__active_handle_add(_h h) noexcept {
+  do {
+    (h)->loop->active_handles++;
+  }
+  while (0);
+}
 
-#define uv__active_handle_rm(h)                                               \
-  do {                                                                        \
-    (h)->loop->active_handles--;                                              \
-  }                                                                           \
-  while (0)
+template <class _h>
+auto uv__active_handle_rm(_h h) noexcept {
+  do {
+    (h)->loop->active_handles--;
+  }
+  while (0);
+}
 
-#define uv__is_active(h)                                                      \
-  (((h)->flags & UV_HANDLE_ACTIVE) != 0)
+template <class _h>
+auto uv__is_active(_h h) noexcept -> bool {
+  return (((h)->flags & UV_HANDLE_ACTIVE) != 0);
+}
 
-#define uv__is_closing(h)                                                     \
-  (((h)->flags & (UV_HANDLE_CLOSING | UV_HANDLE_CLOSED)) != 0)
+template <class _h>
+auto uv__is_closing(_h h) noexcept -> bool {
+  return (((h)->flags & (UV_HANDLE_CLOSING | UV_HANDLE_CLOSED)) != 0);
+}
 
-#define uv__handle_start(h)                                                   \
-  do {                                                                        \
-    if (((h)->flags & UV_HANDLE_ACTIVE) != 0) break;                          \
-    (h)->flags |= UV_HANDLE_ACTIVE;                                           \
-    if (((h)->flags & UV_HANDLE_REF) != 0) uv__active_handle_add(h);          \
-  }                                                                           \
-  while (0)
+template <class _h>
+auto uv__handle_start(_h h) noexcept {
+  do {
+    if (((h)->flags & UV_HANDLE_ACTIVE) != 0) break;
+    (h)->flags |= UV_HANDLE_ACTIVE;
+    if (((h)->flags & UV_HANDLE_REF) != 0) uv__active_handle_add(h);
+  }
+  while (0);
+}
 
-#define uv__handle_stop(h)                                                    \
-  do {                                                                        \
-    if (((h)->flags & UV_HANDLE_ACTIVE) == 0) break;                          \
-    (h)->flags &= ~UV_HANDLE_ACTIVE;                                          \
-    if (((h)->flags & UV_HANDLE_REF) != 0) uv__active_handle_rm(h);           \
-  }                                                                           \
-  while (0)
+template <class _h>
+auto uv__handle_stop(_h h) noexcept {
+  do {
+    if (((h)->flags & UV_HANDLE_ACTIVE) == 0) break;
+    (h)->flags &= ~UV_HANDLE_ACTIVE;
+    if (((h)->flags & UV_HANDLE_REF) != 0) uv__active_handle_rm(h);
+  }
+  while (0);
+}
 
-#define uv__handle_ref(h)                                                     \
-  do {                                                                        \
-    if (((h)->flags & UV_HANDLE_REF) != 0) break;                             \
-    (h)->flags |= UV_HANDLE_REF;                                              \
-    if (((h)->flags & UV_HANDLE_CLOSING) != 0) break;                         \
-    if (((h)->flags & UV_HANDLE_ACTIVE) != 0) uv__active_handle_add(h);       \
-  }                                                                           \
-  while (0)
+template <class _h>
+auto uv__handle_ref(_h h) noexcept {
+  do {
+    if (((h)->flags & UV_HANDLE_REF) != 0) break;
+    (h)->flags |= UV_HANDLE_REF;
+    if (((h)->flags & UV_HANDLE_CLOSING) != 0) break;
+    if (((h)->flags & UV_HANDLE_ACTIVE) != 0) uv__active_handle_add(h);
+  }
+  while (0);
+}
 
-#define uv__handle_unref(h)                                                   \
-  do {                                                                        \
-    if (((h)->flags & UV_HANDLE_REF) == 0) break;                             \
-    (h)->flags &= ~UV_HANDLE_REF;                                             \
-    if (((h)->flags & UV_HANDLE_CLOSING) != 0) break;                         \
-    if (((h)->flags & UV_HANDLE_ACTIVE) != 0) uv__active_handle_rm(h);        \
-  }                                                                           \
-  while (0)
+template <class _h>
+auto uv__handle_unref(_h h) noexcept {
+  do {
+    if (((h)->flags & UV_HANDLE_REF) == 0) break;
+    (h)->flags &= ~UV_HANDLE_REF;
+    if (((h)->flags & UV_HANDLE_CLOSING) != 0) break;
+    if (((h)->flags & UV_HANDLE_ACTIVE) != 0) uv__active_handle_rm(h);
+  }
+  while (0);
+}
 
-#define uv__has_ref(h)                                                        \
-  (((h)->flags & UV_HANDLE_REF) != 0)
+template <class _h>
+auto uv__has_ref(_h h) noexcept -> bool{
+  return ((h)->flags & UV_HANDLE_REF) != 0;
+}
 
 #if defined(_WIN32)
-# define uv__handle_platform_init(h) ((h)->u.fd = -1)
+template <class _h>
+auto uv__handle_platform_init(_h h) noexcept { (h)->u.fd = -1; }
 #else
-# define uv__handle_platform_init(h) ((h)->next_closing = nullptr)
+template <class _h>
+auto uv__handle_platform_init(_h h) noexcept { (h)->next_closing = nullptr ;}
 #endif
 
-#define uv__handle_init(loop_, h, type_)                                      \
-  do {                                                                        \
-    (h)->loop = (loop_);                                                      \
-    (h)->type = (type_);                                                      \
-    (h)->flags = UV_HANDLE_REF;  /* Ref the loop when active. */              \
-    QUEUE_INSERT_TAIL(&(loop_)->handle_queue, &(h)->handle_queue);            \
-    uv__handle_platform_init(h);                                              \
-  }                                                                           \
-  while (0)
+template<class _loop, class _h, class _type>
+auto uv__handle_init(_loop loop_, _h h, _type type_) noexcept {
+  do{
+    (h)->loop = (loop_);
+    (h)->type = (type_);
+    (h)->flags = UV_HANDLE_REF; /* Ref the loop when active. */
+    QUEUE_INSERT_TAIL(&(loop_)->handle_queue, &(h)->handle_queue);
+    uv__handle_platform_init(h);
+  }
+  while(0);
+}
 
 /* Note: uses an open-coded version of SET_REQ_SUCCESS() because of
  * a circular dependency between src/uv-common.h and src/win/internal.h.
  */
 #if defined(_WIN32)
-# define UV_REQ_INIT(req, typ)                                                \
-  do {                                                                        \
-    (req)->type = (typ);                                                      \
-    (req)->u.io.overlapped.Internal = 0;  /* SET_REQ_SUCCESS() */             \
-  }                                                                           \
-  while (0)
+template<class _req, class _typ>
+auto UV_REQ_INIT(_req req, _typ typ) noexcept {
+  do {
+    (req)->type = (typ);
+    (req)->u.io.overlapped.Internal = 0; /* SET_REQ_SUCCESS() */
+  }
+  while (0);
+}
 #else
-# define UV_REQ_INIT(req, typ)                                                \
-  do {                                                                        \
-    (req)->type = (typ);                                                      \
-  }                                                                           \
-  while (0)
+template<class _req, class _typ>
+auto UV_REQ_INIT(_req req, _typ typ) noexcept {
+  do {
+    (req)->type = (typ);
+  }
+  while (0);
+}
 #endif
 
-#define uv__req_init(loop, req, typ)                                          \
-  do {                                                                        \
-    UV_REQ_INIT(req, typ);                                                    \
-    uv__req_register(loop, req);                                              \
-  }                                                                           \
-  while (0)
+template<class _loop, class _req, class _typ>
+auto uv__req_init(_loop loop, _req req, _typ typ) noexcept {
+  do {
+    UV_REQ_INIT(req, typ);
+    uv__req_register(loop, req);
+  }
+  while (0);
+}
+
 
 /* Allocator prototypes */
-void *uv__calloc(size_t count, size_t size);
-char *uv__strdup(const char* s);
-char *uv__strndup(const char* s, size_t n);
-void* uv__malloc(size_t size);
-void uv__free(void* ptr);
-void* uv__realloc(void* ptr, size_t size);
-void* uv__reallocf(void* ptr, size_t size);
-
-#endif /* UV_COMMON_H_ */
+auto uv__calloc(size_t count, size_t size) -> void *;
+auto uv__strdup(const char* s) -> char *;
+auto uv__strndup(const char* s, size_t n) -> char *;
+auto uv__malloc(size_t size) -> void*;
+auto uv__free(void* ptr) -> void;
+auto uv__realloc(void* ptr, size_t size) -> void*;
+auto uv__reallocf(void* ptr, size_t size) -> void*;

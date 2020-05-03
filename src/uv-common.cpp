@@ -53,7 +53,7 @@ static uv__allocator_t uv__allocator = {
 };
 
 char* uv__strdup(const char* s) {
-  size_t len = strlen(s) + 1;
+  auto len = strlen(s) + 1;
   auto *m = create_ptrstruct<char>(len);
   if (m == nullptr)
     return nullptr;
@@ -61,7 +61,7 @@ char* uv__strdup(const char* s) {
 }
 
 char* uv__strndup(const char* s, size_t n) {
-  size_t len = strlen(s);
+  auto len = strlen(s);
   if (n < len)
     len = n;
   auto *m = create_ptrstruct<char>(len + 1);
@@ -78,12 +78,10 @@ void* uv__malloc(size_t size) {
 }
 
 void uv__free(void* ptr) {
-  int saved_errno;
-
   /* Libuv expects that free() does not clobber errno.  The system allocator
    * honors that assumption but custom allocators may not be so careful.
    */
-  saved_errno = errno;
+  auto saved_errno = errno;
   uv__allocator.local_free(ptr);
   errno = saved_errno;
 }
@@ -100,9 +98,8 @@ void* uv__realloc(void* ptr, size_t size) {
 }
 
 void* uv__reallocf(void* ptr, size_t size) {
-  void* newptr;
 
-  newptr = uv__realloc(ptr, size);
+  auto newptr = uv__realloc(ptr, size);
   if (newptr == nullptr)
     if (size > 0)
       uv__free(ptr);
@@ -230,8 +227,6 @@ int uv_ip4_addr(const char* ip, int port, sockaddr_in* addr) {
 
 int uv_ip6_addr(const char* ip, int port, sockaddr_in6* addr) {
   char address_part[40];
-  size_t address_part_size;
-  const char* zone_index;
 
   memset(addr, 0, sizeof(*addr));
   addr->sin6_family = AF_INET6;
@@ -240,9 +235,9 @@ int uv_ip6_addr(const char* ip, int port, sockaddr_in6* addr) {
   addr->sin6_len = sizeof(*addr);
 #endif
 
-  zone_index = strchr(ip, '%');
+  auto zone_index = strchr(ip, '%');
   if (zone_index != nullptr) {
-    address_part_size = zone_index - ip;
+    auto address_part_size = static_cast<size_t>(zone_index - ip);
     if (address_part_size >= sizeof(address_part))
       address_part_size = sizeof(address_part) - 1;
 
@@ -361,11 +356,10 @@ int uv_udp_connect(uv_udp_t* handle, const sockaddr* addr) {
 
 int uv__udp_is_connected(uv_udp_t* handle) {
   sockaddr_storage addr;
-  int addrlen;
   if (handle->type != UV_UDP)
     return 0;
 
-  addrlen = sizeof(addr);
+  auto addrlen = static_cast<int>(sizeof(decltype(addr)));
   if (uv_udp_getpeername(handle, reinterpret_cast<sockaddr*>(&addr), &addrlen) != 0)
     return 0;
 
@@ -387,20 +381,18 @@ int uv__udp_check_before_send(uv_udp_t* handle, const sockaddr* addr) {
 
   if (addr != nullptr) {
     if (addr->sa_family == AF_INET)
-      addrlen = sizeof(sockaddr_in);
+      return sizeof(sockaddr_in);
     else if (addr->sa_family == AF_INET6)
-      addrlen = sizeof(sockaddr_in6);
+      return sizeof(sockaddr_in6);
 #if defined(AF_UNIX) && !defined(_WIN32)
     else if (addr->sa_family == AF_UNIX)
-      addrlen = sizeof(sockaddr_un);
+      return sizeof(sockaddr_un);
 #endif
     else
       return UV_EINVAL;
   } else {
-    addrlen = 0;
+    return 0;
   }
-
-  return addrlen;
 }
 
 
@@ -410,9 +402,8 @@ int uv_udp_send(uv_udp_send_t* req,
                 unsigned int nbufs,
                 const sockaddr* addr,
                 uv_udp_send_cb send_cb) {
-  int addrlen;
 
-  addrlen = uv__udp_check_before_send(handle, addr);
+  auto addrlen = uv__udp_check_before_send(handle, addr);
   if (addrlen < 0)
     return addrlen;
 
@@ -424,9 +415,8 @@ int uv_udp_try_send(uv_udp_t* handle,
                     const uv_buf_t bufs[],
                     unsigned int nbufs,
                     const sockaddr* addr) {
-  int addrlen;
 
-  addrlen = uv__udp_check_before_send(handle, addr);
+  auto addrlen = uv__udp_check_before_send(handle, addr);
   if (addrlen < 0)
     return addrlen;
 
@@ -454,13 +444,11 @@ int uv_udp_recv_stop(uv_udp_t* handle) {
 
 void uv_walk(uv_loop_t* loop, uv_walk_cb walk_cb, void* arg) {
   QUEUE queue;
-  QUEUE* q;
-  uv_handle_t* h;
 
   QUEUE_MOVE(&loop->handle_queue, &queue);
   while (!QUEUE_EMPTY(&queue)) {
-    q = QUEUE_HEAD(&queue);
-    h = QUEUE_DATA(q, uv_handle_t, handle_queue);
+    auto q = QUEUE_HEAD(&queue);
+    auto h = QUEUE_DATA(q, uv_handle_t, handle_queue);
 
     QUEUE_REMOVE(q);
     QUEUE_INSERT_TAIL(&loop->handle_queue, q);
@@ -474,13 +462,12 @@ void uv_walk(uv_loop_t* loop, uv_walk_cb walk_cb, void* arg) {
 static void uv__print_handles(uv_loop_t* loop, int only_active, FILE* stream) {
   const char* type;
   QUEUE* q;
-  uv_handle_t* h;
 
   if (loop == nullptr)
     loop = uv_default_loop();
 
   QUEUE_FOREACH(q, &loop->handle_queue) {
-    h = QUEUE_DATA(q, uv_handle_t, handle_queue);
+    auto h = QUEUE_DATA(q, uv_handle_t, handle_queue);
 
     if (only_active && !uv__is_active(h))
       continue;
@@ -540,12 +527,10 @@ uint64_t uv_now(const uv_loop_t* loop) {
 
 
 size_t uv__count_bufs(const uv_buf_t bufs[], unsigned int nbufs) {
-  unsigned int i;
-  size_t bytes;
 
-  bytes = 0;
-  for (i = 0; i < nbufs; i++)
-    bytes += (size_t) bufs[i].len;
+  auto bytes = size_t{0};
+  for (auto i = 0u; i < nbufs; i++)
+    bytes += static_cast<size_t>(bufs[i].len);
 
   return bytes;
 }
@@ -559,14 +544,13 @@ int uv_send_buffer_size(uv_handle_t* handle, int *value) {
 }
 
 int uv_fs_event_getpath(uv_fs_event_t* handle, char* buffer, size_t* size) {
-  size_t required_len;
 
   if (!uv__is_active(handle)) {
     *size = 0;
     return UV_EINVAL;
   }
 
-  required_len = strlen(handle->path);
+  auto required_len = strlen(handle->path);
   if (required_len >= *size) {
     *size = required_len + 1;
     return UV_ENOBUFS;
@@ -603,12 +587,12 @@ static unsigned int* uv__get_nbufs(uv_fs_t* req) {
 
 void uv__fs_scandir_cleanup(uv_fs_t* req) {
 
-  unsigned int* nbufs = uv__get_nbufs(req);
+  auto nbufs = uv__get_nbufs(req);
 
   auto **dents = reinterpret_cast<uv__dirent_t**>(req->ptr);
-  if (*nbufs > 0 && *nbufs != (unsigned int) req->result)
+  if (*nbufs > 0 && *nbufs != static_cast<unsigned int>(req->result))
     (*nbufs)--;
-  for (; *nbufs < (unsigned int) req->result; (*nbufs)++)
+  for (; *nbufs < static_cast<unsigned int>(req->result); (*nbufs)++)
     uv__fs_scandir_free(dents[*nbufs]);
 
   uv__fs_scandir_free(req->ptr);
@@ -617,8 +601,6 @@ void uv__fs_scandir_cleanup(uv_fs_t* req) {
 
 
 int uv_fs_scandir_next(uv_fs_t* req, uv_dirent_t* ent) {
-  uv__dirent_t* dent;
-  unsigned int* nbufs;
 
   /* Check to see if req passed */
   if (req->result < 0)
@@ -628,7 +610,7 @@ int uv_fs_scandir_next(uv_fs_t* req, uv_dirent_t* ent) {
   if (!req->ptr)
     return UV_EOF;
 
-  nbufs = uv__get_nbufs(req);
+  auto nbufs = uv__get_nbufs(req);
   assert(nbufs);
 
   auto **dents = reinterpret_cast<uv__dirent_t**>(req->ptr);
@@ -644,7 +626,7 @@ int uv_fs_scandir_next(uv_fs_t* req, uv_dirent_t* ent) {
     return UV_EOF;
   }
 
-  dent = dents[(*nbufs)++];
+  auto dent = dents[(*nbufs)++];
 
   ent->name = dent->d_name;
   ent->type = uv__fs_get_dirent_type(dent);
@@ -689,21 +671,18 @@ uv_dirent_type_t uv__fs_get_dirent_type(uv__dirent_t* dent) {
 }
 
 void uv__fs_readdir_cleanup(uv_fs_t* req) {
-  uv_dir_t* dir;
-  uv_dirent_t* dirents;
-  int i;
 
   if (req->ptr == nullptr)
     return;
 
-  dir = reinterpret_cast<uv_dir_t*>(req->ptr);
-  dirents = dir->dirents;
+  auto dir = reinterpret_cast<uv_dir_t*>(req->ptr);
+  auto dirents = dir->dirents;
   req->ptr = nullptr;
 
   if (dirents == nullptr)
     return;
 
-  for (i = 0; i < req->result; ++i) {
+  for (auto i = 0; i < req->result; ++i) {
     uv__free((char*) dirents[i].name);
     dirents[i].name = nullptr;
   }
@@ -712,11 +691,10 @@ void uv__fs_readdir_cleanup(uv_fs_t* req) {
 
 int uv_loop_configure(uv_loop_t* loop, uv_loop_option option, ...) {
   va_list ap;
-  int err;
 
   va_start(ap, option);
   /* Any platform-agnostic options should be handled here. */
-  err = uv__loop_configure(loop, option, ap);
+  auto err = uv__loop_configure(loop, option, ap);
   va_end(ap);
 
   return err;
@@ -727,7 +705,7 @@ static uv_loop_t default_loop_struct;
 static uv_loop_t* default_loop_ptr;
 
 
-uv_loop_t* uv_default_loop(void) {
+uv_loop_t* uv_default_loop() {
   if (default_loop_ptr != nullptr)
     return default_loop_ptr;
 
@@ -739,7 +717,7 @@ uv_loop_t* uv_default_loop(void) {
 }
 
 
-uv_loop_t* uv_loop_new(void) {
+uv_loop_t* uv_loop_new() {
   auto *loop = create_ptrstruct<uv_loop_t>(sizeof(uv_loop_t));
   if (loop == nullptr)
     return nullptr;
@@ -755,7 +733,6 @@ uv_loop_t* uv_loop_new(void) {
 
 int uv_loop_close(uv_loop_t* loop) {
   QUEUE* q;
-  uv_handle_t* h;
 #ifndef NDEBUG
   void* saved_data;
 #endif
@@ -764,7 +741,7 @@ int uv_loop_close(uv_loop_t* loop) {
     return UV_EBUSY;
 
   QUEUE_FOREACH(q, &loop->handle_queue) {
-    h = QUEUE_DATA(q, uv_handle_t, handle_queue);
+    auto h = QUEUE_DATA(q, uv_handle_t, handle_queue);
     if (!(h->flags & UV_HANDLE_INTERNAL))
       return UV_EBUSY;
   }
@@ -784,13 +761,10 @@ int uv_loop_close(uv_loop_t* loop) {
 
 
 void uv_loop_delete(uv_loop_t* loop) {
-  uv_loop_t* default_loop;
-  int err;
 
-  default_loop = default_loop_ptr;
+  auto default_loop = default_loop_ptr;
 
-  err = uv_loop_close(loop);
-  (void) err;    /* Squelch compiler warnings. */
+  auto err = uv_loop_close(loop);
   assert(err == 0);
   if (loop != default_loop)
     uv__free(loop);
@@ -798,9 +772,8 @@ void uv_loop_delete(uv_loop_t* loop) {
 
 
 void uv_os_free_environ(uv_env_item_t* envitems, int count) {
-  int i;
 
-  for (i = 0; i < count; i++) {
+  for (auto i = 0; i < count; i++) {
     uv__free(envitems[i].name);
   }
 
@@ -809,9 +782,8 @@ void uv_os_free_environ(uv_env_item_t* envitems, int count) {
 
 
 void uv_free_cpu_info(uv_cpu_info_t* cpu_infos, int count) {
-  int i;
 
-  for (i = 0; i < count; i++)
+  for (auto i = 0; i < count; i++)
     uv__free(cpu_infos[i].model);
 
   uv__free(cpu_infos);
